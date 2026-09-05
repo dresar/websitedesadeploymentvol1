@@ -1,0 +1,180 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/beneficiaries/beneficiaries-detail.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="beneficiaries-detail-wrapper">
+    <div class="container-fluid">
+
+        <div class="mb-3">
+            <a href="{% url 'admin_panel:categories_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="beneficiaries-detail-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4>{{ category.name }}</h4>
+                            <p class="text-muted mb-0">Detail kategori penerima bantuan</p>
+                        </div>
+                        <div>
+                            <span class="beneficiaries-detail-badge beneficiaries-detail-badge-{% if category.is_active %}success{% else %}secondary{% endif %}">
+                                {% if category.is_active %}
+                                    <i class="fas fa-check-circle me-1"></i>Aktif
+                                {% else %}
+                                    <i class="fas fa-times-circle me-1"></i>Non-Aktif
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card mb-4">
+                    <div class="beneficiaries-detail-card-header">
+                        <div class="beneficiaries-detail-stat-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <h1>{{ category.name }}</h1>
+                        <p>Kategori Penerima Bantuan</p>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-info-circle me-2"></i>Informasi Kategori
+                    </h5>
+                    <div class="beneficiaries-detail-section">
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Nama Kategori</div>
+                            <div class="beneficiaries-detail-info-value">{{ category.name }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Status</div>
+                            <div class="beneficiaries-detail-info-value">
+                                <span class="beneficiaries-detail-badge beneficiaries-detail-badge-{% if category.is_active %}success{% else %}secondary{% endif %}">
+                                    {% if category.is_active %}Aktif{% else %}Non-Aktif{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Jumlah Penerima</div>
+                            <div class="beneficiaries-detail-info-value">
+                                <span class="beneficiaries-detail-badge beneficiaries-detail-badge-info">{{ category.beneficiary_count }} orang</span>
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Tanggal Dibuat</div>
+                            <div class="beneficiaries-detail-info-value">{{ category.created_at|date:"d F Y" }}</div>
+                        </div>
+                        {% if category.description %}
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Deskripsi</div>
+                            <div class="beneficiaries-detail-info-value">{{ category.description }}</div>
+                        </div>
+                        {% endif %}
+                        {% if category.criteria %}
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Kriteria Penerima</div>
+                            <div class="beneficiaries-detail-info-value">{{ category.criteria }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if beneficiaries %}
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-users me-2"></i>Daftar Penerima ({{ beneficiaries|length }} orang)
+                    </h5>
+                    <div class="beneficiaries-detail-section">
+                        {% for beneficiary in beneficiaries %}
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="flex-shrink-0">
+                                    {% if beneficiary.person.photo %}
+                                        <img src="{{ beneficiary.person.photo.url }}" alt="{{ beneficiary.person.name }}"
+                                             class="beneficiaries-detail-avatar-small">
+                                    {% else %}
+                                        <div class="beneficiaries-detail-avatar-placeholder-small">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">{{ beneficiary.person.name }}</h6>
+                                    <small class="text-muted">NIK: {{ beneficiary.person.nik }}</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <span class="beneficiaries-detail-badge beneficiaries-detail-badge-{% if beneficiary.status == 'aktif' %}success{% elif beneficiary.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                        {{ beneficiary.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <div class="col-lg-4">
+
+                <div class="beneficiaries-detail-card mb-4">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-cogs me-2"></i>Aksi
+                    </h5>
+                    <div class="beneficiaries-detail-actions">
+                        <a href="{% url 'admin_panel:category_update' category.pk %}" class="btn btn-warning">
+                            <i class="fas fa-edit me-2"></i>Edit Kategori
+                        </a>
+                        <a href="{% url 'admin_panel:beneficiaries_list' %}?category={{ category.id }}" class="btn btn-info">
+                            <i class="fas fa-users me-2"></i>Lihat Penerima
+                        </a>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-info me-2"></i>Informasi Sistem
+                    </h5>
+                    <div class="beneficiaries-detail-stats beneficiaries-detail-stats-single">
+                        <div class="beneficiaries-detail-stat-card">
+                            <div class="beneficiaries-detail-stat-label">ID Kategori</div>
+                            <div class="beneficiaries-detail-stat-value">#{{ category.id }}</div>
+                        </div>
+                    </div>
+                    <div class="beneficiaries-detail-section">
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Dibuat</div>
+                            <div class="beneficiaries-detail-info-value">
+                                {% if category.created_at %}
+                                    {{ category.created_at|date:"d F Y, H:i" }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Diperbarui</div>
+                            <div class="beneficiaries-detail-info-value">
+                                {% if category.updated_at %}
+                                    {{ category.updated_at|date:"d F Y, H:i" }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

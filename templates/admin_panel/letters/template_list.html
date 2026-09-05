@@ -1,0 +1,973 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %}Template Surat{% endblock %}
+{% block page_description %}Kelola template surat untuk mempercepat pembuatan dokumen{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Template List Page Styles */
+.template-list-page {
+    padding: 2rem 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+.template-list-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.template-list-header h1 {
+    color: #495057;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.template-list-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.template-list-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Stats Grid */
+.template-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.template-stat-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.template-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Filters */
+.template-filters {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.template-filters-header h5 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.template-filters-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.template-filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.template-filter-label {
+    color: #495057;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.template-filter-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Table */
+.template-table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    margin-bottom: 2rem;
+}
+
+.template-table-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.template-table-header h5 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+.template-table-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.template-table-responsive {
+    overflow-x: auto;
+}
+
+.template-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+}
+
+.template-table-head th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    padding: 1rem;
+    border-bottom: 2px solid #e9ecef;
+    text-align: left;
+}
+
+.template-table-body td {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.template-table-row:hover {
+    background: #f8f9fa;
+}
+
+.template-table-cell-primary {
+    font-weight: 600;
+    color: #495057;
+}
+
+.template-table-cell-description {
+    color: #6c757d;
+    max-width: 200px;
+}
+
+.template-usage-count {
+    font-weight: 600;
+    color: #495057;
+}
+
+.template-table-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* Empty State */
+.template-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+}
+
+/* Bulk Actions */
+.template-bulk-actions {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.template-bulk-actions.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.template-bulk-actions-content {
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem 2rem;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid #e9ecef;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.template-bulk-actions-info {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.template-bulk-actions-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Pagination */
+.template-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .template-list-page {
+        padding: 1rem 0;
+    }
+    
+    .template-list-header {
+        margin-bottom: 2rem;
+        padding: 1.5rem 1rem;
+    }
+    
+    .template-list-content {
+        padding: 0 0.5rem;
+    }
+    
+    .template-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .template-stat-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .template-filters {
+        padding: 1.5rem;
+    }
+    
+    .template-filters-body {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .template-filter-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .template-table-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .template-table-actions {
+        justify-content: center;
+    }
+    
+    .template-table-head th,
+    .template-table-body td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .template-table-cell-description {
+        max-width: 150px;
+    }
+    
+    .template-bulk-actions-content {
+        flex-direction: column;
+        padding: 1rem;
+        gap: 0.5rem;
+    }
+    
+    .template-bulk-actions-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .template-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .template-table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .template-table-head th,
+    .template-table-body td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .template-table-actions {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Template List Page Container -->
+<div class="template-list-page">
+    <!-- Template List Header -->
+    <div class="template-list-header">
+        <h1>Template Surat</h1>
+        <p>Kelola template surat untuk mempercepat pembuatan dokumen</p>
+    </div>
+    
+    <!-- Template List Content -->
+    <div class="template-list-content">
+        <!-- Statistics Cards -->
+        <div class="template-stats-grid">
+            <div class="template-stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-number">{{ templates.paginator.count|default:0|intcomma }}</div>
+                <div class="stat-label">Total Template</div>
+            </div>
+
+            <div class="template-stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ active_templates|intcomma }}</div>
+                <div class="stat-label">Aktif</div>
+            </div>
+
+            <div class="template-stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-pause-circle"></i>
+                </div>
+                <div class="stat-number">{{ inactive_templates|intcomma }}</div>
+                <div class="stat-label">Tidak Aktif</div>
+            </div>
+
+            <div class="template-stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="stat-number">+</div>
+                <div class="stat-label">
+                    <a href="#" class="btn btn-primary" onclick="showCreateModal()">
+                        <i class="fas fa-plus me-1"></i>Buat Template
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="template-filters">
+            <div class="template-filters-header">
+                <h5>
+                    <i class="fas fa-filter me-2"></i>
+                    Filter & Pencarian
+                </h5>
+            </div>
+            <div class="template-filters-body">
+                <div class="template-filter-group">
+                    <label for="searchInput" class="template-filter-label">Pencarian</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cari template...">
+                </div>
+                <div class="template-filter-group">
+                    <label for="typeFilter" class="template-filter-label">Jenis Template</label>
+                    <select class="form-control" id="typeFilter">
+                        <option value="">Semua Tipe</option>
+                        <option value="official">Surat Resmi</option>
+                        <option value="certificate">Surat Keterangan</option>
+                        <option value="recommendation">Surat Rekomendasi</option>
+                        <option value="invitation">Surat Undangan</option>
+                        <option value="notification">Surat Pemberitahuan</option>
+                        <option value="custom">Template Kustom</option>
+                    </select>
+                </div>
+                <div class="template-filter-group">
+                    <label for="statusFilter" class="template-filter-label">Status</label>
+                    <select class="form-control" id="statusFilter">
+                        <option value="">Semua Status</option>
+                        <option value="active">Aktif</option>
+                        <option value="inactive">Tidak Aktif</option>
+                    </select>
+                </div>
+                <div class="template-filter-actions">
+                    <button class="btn btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showInactive">
+                        <label class="form-check-label" for="showInactive">
+                            Tampilkan Non-Aktif
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates Table -->
+        <div class="template-table-container">
+            <div class="template-table-header">
+                <h5>
+                    <i class="fas fa-list me-2"></i>
+                    Daftar Template Surat
+                </h5>
+                <div class="template-table-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="exportTemplates()">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="importTemplates()">
+                        <i class="fas fa-upload me-1"></i>Import
+                    </button>
+                </div>
+            </div>
+            <div class="template-table-body">
+                <div class="template-table-responsive">
+                    <table class="template-table" id="templatesTable">
+                        <thead class="template-table-head">
+                            <tr>
+                                <th>
+                                    <input type="checkbox" class="form-check-input" id="selectAllTemplates">
+                                </th>
+                                <th>Nama Template</th>
+                                <th>Tipe</th>
+                                <th>Deskripsi</th>
+                                <th class="text-center">Penggunaan</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Default</th>
+                                <th class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="template-table-body">
+                            {% for template in templates %}
+                            <tr class="template-table-row" data-type="{{ template.template_type }}" data-status="{{ template.is_active|yesno:'active,inactive' }}">
+                                <td>
+                                    <input type="checkbox" class="form-check-input template-checkbox"
+                                           value="{{ template.id }}" name="selected_templates[]">
+                                </td>
+                                <td>
+                                    <div class="template-table-cell-primary">{{ template.name }}</div>
+                                    <small class="text-muted">Dibuat {{ template.created_at|date:"d M Y" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ template.get_template_type_display }}</span>
+                                </td>
+                                <td>
+                                    <div class="template-table-cell-description">{{ template.description|truncatechars:100|default:"-" }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="template-usage-count">{{ template.usage_count|intcomma }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if template.is_active %}
+                                    <span class="badge bg-success me-1">Aktif</span>
+                                    <button class="btn btn-warning btn-sm"
+                                            onclick="toggleTemplateStatus('{{ template.id }}', false)"
+                                            title="Nonaktifkan">
+                                        <i class="fas fa-pause"></i>
+                                    </button>
+                                    {% else %}
+                                    <span class="badge bg-secondary me-1">Tidak Aktif</span>
+                                    <button class="btn btn-success btn-sm"
+                                            onclick="toggleTemplateStatus('{{ template.id }}', true)"
+                                            title="Aktifkan">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if template.is_default %}
+                                    <i class="fas fa-star text-warning" title="Template Default"></i>
+                                    {% else %}
+                                    <button class="btn btn-warning btn-sm"
+                                            onclick="setAsDefault('{{ template.id }}')"
+                                            title="Jadikan Default">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="template-table-actions">
+                                        <button class="btn btn-primary btn-sm"
+                                                onclick="editTemplate('{{ template.id }}')"
+                                                title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-info btn-sm"
+                                                onclick="previewTemplate('{{ template.id }}')"
+                                                title="Preview">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-warning btn-sm"
+                                                onclick="duplicateTemplate('{{ template.id }}')"
+                                                title="Duplikat">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm"
+                                                onclick="deleteTemplate('{{ template.id }}', '{{ template.name }}')"
+                                                title="Hapus">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if not templates %}
+                <div class="template-empty-state">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Tidak ada template ditemukan</h5>
+                    <p class="text-muted">Buat template surat pertama untuk mempercepat pembuatan dokumen</p>
+                    <button class="btn btn-primary" onclick="showCreateModal()">
+                        <i class="fas fa-plus me-1"></i>Buat Template Pertama
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="template-bulk-actions">
+            <div id="bulkActions" class="template-bulk-actions-content">
+                <div class="template-bulk-actions-info">
+                    <span class="text-muted">Dipilih: <span id="selectedCount">0</span></span>
+                </div>
+                <div class="template-bulk-actions-buttons">
+                    <button class="btn btn-danger btn-sm" onclick="bulkDelete()">
+                        <i class="fas fa-trash me-1"></i>Hapus Terpilih
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="bulkToggleStatus(false)">
+                        <i class="fas fa-pause me-1"></i>Nonaktifkan Terpilih
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="bulkToggleStatus(true)">
+                        <i class="fas fa-play me-1"></i>Aktifkan Terpilih
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="bulkExport()">
+                        <i class="fas fa-download me-1"></i>Export Terpilih
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if templates.has_other_pages %}
+        <div class="template-pagination">
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm">
+                    {% if templates.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">‹‹</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ templates.previous_page_number }}">‹</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in templates.paginator.page_range %}
+                    {% if num == templates.number %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > templates.number|add:'-3' and num < templates.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if templates.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ templates.next_page_number }}">›</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ templates.paginator.num_pages }}">››</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin/letters-admin.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $('#searchInput').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        filterTable(searchTerm);
+    });
+
+    // Type filter functionality
+    $('#typeFilter').change(function() {
+        const type = $(this).val();
+        filterTable(null, type);
+    });
+
+    // Status filter functionality
+    $('#statusFilter').change(function() {
+        const status = $(this).val();
+        filterTable(null, null, status);
+    });
+
+    // Show inactive checkbox functionality
+    $('#showInactive').change(function() {
+        filterTable(); // Re-filter based on current filters and new checkbox state
+    });
+
+    function filterTable(searchTerm = null, typeFilter = null, statusFilter = null) {
+        if (searchTerm === null) {
+            searchTerm = $('#searchInput').val().toLowerCase();
+        }
+        if (typeFilter === null) {
+            typeFilter = $('#typeFilter').val();
+        }
+        if (statusFilter === null) {
+            statusFilter = $('#statusFilter').val();
+        }
+        const showInactive = $('#showInactive').is(':checked');
+
+        $('#templatesTable tbody tr').each(function() {
+            const row = $(this);
+            const name = row.find('td:nth-child(2)').text().toLowerCase();
+            const rowType = row.data('type');
+            const rowStatus = row.data('status');
+
+            const matchesSearch = (searchTerm === '' || name.includes(searchTerm));
+            const matchesType = (typeFilter === '' || rowType === typeFilter);
+            const matchesStatus = (statusFilter === '' || rowStatus === statusFilter);
+            const isInactive = (rowStatus === 'inactive');
+
+            if (matchesSearch && matchesType && matchesStatus && (showInactive || !isInactive)) {
+                row.show();
+            } else {
+                row.hide();
+            }
+        });
+    }
+
+    // Initial filter on page load
+    filterTable();
+
+    // Select all checkbox
+    $('#selectAllTemplates').change(function() {
+        $('.template-checkbox').prop('checked', $(this).prop('checked'));
+        updateBulkActions();
+    });
+
+    // Individual checkbox change
+    $('.template-checkbox').change(function() {
+        updateBulkActions();
+    });
+
+    function updateBulkActions() {
+        const selectedCount = $('.template-checkbox:checked').length;
+        $('#selectedCount').text(selectedCount);
+        if (selectedCount > 0) {
+            $('#bulkActions').addClass('active');
+        } else {
+            $('#bulkActions').removeClass('active');
+        }
+    }
+
+    // Template management functions
+    window.showCreateModal = function() {
+        // Redirect to template editor for creating new template
+        window.location.href = "{% url 'admin_panel:letters:template_editor' %}";
+    };
+
+    window.editTemplate = function(templateId) {
+        // Redirect to template editor for editing existing template
+        window.location.href = "{% url 'admin_panel:letters:template_editor_edit' 0 %}".replace('0', templateId);
+    };
+
+    window.previewTemplate = function(templateId) {
+        // Open template preview in new window
+        const previewUrl = "{% url 'admin_panel:letters:template_editor_edit' 0 %}?preview=true".replace('0', templateId);
+        window.open(previewUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+    };
+
+    window.duplicateTemplate = function(templateId) {
+        if (confirm('Apakah Anda yakin ingin menduplikasi template ini?')) {
+            // Send AJAX request to duplicate template
+            $.ajax({
+                url: "{% url 'admin_panel:letters:api_bulk_action' %}",
+                method: 'POST',
+                data: {
+                    'action': 'duplicate',
+                    'template_ids': [templateId],
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Template berhasil diduplikasi');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat menduplikasi template');
+                }
+            });
+        }
+    };
+
+    window.deleteTemplate = function(templateId, templateName) {
+        if (confirm('Apakah Anda yakin ingin menghapus template: ' + templateName + '?')) {
+            // Send AJAX request to delete template
+            $.ajax({
+                url: "{% url 'admin_panel:letters:api_bulk_action' %}",
+                method: 'POST',
+                data: {
+                    'action': 'delete',
+                    'template_ids': [templateId],
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Template berhasil dihapus');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat menghapus template');
+                }
+            });
+        }
+    };
+
+    window.setAsDefault = function(templateId) {
+        if (confirm('Apakah Anda yakin ingin menjadikan template ini sebagai default?')) {
+            // Send AJAX request to set as default
+            $.ajax({
+                url: "{% url 'admin_panel:letters:api_bulk_action' %}",
+                method: 'POST',
+                data: {
+                    'action': 'set_default',
+                    'template_ids': [templateId],
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Template berhasil dijadikan default');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat mengatur template default');
+                }
+            });
+        }
+    };
+
+    window.toggleTemplateStatus = function(templateId, newStatus) {
+        const action = newStatus ? 'aktifkan' : 'nonaktifkan';
+        if (confirm(`Apakah Anda yakin ingin ${action} template ini?`)) {
+            // Send AJAX request to toggle status
+            $.ajax({
+                url: "{% url 'admin_panel:letters:api_bulk_action' %}",
+                method: 'POST',
+                data: {
+                    'action': 'toggle_status',
+                    'template_ids': [templateId],
+                    'new_status': newStatus,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(`Template berhasil ${action}`);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert(`Terjadi kesalahan saat ${action} template`);
+                }
+            });
+        }
+    };
+
+    window.exportTemplates = function() {
+        // Redirect to export page or download
+        window.location.href = "{% url 'admin_panel:letters:api_bulk_action' %}?action=export";
+    };
+
+    window.importTemplates = function() {
+        // Show import modal or redirect to import page
+        const importUrl = "{% url 'admin_panel:letters:api_bulk_action' %}?action=import";
+        window.open(importUrl, '_blank', 'width=600,height=400,scrollbars=yes,resizable=yes');
+    };
+
+    // Bulk actions
+    window.bulkDelete = function() {
+        const selectedTemplates = $('.template-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (selectedTemplates.length === 0) {
+            alert('Pilih setidaknya satu template untuk dihapus.');
+            return;
+        }
+
+        if (confirm('Apakah Anda yakin ingin menghapus ' + selectedTemplates.length + ' template terpilih?')) {
+            // Send AJAX request for bulk delete
+            $.ajax({
+                url: "{% url 'admin_panel:letters:api_bulk_action' %}",
+                method: 'POST',
+                data: {
+                    'action': 'delete',
+                    'template_ids': selectedTemplates,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Template terpilih berhasil dihapus');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat menghapus template terpilih');
+                }
+            });
+        }
+    };
+
+    window.bulkToggleStatus = function(newStatus) {
+        const selectedTemplates = $('.template-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (selectedTemplates.length === 0) {
+            alert('Pilih setidaknya satu template untuk mengubah status.');
+            return;
+        }
+
+        const action = newStatus ? 'aktifkan' : 'nonaktifkan';
+        if (confirm(`Apakah Anda yakin ingin ${action} ${selectedTemplates.length} template terpilih?`)) {
+            // Send AJAX request for bulk toggle status
+            $.ajax({
+                url: "{% url 'admin_panel:letters:api_bulk_action' %}",
+                method: 'POST',
+                data: {
+                    'action': 'toggle_status',
+                    'template_ids': selectedTemplates,
+                    'new_status': newStatus,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(`Template terpilih berhasil ${action}`);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert(`Terjadi kesalahan saat ${action} template terpilih`);
+                }
+            });
+        }
+    };
+
+    window.bulkExport = function() {
+        const selectedTemplates = $('.template-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (selectedTemplates.length === 0) {
+            alert('Pilih setidaknya satu template untuk diexport.');
+            return;
+        }
+
+        // Create form and submit for bulk export
+        const form = $('<form method="post" action="{% url "admin_panel:letters:api_bulk_action" %}"></form>');
+        form.append('<input type="hidden" name="action" value="export">');
+        form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+        selectedTemplates.forEach(function(templateId) {
+            form.append('<input type="hidden" name="template_ids" value="' + templateId + '">');
+        });
+        $('body').append(form);
+        form.submit();
+        form.remove();
+    };
+
+    window.refreshData = function() {
+        // Implementation for refreshing data
+        location.reload();
+    };
+});
+</script>
+{% endblock %}

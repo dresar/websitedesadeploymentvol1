@@ -1,0 +1,645 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load business_filters %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/business/business-detail.css' %}">
+<style>
+/* Registration Detail Specific Styles */
+.registration-detail-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.registration-status-badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.registration-status-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.registration-status-approved {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.registration-status-rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.registration-status-under-review {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.registration-type-badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.registration-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.registration-image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.registration-image-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.registration-image-item img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.registration-image-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    color: white;
+    padding: 1rem 0.5rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.registration-approval-form {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.registration-approval-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .registration-detail-header {
+        padding: 1.5rem;
+    }
+    
+    .registration-actions {
+        flex-direction: column;
+    }
+    
+    .registration-approval-actions {
+        flex-direction: column;
+    }
+    
+    .registration-image-gallery {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="business-detail-container">
+
+    <div class="registration-detail-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+                <h1 class="business-detail-page-title mb-2">
+                    <i class="fas fa-building"></i>
+                    {{ registration.business_name }}
+                </h1>
+                <p class="business-detail-page-subtitle mb-3">
+                    Pendaftaran {{ registration.get_registration_type_display }} - {{ registration.owner_name }}
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="registration-type-badge">
+                        <i class="fas fa-tag"></i>
+                        {{ registration.get_registration_type_display }}
+                    </span>
+                    <span class="registration-status-badge registration-status-{{ registration.status }}">
+                        {% if registration.status == 'pending' %}
+                            <i class="fas fa-clock"></i> Menunggu Persetujuan
+                        {% elif registration.status == 'approved' %}
+                            <i class="fas fa-check"></i> Disetujui
+                        {% elif registration.status == 'rejected' %}
+                            <i class="fas fa-times"></i> Ditolak
+                        {% elif registration.status == 'under_review' %}
+                            <i class="fas fa-eye"></i> Sedang Ditinjau
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="text-white-50 mb-1">Tanggal Daftar</div>
+                <div class="h5 mb-0">{{ registration.created_at|date:"d M Y" }}</div>
+                <div class="small">{{ registration.created_at|date:"H:i" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="business-detail-grid">
+        <div>
+            <!-- Informasi Dasar -->
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-info-circle"></i>Informasi Dasar
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Nama Bisnis:</div>
+                        <div class="business-detail-value">{{ registration.business_name }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Jenis Bisnis:</div>
+                        <div class="business-detail-value">{{ registration.get_registration_type_display }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Alamat Bisnis:</div>
+                        <div class="business-detail-value">{{ registration.business_address }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Deskripsi Bisnis:</div>
+                        <div class="business-detail-value">{{ registration.business_description }}</div>
+                    </div>
+                    {% if registration.business_phone %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Telepon Bisnis:</div>
+                        <div class="business-detail-value">{{ registration.business_phone }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.business_email %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Email Bisnis:</div>
+                        <div class="business-detail-value">{{ registration.business_email }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.business_video %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Video Bisnis:</div>
+                        <div class="business-detail-value">
+                            <video controls style="max-width: 300px; max-height: 200px;">
+                                <source src="{{ registration.business_video.url }}" type="video/mp4">
+                                Browser Anda tidak mendukung video.
+                            </video>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Media Sosial dan Website -->
+            {% if registration.facebook_url or registration.instagram_url or registration.twitter_url or registration.youtube_url or registration.tiktok_url or registration.website_url %}
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-share-alt"></i>Media Sosial & Website
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    {% if registration.facebook_url %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">
+                            <i class="fab fa-facebook text-blue-600"></i> Facebook:
+                        </div>
+                        <div class="business-detail-value">
+                            <a href="{{ registration.facebook_url }}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                {{ registration.facebook_url }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if registration.instagram_url %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">
+                            <i class="fab fa-instagram text-pink-600"></i> Instagram:
+                        </div>
+                        <div class="business-detail-value">
+                            <a href="{{ registration.instagram_url }}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                {{ registration.instagram_url }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if registration.twitter_url %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">
+                            <i class="fab fa-twitter text-blue-400"></i> Twitter:
+                        </div>
+                        <div class="business-detail-value">
+                            <a href="{{ registration.twitter_url }}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                {{ registration.twitter_url }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if registration.youtube_url %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">
+                            <i class="fab fa-youtube text-red-600"></i> YouTube:
+                        </div>
+                        <div class="business-detail-value">
+                            <a href="{{ registration.youtube_url }}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                {{ registration.youtube_url }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if registration.tiktok_url %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">
+                            <i class="fab fa-tiktok text-black"></i> TikTok:
+                        </div>
+                        <div class="business-detail-value">
+                            <a href="{{ registration.tiktok_url }}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                {{ registration.tiktok_url }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if registration.website_url %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">
+                            <i class="fas fa-globe text-green-600"></i> Website:
+                        </div>
+                        <div class="business-detail-value">
+                            <a href="{{ registration.website_url }}" target="_blank" class="text-primary-600 hover:text-primary-700">
+                                {{ registration.website_url }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Informasi Pemilik -->
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-user"></i>Informasi Pemilik
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Nama Pemilik:</div>
+                        <div class="business-detail-value">{{ registration.owner_name }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">NIK:</div>
+                        <div class="business-detail-value">{{ registration.owner_nik }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">No. Telepon:</div>
+                        <div class="business-detail-value">{{ registration.owner_phone }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Email:</div>
+                        <div class="business-detail-value">{{ registration.owner_email }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Alamat Pemilik:</div>
+                        <div class="business-detail-value">{{ registration.owner_address }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informasi Spesifik Jenis Bisnis -->
+            {% if registration.registration_type == 'umkm' %}
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-store"></i>Informasi UMKM
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    {% if registration.skala_usaha %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Skala Usaha:</div>
+                        <div class="business-detail-value">{{ registration.get_skala_usaha_display }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.jenis_usaha %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Jenis Usaha:</div>
+                        <div class="business-detail-value">{{ registration.jenis_usaha }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% elif registration.registration_type == 'koperasi' %}
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-handshake"></i>Informasi Koperasi
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    {% if registration.ketua %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Ketua:</div>
+                        <div class="business-detail-value">{{ registration.ketua }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.sekretaris %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Sekretaris:</div>
+                        <div class="business-detail-value">{{ registration.sekretaris }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.bendahara %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Bendahara:</div>
+                        <div class="business-detail-value">{{ registration.bendahara }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.jumlah_anggota %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Jumlah Anggota:</div>
+                        <div class="business-detail-value">{{ registration.jumlah_anggota }} orang</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.modal_dasar %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Modal Dasar:</div>
+                        <div class="business-detail-value">{{ registration.modal_dasar|rupiah }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% elif registration.registration_type == 'bumg' %}
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-building"></i>Informasi BUMG
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    {% if registration.direktur %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Direktur:</div>
+                        <div class="business-detail-value">{{ registration.direktur }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.komisaris %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Komisaris:</div>
+                        <div class="business-detail-value">{{ registration.komisaris }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.jumlah_karyawan %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Jumlah Karyawan:</div>
+                        <div class="business-detail-value">{{ registration.jumlah_karyawan }} orang</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.bidang_usaha %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Bidang Usaha:</div>
+                        <div class="business-detail-value">{{ registration.bidang_usaha }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% elif registration.registration_type == 'layanan_jasa' %}
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-tools"></i>Informasi Layanan Jasa
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    {% if registration.penyedia %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Penyedia:</div>
+                        <div class="business-detail-value">{{ registration.penyedia }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.kategori_layanan %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Kategori Layanan:</div>
+                        <div class="business-detail-value">{{ registration.kategori_layanan }}</div>
+                    </div>
+                    {% endif %}
+                    {% if registration.tarif_layanan %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Tarif Layanan:</div>
+                        <div class="business-detail-value">{{ registration.tarif_layanan|rupiah }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Gambar, Video dan Dokumen -->
+            {% if registration.business_photo or registration.business_logo or registration.business_video or registration.additional_documents or images %}
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-images"></i>Gambar, Video dan Dokumen
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    {% if registration.business_photo %}
+                    <div class="mb-3">
+                        <h6><i class="fas fa-camera"></i> Foto Bisnis</h6>
+                        <img src="{{ registration.business_photo.url }}" alt="Foto Bisnis" class="img-fluid rounded" style="max-height: 300px;">
+                    </div>
+                    {% endif %}
+                    
+                    {% if registration.business_logo %}
+                    <div class="mb-3">
+                        <h6><i class="fas fa-image"></i> Logo Bisnis</h6>
+                        <img src="{{ registration.business_logo.url }}" alt="Logo Bisnis" class="img-fluid rounded" style="max-height: 200px;">
+                    </div>
+                    {% endif %}
+                    
+                    {% if registration.business_video %}
+                    <div class="mb-3">
+                        <h6><i class="fas fa-video"></i> Video Bisnis</h6>
+                        <video controls class="img-fluid rounded" style="max-height: 300px;">
+                            <source src="{{ registration.business_video.url }}" type="video/mp4">
+                            <source src="{{ registration.business_video.url }}" type="video/avi">
+                            <source src="{{ registration.business_video.url }}" type="video/mov">
+                            Browser Anda tidak mendukung video.
+                        </video>
+                        <div class="mt-2">
+                            <a href="{{ registration.business_video.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download"></i> Download Video
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if images %}
+                    <div class="mb-3">
+                        <h6><i class="fas fa-images"></i> Gambar Tambahan</h6>
+                        <div class="registration-image-gallery">
+                            {% for image in images %}
+                            <div class="registration-image-item">
+                                <img src="{{ image.image.url }}" alt="{{ image.caption }}">
+                                {% if image.caption %}
+                                <div class="registration-image-caption">{{ image.caption }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if registration.additional_documents %}
+                    <div class="mb-3">
+                        <h6><i class="fas fa-file"></i> Dokumen Tambahan</h6>
+                        <a href="{{ registration.additional_documents.url }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="fas fa-download"></i> Download Dokumen
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <!-- Aksi Admin -->
+            <div class="business-detail-sidebar-sticky">
+                <div class="business-detail-card">
+                    <div class="business-detail-card-header">
+                        <h5 class="business-detail-card-title">
+                            <i class="fas fa-cogs"></i>Aksi Admin
+                        </h5>
+                    </div>
+                    <div class="business-detail-card-body">
+                        <div class="registration-actions">
+                            <a href="{% url 'admin_panel:business_registration_list' %}" class="business-detail-btn business-detail-btn-secondary">
+                                <i class="fas fa-arrow-left"></i>Kembali ke Daftar
+                            </a>
+                            
+                            {% if registration.status == 'pending' %}
+                            <a href="{% url 'admin_panel:business_registration_approve' registration.id %}" class="business-detail-btn business-detail-btn-success">
+                                <i class="fas fa-check"></i>Setujui
+                            </a>
+                            <a href="{% url 'admin_panel:business_registration_reject' registration.id %}" class="business-detail-btn business-detail-btn-danger">
+                                <i class="fas fa-times"></i>Tolak
+                            </a>
+                            <a href="{% url 'admin_panel:business_registration_under_review' registration.id %}" class="business-detail-btn business-detail-btn-warning">
+                                <i class="fas fa-eye"></i>Tinjau
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Persetujuan/Tolak -->
+                {% if registration.status == 'pending' %}
+                <div class="business-detail-card">
+                    <div class="business-detail-card-header">
+                        <h5 class="business-detail-card-title">
+                            <i class="fas fa-edit"></i>Catatan Admin
+                        </h5>
+                    </div>
+                    <div class="business-detail-card-body">
+                        <div class="registration-approval-form">
+                            <form method="post" action="{% url 'admin_panel:business_registration_approve' registration.id %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="admin_notes" class="form-label">Catatan (Opsional)</label>
+                                    <textarea class="form-control" id="admin_notes" name="admin_notes" rows="3" placeholder="Tambahkan catatan untuk pendaftar..."></textarea>
+                                </div>
+                                <div class="registration-approval-actions">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-check"></i> Setujui
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Informasi Status -->
+                <div class="business-detail-card">
+                    <div class="business-detail-card-header">
+                        <h5 class="business-detail-card-title">
+                            <i class="fas fa-info"></i>Informasi Status
+                        </h5>
+                    </div>
+                    <div class="business-detail-card-body">
+                        <div class="business-detail-info-row">
+                            <div class="business-detail-label">Status:</div>
+                            <div class="business-detail-value">
+                                <span class="registration-status-badge registration-status-{{ registration.status }}">
+                                    {% if registration.status == 'pending' %}
+                                        <i class="fas fa-clock"></i> Menunggu Persetujuan
+                                    {% elif registration.status == 'approved' %}
+                                        <i class="fas fa-check"></i> Disetujui
+                                    {% elif registration.status == 'rejected' %}
+                                        <i class="fas fa-times"></i> Ditolak
+                                    {% elif registration.status == 'under_review' %}
+                                        <i class="fas fa-eye"></i> Sedang Ditinjau
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% if registration.approved_by %}
+                        <div class="business-detail-info-row">
+                            <div class="business-detail-label">Disetujui Oleh:</div>
+                            <div class="business-detail-value">{{ registration.approved_by.get_full_name|default:registration.approved_by.username }}</div>
+                        </div>
+                        {% endif %}
+                        {% if registration.approved_at %}
+                        <div class="business-detail-info-row">
+                            <div class="business-detail-label">Tanggal Disetujui:</div>
+                            <div class="business-detail-value">{{ registration.approved_at|date:"d M Y, H:i" }}</div>
+                        </div>
+                        {% endif %}
+                        {% if registration.admin_notes %}
+                        <div class="business-detail-info-row">
+                            <div class="business-detail-label">Catatan Admin:</div>
+                            <div class="business-detail-value">{{ registration.admin_notes }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+console.log('Business registration detail page initialized');
+</script>
+{% endblock extra_js %}

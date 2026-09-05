@@ -1,0 +1,318 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load beneficiary_filters %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/beneficiaries/beneficiaries.css' %}">
+<style>
+/* Make action buttons clickable */
+.btn-group .btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 10 !important;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.btn-group .btn:hover {
+    transform: scale(1.05);
+    z-index: 11 !important;
+}
+
+.beneficiaries-table {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.beneficiaries-table .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+}
+
+.beneficiaries-table .card-title {
+    color: white;
+    margin: 0;
+    font-weight: 600;
+}
+
+.table {
+    margin: 0;
+}
+
+.table thead th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+</style>
+{% endblock extra_css %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="beneficiaries-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-1">{{ title }}</h4>
+                            <p class="text-muted mb-0">Kelola program bantuan di Desa Pulosarok</p>
+                        </div>
+                        <div class="w-100 w-md-auto">
+                            <a href="{% url 'admin_panel:beneficiaries_aid_program_create' %}" class="btn btn-primary w-100 w-md-auto">
+                                <i class="fas fa-plus me-1"></i>Tambah Program
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-table">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-gift me-2"></i>Daftar Program Bantuan
+                        </h6>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama Program</th>
+                                    <th>Jenis</th>
+                                    <th>Sumber</th>
+                                    <th>Target Penerima</th>
+                                    <th>Budget</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for program in aid_programs %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ program.name }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-info text-white">
+                                            {{ program.get_aid_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ program.get_source_display }}</td>
+                                    <td class="text-center">{{ program.target_beneficiaries }} orang</td>
+                                    <td>{{ program.total_budget|rupiah }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if program.is_active %}success{% else %}secondary{% endif %}">
+                                            {% if program.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'admin_panel:beneficiaries_aid_program_edit' program.pk %}" 
+                                               class="btn btn-outline-warning btn-sm action-btn" 
+                                               title="Edit Program"
+                                               data-bs-toggle="tooltip"
+                                               onclick="console.log('Edit program clicked');">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-outline-danger btn-sm delete-program-btn action-btn" 
+                                                    title="Hapus Program"
+                                                    data-bs-toggle="tooltip"
+                                                    data-program-id="{{ program.id }}"
+                                                    data-program-name="{{ program.name }}"
+                                                    onclick="console.log('Delete program clicked');">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-5">
+                                        <i class="fas fa-gift fa-3x text-muted mb-3 d-block"></i>
+                                        <p class="text-muted mb-3">Belum ada program bantuan</p>
+                                        <a href="{% url 'admin_panel:beneficiaries_aid_program_create' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus me-1"></i>Tambah Program Bantuan
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>Konfirmasi Hapus
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus program bantuan:</p>
+                <div class="alert alert-warning">
+                    <strong id="programNameToDelete"></strong>
+                </div>
+                <p class="text-muted mb-0">Data yang sudah dihapus tidak dapat dikembalikan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>
+// Notification functions
+function showSuccess(message) {
+    showAlert(message, 'success');
+}
+
+function showError(message) {
+    showAlert(message, 'danger');
+}
+
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Aid programs page loaded - JavaScript initialized');
+    
+    let deleteProgramId = null;
+    let deleteProgramName = '';
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    console.log('Found tooltips:', tooltipTriggerList.length);
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Delete program button handler
+    const deleteButtons = document.querySelectorAll('.delete-program-btn');
+    console.log('Found delete buttons:', deleteButtons.length);
+    
+    deleteButtons.forEach(btn => {
+        console.log('Attaching delete listener to button:', btn);
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Delete button clicked!');
+            deleteProgramId = this.getAttribute('data-program-id');
+            deleteProgramName = this.getAttribute('data-program-name');
+            console.log('Delete program:', deleteProgramId, deleteProgramName);
+            document.getElementById('programNameToDelete').textContent = deleteProgramName;
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        });
+    });
+    
+    // Confirm delete button
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (!deleteProgramId) return;
+            
+            const submitBtn = this;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Menghapus...';
+            
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const deleteUrl = "{% url 'admin_panel:beneficiaries_aid_program_delete' 0 %}".replace('0', deleteProgramId);
+            
+            fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                if (deleteModal) deleteModal.hide();
+                
+                if (data.success) {
+                    showSuccess('Program bantuan berhasil dihapus');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showError(data.message || 'Gagal menghapus program bantuan');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Terjadi kesalahan saat menghapus program bantuan');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // Reset on modal close
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('hidden.bs.modal', function() {
+            deleteProgramId = null;
+            deleteProgramName = '';
+        });
+    }
+    
+    // Test all action buttons
+    const allActionButtons = document.querySelectorAll('.action-btn');
+    console.log('Total action buttons found:', allActionButtons.length);
+    allActionButtons.forEach((btn, index) => {
+        console.log(`Button ${index}:`, btn.className, btn.href || 'no href');
+        btn.addEventListener('click', function(e) {
+            console.log('Button clicked:', this.className);
+        });
+    });
+});
+</script>
+{% endblock extra_js %}

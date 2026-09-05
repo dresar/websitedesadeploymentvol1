@@ -1,0 +1,440 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Global Import Data{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'references:import_export_dashboard' %}">Import/Export</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Global Import</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .import-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .import-form {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .file-upload-area {
+        border: 2px dashed #cbd5e0;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        background: #f7fafc;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .file-upload-area:hover {
+        border-color: #667eea;
+        background: #edf2f7;
+    }
+    
+    .file-upload-area.dragover {
+        border-color: #667eea;
+        background: #e6fffa;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #a0aec0;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-text {
+        font-size: 1.1rem;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-hint {
+        color: #718096;
+        font-size: 0.875rem;
+    }
+    
+    .format-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .format-option {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .format-option:hover {
+        border-color: #667eea;
+        background: #f7fafc;
+    }
+    
+    .format-option.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+    
+    .format-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .format-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .format-desc {
+        font-size: 0.875rem;
+        opacity: 0.8;
+    }
+    
+    .supported-models {
+        background: #f7fafc;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .models-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1rem;
+    }
+    
+    .models-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .model-tag {
+        background: #667eea;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        text-align: center;
+        font-weight: 500;
+    }
+    
+    .btn-import {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-import:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .btn-import:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .instructions {
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .instructions-title {
+        color: #c53030;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .instructions-list {
+        color: #744210;
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .instructions-list li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .file-info {
+        background: #e6fffa;
+        border: 1px solid #81e6d9;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: none;
+    }
+    
+    .file-name {
+        font-weight: 600;
+        color: #234e52;
+        margin-bottom: 0.25rem;
+    }
+    
+    .file-size {
+        color: #2c7a7b;
+        font-size: 0.875rem;
+    }
+    
+    .preview-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: none;
+    }
+    
+    .preview-table {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    
+    .preview-table table {
+        margin: 0;
+        width: 100%;
+    }
+    
+    .preview-table th {
+        background: #f7fafc;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        font-weight: 600;
+        color: #2d3748;
+        padding: 0.75rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .preview-table td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.875rem;
+    }
+    
+    .preview-table tr:hover {
+        background: #f7fafc;
+    }
+    
+    .preview-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .preview-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    .preview-stats {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: #718096;
+    }
+    
+    .preview-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .preview-stat i {
+        font-size: 0.75rem;
+    }
+    
+    .progress-bar {
+        background: #e2e8f0;
+        border-radius: 10px;
+        height: 8px;
+        margin-top: 1rem;
+        overflow: hidden;
+        display: none;
+    }
+    
+    .progress-fill {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    
+    @media (max-width: 768px) {
+        .format-options {
+            grid-template-columns: 1fr;
+        }
+        
+        .models-grid {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="import-header">
+        <h1 class="mb-3">
+            <i class="fas fa-upload me-2"></i>
+            Import Data
+        </h1>
+    </div>
+
+    <!-- Import Form -->
+    <div class="import-form">
+        <form method="post" enctype="multipart/form-data" id="globalImportForm">
+            {% csrf_token %}
+            <input type="hidden" name="format" value="excel">
+            
+            <!-- File Upload -->
+            <div class="form-group">
+                <label class="form-label">Upload File Excel</label>
+                <input type="file" name="file" id="fileInput" accept=".xlsx,.xls" required style="width: 100%; padding: 10px; border: 2px dashed #ccc; border-radius: 5px;">
+                <div class="file-info" id="fileInfo" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 5px; display: none;">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-size" id="fileSize"></div>
+                </div>
+            </div>
+
+            <!-- Options -->
+            <div class="form-group">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="validate_only" id="validateOnly" checked>
+                    <label class="form-check-label" for="validateOnly">
+                        <strong>Validasi Saja</strong> - Hanya periksa data tanpa menyimpan ke database (Aktif untuk Debug)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-import" id="importBtn" disabled>
+                <i class="fas fa-upload me-2"></i>
+                Mulai Global Import
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const importBtn = document.getElementById('importBtn');
+    
+    // File input change
+    fileInput.addEventListener('change', function() {
+        console.log('File input changed');
+        console.log('Files:', this.files);
+        
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            console.log('File selected:', file.name, file.size);
+            
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+            
+            if (importBtn) importBtn.disabled = false;
+        } else {
+            console.log('No files selected');
+            fileInfo.style.display = 'none';
+            if (importBtn) importBtn.disabled = true;
+        }
+    });
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Form submission
+    document.getElementById('globalImportForm').addEventListener('submit', function(e) {
+        console.log('Form submitted');
+        console.log('File input files:', fileInput.files);
+        
+        const file = fileInput.files[0];
+        if (!file) {
+            e.preventDefault();
+            console.error('No file selected');
+            alert('Pilih file terlebih dahulu!');
+            return false;
+        }
+        
+        console.log('File validation passed:', file.name);
+        console.log('Proceeding with form submission...');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,913 @@
+{% extends 'public/base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block extra_css %}
+<style>
+    /* Category Detail Specific Styles */
+    .category-hero {
+        position: relative;
+        height: 50vh;
+        min-height: 300px;
+        overflow: hidden;
+    }
+
+    .category-hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .category-hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+    }
+
+    .category-hero-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 2rem;
+        color: white;
+    }
+
+    .category-icon {
+        width: 4rem;
+        height: 4rem;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .tourism-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #e5e7eb;
+    }
+
+    .tourism-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .featured-badge {
+        background: linear-gradient(135deg, #F59E0B, #D97706);
+        color: white;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .location-type-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+    }
+
+    .location-type-natural {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .location-type-cultural {
+        background-color: #fef3c7;
+        color: #d97706;
+    }
+
+    .location-type-historical {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    .location-type-religious {
+        background-color: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .location-type-culinary {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .location-type-adventure {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+
+    .location-type-education {
+        background-color: #f3e8ff;
+        color: #7c3aed;
+    }
+
+    .location-type-other {
+        background-color: #f1f5f9;
+        color: #475569;
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #3B82F6, #10B981);
+        color: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-label {
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+
+    .filter-chip {
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+    }
+
+    .filter-chip.active {
+        background-color: #3B82F6;
+        color: white;
+    }
+
+    .filter-chip:hover {
+        background-color: #f3f4f6;
+    }
+
+    .filter-chip.active {
+        background-color: #3B82F6;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .empty-state-icon {
+        width: 4rem;
+        height: 4rem;
+        margin: 0 auto 1rem;
+        opacity: 0.5;
+    }
+
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    /* Price Filter Styles */
+    .currency-btn.active {
+        background-color: #3B82F6;
+        color: white;
+    }
+
+    .price-filter-btn.active {
+        background-color: #3B82F6;
+        color: white;
+    }
+
+    .price-filter-btn.active:hover {
+        background-color: #2563EB;
+    }
+
+    #priceFilterDropdown {
+        animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Price display in cards */
+    .price-display {
+        font-weight: 600;
+    }
+
+    .price-idr {
+        color: #059669;
+    }
+
+    .price-usd {
+        color: #DC2626;
+    }
+</style>
+{% endblock %}
+
+{% block title %}{{ category.name }} - Wisata Desa Pulosarok{% endblock %}
+{% block meta_description %}{{ category.description|truncatewords:20 }}{% endblock %}
+
+{% block content %}
+<section class="category-hero">
+    {% if category.hero_image %}
+    <img src="{{ category.hero_image.url }}" alt="{{ category.name }}" class="category-hero-image">
+    {% elif category.image %}
+    <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-hero-image">
+    {% else %}
+    <div class="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+        <div class="text-center text-white">
+            <i class="{{ category.icon|default:"fas fa-mountain" }} text-6xl mb-4"></i>
+            <h1 class="text-4xl font-bold">{{ category.name }}</h1>
+        </div>
+    </div>
+    {% endif %}
+    <div class="category-hero-overlay"></div>
+    <div class="category-hero-content">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="category-icon" data-color="{{ category.color|default:'#3B82F6' }}">
+                    <i class="{{ category.icon|default:'fas fa-mountain' }} text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold mb-2">{{ category.name }}</h1>
+                    {% if category.is_featured %}
+                    <span class="featured-badge">Kategori Unggulan</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if category.description %}
+            <p class="text-lg md:text-xl opacity-90 max-w-3xl">{{ category.description|safe }}</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Statistics -->
+<section class="py-8 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="stats-card">
+                <div class="stats-number">{{ page_obj.paginator.count }}</div>
+                <div class="stats-label">Destinasi Wisata</div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-number">{{ page_obj.paginator.count }}</div>
+                <div class="stats-label">Total Destinasi</div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-number">{{ page_obj.paginator.count }}</div>
+                <div class="stats-label">Kategori {{ category.name }}</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filters and Search -->
+<section class="py-6 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div class="flex-1 max-w-md">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Cari destinasi wisata..."
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <span class="text-sm text-gray-600 self-center mr-2">Filter:</span>
+                <button class="filter-chip px-3 py-1 rounded-full text-sm border border-gray-300" data-filter="all">
+                    Semua
+                </button>
+                <button class="filter-chip px-3 py-1 rounded-full text-sm border border-gray-300" data-filter="featured">
+                    Unggulan
+                </button>
+                <button class="filter-chip px-3 py-1 rounded-full text-sm border border-gray-300" data-filter="natural">
+                    Wisata Alam
+                </button>
+                <button class="filter-chip px-3 py-1 rounded-full text-sm border border-gray-300" data-filter="cultural">
+                    Wisata Budaya
+                </button>
+                <button class="filter-chip px-3 py-1 rounded-full text-sm border border-gray-300" data-filter="adventure">
+                    Petualangan
+                </button>
+
+                <!-- Price Filters -->
+                <div class="relative">
+                    <button class="filter-chip px-3 py-1 rounded-full text-sm border border-gray-300" data-filter="price"
+                        id="priceFilterBtn">
+                        <i class="fas fa-dollar-sign mr-1"></i>Harga
+                        <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                    </button>
+                    <div class="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-10 hidden"
+                        id="priceFilterDropdown">
+                        <div class="p-4">
+                            <h4 class="text-sm font-semibold text-gray-900 mb-3">Filter Harga</h4>
+
+                            <!-- Currency Toggle -->
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-gray-600">Mata Uang:</span>
+                                <div class="flex bg-gray-100 rounded-lg p-1">
+                                    <button class="currency-btn px-3 py-1 text-xs rounded-md transition-colors"
+                                        data-currency="idr" id="idrBtn"> IDR </button>
+                                    <button class="currency-btn px-3 py-1 text-xs rounded-md transition-colors"
+                                        data-currency="usd" id="usdBtn"> USD </button>
+                                </div>
+                            </div>
+
+                            <!-- Price Range Filters -->
+                            <div class="space-y-2">
+                                <button
+                                    class="price-filter-btn w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                                    data-price-range="free">
+                                    <i class="fas fa-gift text-green-500 mr-2"></i>
+                                    <span class="price-text-idr">Gratis</span>
+                                    <span class="price-text-usd hidden">Free</span>
+                                </button>
+                                <button
+                                    class="price-filter-btn w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                                    data-price-range="0-50000">
+                                    <i class="fas fa-coins text-blue-500 mr-2"></i>
+                                    <span class="price-text-idr">Rp 0 - Rp 50.000</span>
+                                    <span class="price-text-usd hidden">$0 - $2.94</span>
+                                </button>
+                                <button
+                                    class="price-filter-btn w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                                    data-price-range="50000-100000">
+                                    <i class="fas fa-coins text-yellow-500 mr-2"></i>
+                                    <span class="price-text-idr">Rp 50.000 - Rp 100.000</span>
+                                    <span class="price-text-usd hidden">$2.94 - $5.88</span>
+                                </button>
+                                <button
+                                    class="price-filter-btn w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                                    data-price-range="100000-200000">
+                                    <i class="fas fa-coins text-orange-500 mr-2"></i>
+                                    <span class="price-text-idr">Rp 100.000 - Rp 200.000</span>
+                                    <span class="price-text-usd hidden">$5.88 - $11.76</span>
+                                </button>
+                                <button
+                                    class="price-filter-btn w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+                                    data-price-range="200000+">
+                                    <i class="fas fa-coins text-red-500 mr-2"></i>
+                                    <span class="price-text-idr">Rp 200.000+</span>
+                                    <span class="price-text-usd hidden">$11.76+</span>
+                                </button>
+                            </div>
+
+                            <!-- Custom Price Range -->
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <h5 class="text-xs font-semibold text-gray-600 mb-2">Range Kustom:</h5>
+                                <div class="flex space-x-2">
+                                    <input type="number" id="minPrice" placeholder="Min"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white text-gray-900">
+                                    <input type="number" id="maxPrice" placeholder="Max"
+                                        class="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white text-gray-900">
+                                </div>
+                                <button
+                                    class="w-full mt-2 px-3 py-1 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded transition-colors"
+                                    id="applyCustomPrice"> Terapkan </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-8 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Debug Information -->
+        <div class="mb-4 p-4 bg-blue-50 rounded-lg">
+            <h3 class="text-sm font-semibold text-blue-800 mb-2">Debug Information:</h3>
+            <p class="text-sm text-blue-700">
+                Category: {{ category.name }} (ID: {{ category.id }})<br>
+                Total Locations: {{ page_obj.paginator.count }}<br>
+                Items per Page: {{ page_obj.paginator.per_page }}<br>
+                Current Page: {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}<br>
+                Locations on this page: {{ page_obj|length }}<br>
+                Showing items: {{ page_obj.start_index|default:"N/A" }} - {{ page_obj.end_index|default:"N/A" }}
+            </p>
+        </div>
+
+        {% if page_obj %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="locationsGrid">
+            {% for location in page_obj %}
+            <div
+                class="tourism-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+                data-location-type="{{ location.location_type }}"
+                data-featured="{{ location.featured|yesno:'true,false' }}">
+                <div class="relative h-48 overflow-hidden">
+                    {% if location.get_featured_image %}
+                    <img src="{{ location.get_featured_image }}" alt="{{ location.title }}"
+                        class="w-full h-full object-cover transition-transform duration-300 hover:scale-105">
+                    {% else %}
+                    <div
+                        class="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+                        <i class="fas fa-mountain text-white text-4xl"></i>
+                    </div>
+                    {% endif %}
+
+                    {% if location.featured %}
+                    <div class="absolute top-3 left-3">
+                        <span class="featured-badge">Unggulan</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="absolute top-3 right-3">
+                        <span class="location-type-badge location-type-{{ location.location_type }}">
+                            {{ location.location_type_display }}
+                        </span>
+                    </div>
+
+                    {% if location.average_rating > 0 %}
+                    <div class="absolute bottom-3 right-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded-lg text-sm">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <span>{{ location.average_rating|floatformat:1 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
+                        {{ location.title }}
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                        {{ location.short_description|striptags|truncatewords:20 }}
+                    </p>
+
+                    <div class="space-y-2 mb-4">
+                        {% if location.address %}
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-map-marker-alt mr-2 text-primary-500"></i>
+                            <span class="truncate">{{ location.address }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if location.entry_fee %}
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-ticket-alt mr-2 text-primary-500"></i>
+                            <span class="price-display price-idr" data-price="{{ location.entry_fee }}">Rp <span
+                                    class="idr-amount"></span></span>
+                            <span class="price-display price-usd hidden" data-price="{{ location.entry_fee }}">$<span
+                                    class="usd-amount"></span></span>
+                        </div>
+                        {% else %}
+                        <div class="flex items-center text-sm text-green-600">
+                            <i class="fas fa-gift mr-2"></i>
+                            <span>Gratis</span>
+                        </div>
+                        {% endif %}
+
+                        {% if location.opening_hours %}
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-clock mr-2 text-primary-500"></i>
+                            <span>{{ location.opening_hours }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex space-x-2">
+                        <a href="{% url 'tourism:location_detail' location.slug %}"
+                            class="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors duration-200">
+                            Lihat Detail
+                        </a>
+                        {% if location.contact_phone %}
+                        <a href="https://wa.me/{{ location.contact_phone|slice:'1:' }}" target="_blank"
+                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8">
+            <!-- Pagination Info -->
+            <div class="text-center mb-4">
+                <p class="text-sm text-gray-600">
+                    Menampilkan <span class="font-semibold text-primary-600">{{ page_obj.start_index|default:"1" }}</span>
+                    sampai <span class="font-semibold text-primary-600">{{ page_obj.end_index|default:page_obj|length }}</span>
+                    dari <span class="font-semibold text-primary-600">{{ page_obj.paginator.count }}</span> destinasi wisata
+                </p>
+            </div>
+
+            <!-- Pagination Navigation -->
+            <div class="flex justify-center">
+                <nav class="flex items-center space-x-1" aria-label="Pagination">
+                    <!-- Previous Button -->
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}"
+                        class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                        title="Halaman Sebelumnya">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% else %}
+                    <span class="px-3 py-2 text-sm font-medium text-gray-300 rounded-lg cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                    {% endif %}
+
+                    <!-- First Page -->
+                    {% if page_obj.number > 4 %}
+                    <a href="?page=1"
+                        class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        1
+                    </a>
+                    {% if page_obj.number > 5 %}
+                    <span class="px-2 text-gray-400">...</span>
+                    {% endif %}
+                    {% endif %}
+
+                    <!-- Page Numbers -->
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <span class="px-3 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg">
+                        {{ num }}
+                    </span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}"
+                        class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        {{ num }}
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+
+                    <!-- Last Page -->
+                    {% if page_obj.number < page_obj.paginator.num_pages|add:'-3' %}
+                    {% if page_obj.number < page_obj.paginator.num_pages|add:'-4' %}
+                    <span class="px-2 text-gray-400">...</span>
+                    {% endif %}
+                    <a href="?page={{ page_obj.paginator.num_pages }}"
+                        class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        {{ page_obj.paginator.num_pages }}
+                    </a>
+                    {% endif %}
+
+                    <!-- Next Button -->
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}"
+                        class="px-3 py-2 text-sm font-medium text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                        title="Halaman Selanjutnya">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% else %}
+                    <span class="px-3 py-2 text-sm font-medium text-gray-300 rounded-lg cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                    {% endif %}
+                </nav>
+            </div>
+
+            <!-- Quick Jump -->
+            <div class="mt-4 text-center">
+                <div class="inline-flex items-center space-x-2">
+                    <span class="text-sm text-gray-600">Lompat ke halaman:</span>
+                    <select id="pageJump"
+                        class="px-2 py-1 text-sm border border-gray-300 rounded bg-white text-gray-900">
+                        {% for num in page_obj.paginator.page_range %}
+                        <option value="{{ num }}" {% if page_obj.number == num %}selected{% endif %}>
+                            Halaman {{ num }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-mountain text-6xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                Belum Ada Destinasi Wisata
+            </h3>
+            <p class="text-gray-600 mb-6">
+                Belum ada destinasi wisata dalam kategori {{ category.name }}.
+            </p>
+            <a href="{% url 'tourism:location_list' %}"
+                class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200">
+                <i class="fas fa-arrow-left mr-2"></i> Lihat Semua Destinasi
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% if related_categories %}
+<section class="py-8 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Kategori Lainnya</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for related_category in related_categories %}
+            <a href="{% url 'tourism:category_detail_by_slug' related_category.slug %}"
+                class="group bg-white rounded-lg p-4 hover:shadow-lg transition-all duration-300">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+                        data-color="{{ related_category.color|default:'#3B82F6' }}">
+                        <i class="{{ related_category.icon|default:'fas fa-mountain' }} text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 group-hover:text-primary-600">
+                            {{ related_category.name }}
+                        </h3>
+                        <p class="text-sm text-gray-600">
+                            {{ related_category.location_count }} destinasi
+                        </p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Exchange rate: 1 USD = 17,000 IDR
+        const EXCHANGE_RATE = 17000;
+        let currentCurrency = 'idr';
+        let currentPriceFilter = null;
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const locationsGrid = document.getElementById('locationsGrid');
+        const locationCards = document.querySelectorAll('[data-location-type]');
+
+        if (searchInput && locationCards.length > 0) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                locationCards.forEach(card => {
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    const description = card.querySelector('p').textContent.toLowerCase();
+                    if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Filter functionality
+        const filterChips = document.querySelectorAll('.filter-chip');
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                // Remove active class from all chips
+                filterChips.forEach(c => c.classList.remove('active'));
+                // Add active class to clicked chip
+                this.classList.add('active');
+
+                const filter = this.dataset.filter;
+
+                if (filter === 'price') {
+                    togglePriceDropdown();
+                    return;
+                }
+
+                locationCards.forEach(card => {
+                    if (filter === 'all') {
+                        card.style.display = 'block';
+                    } else if (filter === 'featured') {
+                        if (card.dataset.featured === 'true') {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    } else {
+                        if (card.dataset.locationType === filter) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+
+        // Price filter dropdown functionality
+        const priceFilterBtn = document.getElementById('priceFilterBtn');
+        const priceFilterDropdown = document.getElementById('priceFilterDropdown');
+
+        function togglePriceDropdown() {
+            priceFilterDropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!priceFilterBtn.contains(event.target) && !priceFilterDropdown.contains(event.target)) {
+                priceFilterDropdown.classList.add('hidden');
+            }
+        });
+
+        // Currency toggle functionality
+        const currencyBtns = document.querySelectorAll('.currency-btn');
+        const priceTextIdr = document.querySelectorAll('.price-text-idr');
+        const priceTextUsd = document.querySelectorAll('.price-text-usd');
+        const priceDisplayIdr = document.querySelectorAll('.price-idr');
+        const priceDisplayUsd = document.querySelectorAll('.price-usd');
+
+        // Function to format Indonesian Rupiah with thousand separators
+        function formatIDR(amount) {
+            return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        // Function to calculate and format USD amounts
+        function calculateUSDAmounts() {
+            const usdAmounts = document.querySelectorAll('.usd-amount');
+            usdAmounts.forEach(amountEl => {
+                const priceSpan = amountEl.closest('.price-usd');
+                const idrPrice = parseFloat(priceSpan.dataset.price);
+                const usdPrice = (idrPrice / EXCHANGE_RATE).toFixed(2);
+                amountEl.textContent = usdPrice;
+            });
+        }
+
+        // Function to format IDR amounts
+        function formatIDRAmounts() {
+            const idrAmounts = document.querySelectorAll('.idr-amount');
+            idrAmounts.forEach(amountEl => {
+                const priceSpan = amountEl.closest('.price-idr');
+                const idrPrice = parseFloat(priceSpan.dataset.price);
+                amountEl.textContent = formatIDR(idrPrice);
+            });
+        }
+
+        // Calculate and format amounts on page load
+        formatIDRAmounts();
+        calculateUSDAmounts();
+
+        currencyBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all currency buttons
+                currencyBtns.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                currentCurrency = this.dataset.currency;
+
+                // Toggle price text visibility
+                if (currentCurrency === 'idr') {
+                    priceTextIdr.forEach(el => el.classList.remove('hidden'));
+                    priceTextUsd.forEach(el => el.classList.add('hidden'));
+                    priceDisplayIdr.forEach(el => el.classList.remove('hidden'));
+                    priceDisplayUsd.forEach(el => el.classList.add('hidden')); // Keep USD hidden for now, only showing IDR prices
+                } else {
+                    priceTextIdr.forEach(el => el.classList.add('hidden'));
+                    priceTextUsd.forEach(el => el.classList.remove('hidden'));
+                    priceDisplayIdr.forEach(el => el.classList.add('hidden')); // Hide IDR prices
+                    priceDisplayUsd.forEach(el => el.classList.remove('hidden')); // Show USD prices
+                }
+            });
+        });
+
+        // Price range filter functionality
+        const priceFilterBtns = document.querySelectorAll('.price-filter-btn');
+        priceFilterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all price filter buttons
+                priceFilterBtns.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+
+                const priceRange = this.dataset.priceRange;
+                currentPriceFilter = priceRange;
+                filterByPrice(priceRange);
+            });
+        });
+
+        // Custom price range functionality
+        const applyCustomPriceBtn = document.getElementById('applyCustomPrice');
+        const minPriceInput = document.getElementById('minPrice');
+        const maxPriceInput = document.getElementById('maxPrice');
+
+        applyCustomPriceBtn.addEventListener('click', function() {
+            const minPrice = parseFloat(minPriceInput.value) || 0;
+            const maxPrice = parseFloat(maxPriceInput.value) || Infinity;
+
+            // Convert to IDR if current currency is USD
+            const minPriceIdr = currentCurrency === 'usd' ? minPrice * EXCHANGE_RATE : minPrice;
+            const maxPriceIdr = currentCurrency === 'usd' ? maxPrice * EXCHANGE_RATE : maxPrice;
+
+            filterByCustomPrice(minPriceIdr, maxPriceIdr);
+
+            // Close dropdown
+            priceFilterDropdown.classList.add('hidden');
+        });
+
+        function filterByPrice(priceRange) {
+            locationCards.forEach(card => {
+                const priceElement = card.querySelector('.price-idr');
+                let show = false;
+
+                if (!priceElement) {
+                    // Free locations
+                    if (priceRange === 'free') {
+                        show = true;
+                    }
+                } else {
+                    // Get price from data attribute instead of parsing text
+                    const price = parseFloat(priceElement.dataset.price);
+
+                    switch (priceRange) {
+                        case '0-50000':
+                            show = price > 0 && price <= 50000;
+                            break;
+                        case '50000-100000':
+                            show = price > 50000 && price <= 100000;
+                            break;
+                        case '100000-200000':
+                            show = price > 100000 && price <= 200000;
+                            break;
+                        case '200000+':
+                            show = price > 200000;
+                            break;
+                    }
+                }
+                // Apply price filter and combine with other active filters if needed (though for this simple code, we just apply the last selected filter)
+                card.style.display = show ? 'block' : 'none';
+            });
+        }
+
+        function filterByCustomPrice(minPrice, maxPrice) {
+            locationCards.forEach(card => {
+                const priceElement = card.querySelector('.price-idr');
+                let show = false;
+
+                if (!priceElement) {
+                    // Free locations: only show if min price is 0 (free is within the range [0, max])
+                    show = minPrice <= 0;
+                } else {
+                    // Get price from data attribute instead of parsing text
+                    const price = parseFloat(priceElement.dataset.price);
+                    show = price >= minPrice && price <= maxPrice;
+                }
+                card.style.display = show ? 'block' : 'none';
+            });
+        }
+
+        // Initialize with 'all' filter active
+        const allFilter = document.querySelector('[data-filter="all"]');
+        if (allFilter) {
+            allFilter.classList.add('active');
+        }
+
+        // Initialize with IDR currency active and show IDR prices
+        const idrBtn = document.getElementById('idrBtn');
+        if (idrBtn) {
+            idrBtn.classList.add('active');
+            priceDisplayIdr.forEach(el => el.classList.remove('hidden'));
+            priceDisplayUsd.forEach(el => el.classList.add('hidden'));
+        }
+
+        // Quick jump functionality
+        const pageJumpSelect = document.getElementById('pageJump');
+        if (pageJumpSelect) {
+            pageJumpSelect.addEventListener('change', function() {
+                const selectedPage = this.value;
+                if (selectedPage) {
+                    window.location.href = `?page=${selectedPage}`;
+                }
+            });
+        }
+
+        // Set dynamic colors for category icons
+        document.querySelectorAll('[data-color]').forEach(element => {
+            const color = element.getAttribute('data-color');
+            element.style.backgroundColor = color;
+        });
+
+        // Debug: Log the number of location cards found
+        console.log('Location cards found:', locationCards.length);
+        console.log('Page object:', '{{ page_obj.paginator.count|default:"0" }}');
+        console.log('Items per page:', '{{ page_obj.paginator.per_page|default:"10" }}');
+    });
+</script>
+{% endblock %}

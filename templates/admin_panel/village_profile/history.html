@@ -1,0 +1,284 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/village_profile_global.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/history.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+
+<!-- Tombol Kembali -->
+<div class="back-button-container">
+    <a href="{% url 'village_profile:admin_dashboard' %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Dashboard
+    </a>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <div class="mb-3 mb-md-0">
+        <h4 class="text-danger mb-2" style="font-weight: 600; font-size: 1.5rem;">
+            <i class="fas fa-scroll mr-2"></i>Sejarah Desa
+        </h4>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Kelola data sejarah dan peristiwa penting desa
+        </p>
+    </div>
+    <div class="d-flex flex-column flex-sm-row gap-2">
+        <a href="{% url 'village_profile:admin_history_form' %}" class="btn btn-danger">
+            <i class="fas fa-plus mr-1"></i>Tambah Sejarah
+        </a>
+    </div>
+</div>
+
+<div id="tableView" class="history-table">
+    <div class="card-header d-flex justify-content-between align-items-center py-3">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-scroll mr-2"></i>Daftar Sejarah Desa
+        </h5>
+        <div class="export-buttons">
+            <button class="btn btn-sm btn-outline-danger" onclick="exportHistory()">
+                <i class="fas fa-file-csv mr-1"></i>Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th width="5%">No</th>
+                        <th width="10%">Gambar</th>
+                        <th width="25%">Judul</th>
+                        <th width="15%">Jenis</th>
+                        <th width="12%">Periode</th>
+                        <th width="10%">Status</th>
+                        <th width="8%">Views</th>
+                        <th width="15%">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+
+                </tbody>
+            </table>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning mr-2"></i>Konfirmasi Hapus
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus sejarah:</p>
+                <div class="alert alert-warning">
+                    <strong id="historyToDelete"></strong>
+                </div>
+                <p class="text-muted">Data yang sudah dihapus tidak dapat dikembalikan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash mr-1"></i>Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>const historyData = JSON.parse('{{ history_data|escapejs }}');
+</script>
+<script>let deleteHistoryId = null;
+
+$(document).ready(function() {
+    loadHistoryTable();
+});
+
+function loadHistoryTable() {
+    $('#historyTableBody').html('<tr><td colspan="8" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>');
+
+    setTimeout(function() {
+        let html = '';
+
+        if (historyData.length > 0) {
+            historyData.forEach(function(history, index) {
+                const typeBadge = getHistoryTypeBadge(history.history_type);
+                const statusBadge = history.is_featured ?
+                    '<span class="badge bg-warning text-dark">Unggulan</span>' :
+                    '<span class="badge bg-secondary text-white">Biasa</span>';
+
+                html += `
+                    <tr>
+                        <td><span class="badge bg-secondary text-white">${index + 1}</span></td>
+                        <td>
+                            ${history.featured_image ?
+                                `<img src="${history.featured_image}" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="${history.title}">` :
+                                '<div class="bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;"><i class="fas fa-image text-muted"></i></div>'
+                            }
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">${history.title}</div>
+                            <small class="text-muted">${history.summary ? history.summary.substring(0, 50) + '...' : ''}</small>
+                        </td>
+                        <td>${typeBadge}</td>
+                        <td>
+                            <span class="badge bg-info text-white">
+                                ${history.year_start ? history.year_start : ''}
+                                ${history.year_end ? ` - ${history.year_end}` : ''}
+                            </span>
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td><span class="badge bg-primary text-white">${history.view_count || 0}</span></td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-info" onclick="viewHistory(${history.id})" title="Lihat">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="editHistory(${history.id})" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteHistory(${history.id}, '${history.title}')" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        } else {
+            html = `
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <i class="fas fa-scroll fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">Belum ada data sejarah</h5>
+                        <p class="text-muted">Silakan tambah sejarah desa baru</p>
+                        <a href="{% url 'village_profile:admin_history_form' %}" class="btn btn-warning">
+                            <i class="fas fa-plus mr-1"></i>Tambah Sejarah
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }
+        $('#historyTableBody').html(html);
+    }, 500);
+}
+
+function getHistoryTypeBadge(type) {
+    const badges = {
+        'FOUNDING': '<span class="badge bg-danger text-white">Sejarah Berdiri</span>',
+        'DEVELOPMENT': '<span class="badge bg-primary text-white">Perkembangan</span>',
+        'CULTURE': '<span class="badge bg-info text-white">Budaya & Tradisi</span>',
+        'ECONOMY': '<span class="badge bg-success text-white">Ekonomi</span>',
+        'SOCIAL': '<span class="badge bg-warning text-dark">Sosial</span>',
+        'GOVERNMENT': '<span class="badge bg-dark text-white">Pemerintahan</span>',
+        'OTHER': '<span class="badge bg-secondary text-white">Lainnya</span>'
+    };
+    return badges[type] || `<span class="badge bg-secondary text-white">${type}</span>`;
+}
+
+function viewHistory(historyId) {
+    const url = '{% url "village_profile:admin_history_detail" 0 %}';
+    window.open(url.replace('0', historyId), '_blank');
+}
+
+function editHistory(historyId) {
+    const url = '{% url "village_profile:admin_history_form_edit" 0 %}';
+    window.location.href = url.replace('0', historyId);
+}
+
+function deleteHistory(historyId, historyTitle) {
+    deleteHistoryId = historyId;
+    $('#historyToDelete').text(historyTitle);
+    $('#deleteModal').modal('show');
+}
+
+$('#confirmDeleteBtn').click(function() {
+    if (deleteHistoryId) {
+        const submitBtn = $(this);
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Menghapus...');
+
+        const formData = new FormData();
+        formData.append('history_id', deleteHistoryId);
+        formData.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').val());
+
+        $.ajax({
+            url: '{% url "village_profile:admin_delete_history" %}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#deleteModal').modal('hide');
+                if (response.success) {
+                    showSuccess(response.message);
+                    loadHistory();
+                } else {
+                    showError(response.message);
+                }
+            },
+            error: function() {
+                showError('Terjadi kesalahan saat menghapus data');
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    }
+});
+
+function exportHistory() {
+    window.open('{% url "village_profile:admin_export_history" %}', '_blank');
+}
+
+$('#deleteModal').on('hidden.bs.modal', function() {
+    deleteHistoryId = null;
+});
+
+function showSuccess(message) {
+    const toast = $(`
+        <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `);
+
+    $('#toast-container').append(toast);
+    toast.toast('show');
+    setTimeout(() => toast.remove(), 5000);
+}
+
+function showError(message) {
+    const toast = $(`
+        <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `);
+
+    $('#toast-container').append(toast);
+    toast.toast('show');
+    setTimeout(() => toast.remove(), 5000);
+}
+</script>
+{% endblock extra_js %}

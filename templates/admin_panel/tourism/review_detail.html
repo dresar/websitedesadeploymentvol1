@@ -1,0 +1,622 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Detail Review Wisata{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-detail.css' %}">
+<style>
+    /* Image Preview Styles */
+    .td-image-preview {
+        margin-top: 1.5rem;
+    }
+    
+    .td-section-subtitle {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .td-image-container {
+        position: relative;
+        display: inline-block;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .td-image-container:hover {
+        transform: scale(1.02);
+        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .td-review-image {
+        max-width: 100%;
+        max-height: 400px;
+        width: auto;
+        height: auto;
+        display: block;
+        object-fit: cover;
+    }
+    
+    .td-image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .td-image-container:hover .td-image-overlay {
+        opacity: 1;
+    }
+    
+    .td-image-overlay i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Image Modal Styles */
+    .td-image-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .td-image-modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .td-modal-content {
+        max-width: 90%;
+        max-height: 90%;
+        position: relative;
+        animation: zoomIn 0.3s ease;
+    }
+    
+    .td-modal-image {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        border-radius: 0.5rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .td-modal-close {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s ease;
+    }
+    
+    .td-modal-close:hover {
+        background: rgba(0, 0, 0, 0.8);
+    }
+    
+    .td-modal-info {
+        position: absolute;
+        bottom: -40px;
+        left: 0;
+        color: white;
+        font-size: 0.875rem;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes zoomIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    /* Sidebar Image Preview */
+    .td-sidebar-image {
+        position: relative;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .td-sidebar-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.15);
+    }
+    
+    .td-sidebar-image-preview {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        display: block;
+    }
+    
+    .td-sidebar-image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: 1.5rem;
+    }
+    
+    .td-sidebar-image:hover .td-sidebar-image-overlay {
+        opacity: 1;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .td-review-image {
+            max-height: 300px;
+        }
+        
+        .td-sidebar-image-preview {
+            height: 120px;
+        }
+        
+        .td-modal-content {
+            max-width: 95%;
+            max-height: 95%;
+        }
+        
+        .td-modal-close {
+            top: -30px;
+            width: 30px;
+            height: 30px;
+            font-size: 1.5rem;
+        }
+        
+        .td-modal-info {
+            bottom: -30px;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="td-wrapper">
+    <form style="display: none;">
+        {% csrf_token %}
+    </form>
+
+    <a href="{% url 'admin_panel:tourism_reviews_list' %}" class="td-back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Daftar Review
+    </a>
+
+    <div class="td-header">
+        <div class="td-header-content">
+            <div class="td-icon-wrapper">
+                <i class="fas fa-star"></i>
+            </div>
+
+            <div class="td-header-info">
+                <h1>{{ review.title }}</h1>
+                <div class="td-rating">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= review.rating %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                    <span class="td-rating-value">{{ review.rating }}/5</span>
+                </div>
+
+                <div class="td-meta-row">
+                    <div class="td-meta-item">
+                        <i class="fas fa-user"></i>
+                        <span>
+                            {% if review.user %}
+                                {{ review.user.get_full_name|default:review.user.username }}
+                            {% else %}
+                                Anonim
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="td-meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ review.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <div class="td-meta-item">
+                        <i class="fas fa-{% if review.is_approved %}check-circle{% else %}clock{% endif %}"></i>
+                        <span>{% if review.is_approved %}Disetujui{% else %}Pending{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="td-actions">
+                {% if not review.is_approved %}
+                    <button onclick="approveReview({{ review.id }})" class="td-btn td-btn-success">
+                        <i class="fas fa-check"></i>
+                        Setujui
+                    </button>
+                {% else %}
+                    <button onclick="rejectReview({{ review.id }})" class="td-btn td-btn-warning">
+                        <i class="fas fa-times"></i>
+                        Tolak
+                    </button>
+                {% endif %}
+                <button onclick="deleteReview({{ review.id }})" class="td-btn td-btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-comment"></i>
+                        Komentar Review
+                    </h3>
+                </div>
+
+                <div class="td-info-value">
+                    {{ review.comment|linebreaks }}
+                </div>
+                
+                {% if review.image %}
+                <div class="td-image-preview mt-4">
+                    <h4 class="td-section-subtitle">
+                        <i class="fas fa-image"></i>
+                        Gambar Review
+                    </h4>
+                    <div class="td-image-container">
+                        <img src="{{ review.image.url }}" alt="Review Image" class="td-review-image" onclick="openImageModal('{{ review.image.url }}')">
+                        <div class="td-image-overlay">
+                            <i class="fas fa-search-plus"></i>
+                            <span>Klik untuk memperbesar</span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informasi Review
+                    </h3>
+                </div>
+
+                <div class="td-info-grid">
+                    <div class="td-info-row">
+                        <div class="td-info-label">Lokasi Wisata:</div>
+                        <div class="td-info-value">
+                            <a href="{% url 'admin_panel:tourism_location_detail' review.tourism_location.id %}" class="td-btn td-btn-info td-btn-sm">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ review.tourism_location.title }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Rating:</div>
+                        <div class="td-info-value">
+                            <div class="td-rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="td-rating-value">{{ review.rating }}/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Pengguna:</div>
+                        <div class="td-info-value">
+                            {% if review.user %}
+                                {{ review.user.get_full_name|default:review.user.username }}
+                            {% else %}
+                                Anonim
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if review.visit_date %}
+                    <div class="td-info-row">
+                        <div class="td-info-label">Tanggal Kunjungan:</div>
+                        <div class="td-info-value">{{ review.visit_date|date:"d F Y" }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if review.visit_type %}
+                    <div class="td-info-row">
+                        <div class="td-info-label">Jenis Kunjungan:</div>
+                        <div class="td-info-value">{{ review.get_visit_type_display }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Status:</div>
+                        <div class="td-info-value">
+                            {% if review.is_approved %}
+                                <span class="td-badge td-badge-success">Disetujui</span>
+                            {% else %}
+                                <span class="td-badge td-badge-warning">Pending</span>
+                            {% endif %}
+
+                            {% if review.is_flagged %}
+                                <span class="td-badge td-badge-danger">Ditandai</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if review.is_flagged and review.flagged_reason %}
+                    <div class="td-info-row">
+                        <div class="td-info-label">Alasan:</div>
+                        <div class="td-info-value">{{ review.flagged_reason }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="td-sidebar">
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-tools"></i>
+                        Aksi Cepat
+                    </h6>
+                    <div class="td-actions-list">
+                        {% if not review.is_approved %}
+                            <button type="button" class="td-btn td-btn-success" onclick="approveReview({{ review.id }})">
+                                <i class="fas fa-check"></i>
+                                Setujui Review
+                            </button>
+                        {% else %}
+                            <button type="button" class="td-btn td-btn-warning" onclick="rejectReview({{ review.id }})">
+                                <i class="fas fa-times"></i>
+                                Tolak Review
+                            </button>
+                        {% endif %}
+
+                        <a href="{% url 'admin_panel:tourism_location_detail' review.tourism_location.id %}" class="td-btn td-btn-info">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Lihat Lokasi
+                        </a>
+
+                        <button type="button" class="td-btn td-btn-danger" onclick="deleteReview({{ review.id }})">
+                            <i class="fas fa-trash"></i>
+                            Hapus Review
+                        </button>
+                    </div>
+                </div>
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Informasi Lokasi
+                    </h6>
+                    <div class="td-info-grid">
+                        <h6 class="td-info-value">{{ review.tourism_location.title }}</h6>
+                        <p class="td-info-value">{{ review.tourism_location.short_description|truncatechars:100 }}</p>
+                        <span class="td-badge td-badge-info">{{ review.tourism_location.category.name }}</span>
+                        <a href="{% url 'admin_panel:tourism_location_detail' review.tourism_location.id %}" class="td-btn td-btn-info td-btn-sm">
+                            <i class="fas fa-eye"></i>
+                            Lihat Detail
+                        </a>
+                    </div>
+                </div>
+
+                {% if review.image %}
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-image"></i>
+                        Gambar Review
+                    </h6>
+                    <div class="td-sidebar-image">
+                        <img src="{{ review.image.url }}" alt="Review Image" class="td-sidebar-image-preview" onclick="openImageModal('{{ review.image.url }}')">
+                        <div class="td-sidebar-image-overlay">
+                            <i class="fas fa-search-plus"></i>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-info-circle"></i>
+                        Detail
+                    </h6>
+                    <div class="td-info-grid">
+                        <div class="td-info-row">
+                            <div class="td-info-label">Dibuat:</div>
+                            <div class="td-info-value">{{ review.created_at|date:"d M Y H:i" }}</div>
+                        </div>
+
+                        {% if review.updated_at %}
+                        <div class="td-info-row">
+                            <div class="td-info-label">Diperbarui:</div>
+                            <div class="td-info-value">{{ review.updated_at|date:"d M Y H:i" }}</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if review.image %}
+                        <div class="td-info-row">
+                            <div class="td-info-label">Gambar:</div>
+                            <div class="td-info-value">
+                                <span class="td-badge td-badge-success">Ada</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="td-image-modal">
+    <div class="td-modal-content">
+        <span class="td-modal-close" onclick="closeImageModal()">&times;</span>
+        <img id="modalImage" class="td-modal-image" src="" alt="Review Image">
+        <div class="td-modal-info">
+            <span id="modalImageInfo">Gambar Review</span>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// Image Modal Functions
+function openImageModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalInfo = document.getElementById('modalImageInfo');
+    
+    modalImage.src = imageUrl;
+    modalInfo.textContent = 'Gambar Review - Klik di luar untuk menutup';
+    modal.classList.add('show');
+    
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.remove('show');
+    
+    // Restore body scroll
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside the image
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('imageModal');
+    const modalContent = document.querySelector('.td-modal-content');
+    
+    if (event.target === modal) {
+        closeImageModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeImageModal();
+    }
+});
+
+// Review Management Functions
+function approveReview(reviewId) {
+    if (confirm('Setujui review ini?')) {
+        fetch(`/admin-panel/tourism/reviews/${reviewId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showError('Error: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        });
+    }
+}
+
+function rejectReview(reviewId) {
+    if (confirm('Tolak review ini?')) {
+        fetch(`/admin-panel/tourism/reviews/${reviewId}/reject/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showError('Error: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        });
+    }
+}
+
+function deleteReview(reviewId) {
+    if (confirm('Hapus review ini? Tindakan ini tidak dapat dibatalkan.')) {
+        fetch(`/admin-panel/tourism/reviews/${reviewId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '{% url "admin_panel:tourism_reviews_list" %}';
+            } else {
+                showError('Error: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        });
+    }
+}
+</script>
+{% endblock extra_js %}

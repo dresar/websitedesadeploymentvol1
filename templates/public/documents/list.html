@@ -1,0 +1,334 @@
+{% extends 'public/base.html' %}
+{% load static %}
+{% load document_filters %}
+
+{% block extra_css %}
+<style>
+    .document-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #e5e7eb;
+    }
+    .document-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .document-card {
+        border-color: #374151;
+    }
+    .document-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    }
+    .category-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .category-apbdes { background-color: #dbeafe; color: #1e40af; }
+    .category-realisasi_anggaran { background-color: #dcfce7; color: #166534; }
+    .category-dana_desa { background-color: #fef3c7; color: #92400e; }
+    .category-perdes { background-color: #e0e7ff; color: #3730a3; }
+    .category-perkades { background-color: #fce7f3; color: #be185d; }
+    .category-sk_kades { background-color: #f3e8ff; color: #7c3aed; }
+    .category-profil_desa { background-color: #ecfdf5; color: #065f46; }
+    .category-data_kependudukan { background-color: #f0f9ff; color: #0369a1; }
+    .category-peta_desa { background-color: #fef2f2; color: #dc2626; }
+    .category-lppd { background-color: #fffbeb; color: #d97706; }
+    .category-musdes { background-color: #f0fdf4; color: #16a34a; }
+    .category-laporan_lainnya { background-color: #f8fafc; color: #475569; }
+    .category-lainnya { background-color: #f1f5f9; color: #334155; }
+    .file-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    .file-pdf { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .file-doc { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .file-docx { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .file-xls { background: linear-gradient(135deg, #10b981, #059669); }
+    .file-xlsx { background: linear-gradient(135deg, #10b981, #059669); }
+    .file-ppt { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .file-pptx { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .file-txt { background: linear-gradient(135deg, #6b7280, #4b5563); }
+    .file-zip { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .file-default { background: linear-gradient(135deg, #64748b, #475569); }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<!-- Hero Section -->
+<header class="relative h-64 sm:h-80 md:h-96 lg:h-[500px] overflow-hidden">
+    {% if hero_image_url %}
+    <img src="{{ hero_image_url }}" alt="Documents Hero" class="w-full h-full object-cover">
+    {% else %}
+    <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+        <i class="fas fa-file-alt text-4xl sm:text-6xl text-white opacity-50"></i>
+    </div>
+    {% endif %}
+    
+    <div class="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8 text-white">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="inline-flex items-center px-4 py-2 bg-white/20 text-white rounded-full text-sm font-medium mb-4">
+                <i class="fas fa-file-alt mr-2"></i> Dokumen Transparansi
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight text-white">
+                Dokumen <span class="text-blue-400">Transparansi</span>
+            </h1>
+            <p class="text-sm sm:text-base lg:text-lg opacity-90 max-w-3xl mx-auto text-white">
+                Akses dokumen resmi Desa Pulosarok
+            </p>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-8">
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                    <div class="text-2xl font-bold mb-1 text-white">{{ documents.paginator.count|default:0 }}</div>
+                    <div class="text-sm opacity-80 text-white">Total Dokumen</div>
+                </div>
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                    <div class="text-2xl font-bold mb-1 text-white">{{ categories.count|default:0 }}</div>
+                    <div class="text-sm opacity-80 text-white">Kategori</div>
+                </div>
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                    <div class="text-2xl font-bold mb-1 text-white">{{ years|length|default:0 }}</div>
+                    <div class="text-sm opacity-80 text-white">Tahun</div>
+                </div>
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                    <div class="text-2xl font-bold mb-1 text-white">100%</div>
+                    <div class="text-sm opacity-80 text-white">Transparan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Filter Section -->
+    <div class="bg-white rounded-2xl p-6 mb-8 shadow-sm">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-filter text-blue-500 mr-2"></i> Filter Dokumen
+        </h2>
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                <input type="text" id="search" name="search" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder="Cari dokumen..." value="{{ search }}">
+            </div>
+            <div>
+                <label for="type" class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                <select id="type" name="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Semua Kategori</option>
+                    <option value="apbdes" {% if selected_type == 'apbdes' %}selected{% endif %}>APBDES</option>
+                    <option value="realisasi_anggaran" {% if selected_type == 'realisasi_anggaran' %}selected{% endif %}>Realisasi Anggaran</option>
+                    <option value="dana_desa" {% if selected_type == 'dana_desa' %}selected{% endif %}>Dana Desa</option>
+                    <option value="perdes" {% if selected_type == 'perdes' %}selected{% endif %}>Peraturan Desa</option>
+                    <option value="perkades" {% if selected_type == 'perkades' %}selected{% endif %}>Peraturan Kepala Desa</option>
+                    <option value="sk_kades" {% if selected_type == 'sk_kades' %}selected{% endif %}>SK Kepala Desa</option>
+                    <option value="profil_desa" {% if selected_type == 'profil_desa' %}selected{% endif %}>Profil Desa</option>
+                    <option value="data_kependudukan" {% if selected_type == 'data_kependudukan' %}selected{% endif %}>Data Kependudukan</option>
+                    <option value="peta_desa" {% if selected_type == 'peta_desa' %}selected{% endif %}>Peta Desa</option>
+                    <option value="lppd" {% if selected_type == 'lppd' %}selected{% endif %}>LPPD</option>
+                    <option value="musdes" {% if selected_type == 'musdes' %}selected{% endif %}>Musyawarah Desa</option>
+                    <option value="laporan_lainnya" {% if selected_type == 'laporan_lainnya' %}selected{% endif %}>Laporan Lainnya</option>
+                </select>
+            </div>
+            <div>
+                <label for="year" class="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
+                <select id="year" name="year" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Semua Tahun</option>
+                    {% for year in years %}
+                    <option value="{{ year }}" {% if selected_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300">
+                    <i class="fas fa-search mr-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Documents Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for document in documents %}
+        <div class="document-card bg-white rounded-xl p-6">
+            <div class="flex items-start gap-4 mb-4">
+                <div class="file-icon file-{{ document.file|file_extension }}">
+                    {% with ext=document.file|file_extension %}
+                    {% if ext == 'pdf' %}
+                    <i class="fas fa-file-pdf"></i>
+                    {% elif ext == 'doc' or ext == 'docx' %}
+                    <i class="fas fa-file-word"></i>
+                    {% elif ext == 'xls' or ext == 'xlsx' %}
+                    <i class="fas fa-file-excel"></i>
+                    {% elif ext == 'ppt' or ext == 'pptx' %}
+                    <i class="fas fa-file-powerpoint"></i>
+                    {% elif ext == 'txt' %}
+                    <i class="fas fa-file-alt"></i>
+                    {% elif ext == 'zip' %}
+                    <i class="fas fa-file-archive"></i>
+                    {% else %}
+                    <i class="fas fa-file"></i>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="category-badge category-{{ document.category.category_type }}">
+                            {{ document.category.name }}
+                        </span>
+                        <span class="text-xs text-gray-500">{{ document.document_year }}</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                        <a href="{% url 'documents:public_detail' document.slug %}" class="hover:text-blue-600 transition-colors">
+                            {{ document.title }}
+                        </a>
+                    </h3>
+                    {% if document.document_number %}
+                    <p class="text-sm text-gray-600 mb-2">
+                        <i class="fas fa-hashtag mr-1"></i>{{ document.document_number }}
+                    </p>
+                    {% endif %}
+                    {% if document.summary %}
+                    <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {{ document.summary }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                <div class="flex items-center gap-4">
+                    <span><i class="fas fa-eye mr-1"></i>{{ document.view_count }}</span>
+                    <span><i class="fas fa-download mr-1"></i>{{ document.download_count }}</span>
+                </div>
+                <span>{{ document.created_at|date:"d M Y" }}</span>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'documents:public_detail' document.slug %}" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center">
+                    <i class="fas fa-eye mr-1"></i>Lihat
+                </a>
+                <a href="{% url 'documents:public_download' document.slug %}" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors text-center">
+                    <i class="fas fa-download mr-1"></i>Download
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full">
+            <div class="bg-white rounded-xl p-12 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-file-slash text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Tidak Ada Dokumen</h3>
+                <p class="text-gray-600 mb-6">
+                    Belum ada dokumen yang sesuai dengan filter yang Anda pilih.
+                </p>
+                <a href="{% url 'documents:public_list' %}" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300">
+                    <i class="fas fa-refresh mr-2"></i>Lihat Semua Dokumen
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if documents.has_other_pages %}
+    <div class="mt-8">
+        <div class="flex justify-center">
+            <nav class="flex items-center space-x-2">
+                {% if documents.has_previous %}
+                <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ documents.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                {% endif %}
+                {% for num in documents.paginator.page_range %}
+                {% if documents.number == num %}
+                <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600">{{ num }}</span>
+                {% elif num > documents.number|add:'-3' and num < documents.number|add:'3' %}
+                <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+                {% if documents.has_next %}
+                <a href="?page={{ documents.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ documents.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Access Categories -->
+    <div class="mt-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">
+            <i class="fas fa-folder-open text-blue-500 mr-2"></i> Akses Cepat Kategori
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <a href="{% url 'documents:transparansi_anggaran' %}" class="document-card bg-white rounded-xl p-6 text-center group">
+                <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-chart-pie text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Transparansi Anggaran</h3>
+                <p class="text-sm text-gray-600">APBDES, Realisasi, Dana Desa</p>
+            </a>
+            <a href="{% url 'documents:produk_hukum' %}" class="document-card bg-white rounded-xl p-6 text-center group">
+                <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-gavel text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Produk Hukum</h3>
+                <p class="text-sm text-gray-600">Perdes, Perkades, SK</p>
+            </a>
+            <a href="{% url 'documents:profil_desa' %}" class="document-card bg-white rounded-xl p-6 text-center group">
+                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-info-circle text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Profil Desa</h3>
+                <p class="text-sm text-gray-600">Data, Peta, Demografi</p>
+            </a>
+            <a href="{% url 'documents:laporan' %}" class="document-card bg-white rounded-xl p-6 text-center group">
+                <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-file-alt text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Laporan</h3>
+                <p class="text-sm text-gray-600">LPPD, Musdes, Lainnya</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const filterSelects = document.querySelectorAll('#type, #year');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+
+    // Add smooth scrolling for internal links
+    const links = document.querySelectorAll('a[href^="#"]');
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+});
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,644 @@
+{% extends "admin_panel/base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Import Data Penduduk{% endblock %}
+
+{% block extra_css %}
+<style>
+    .import-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+    
+    .step {
+        display: flex;
+        align-items: center;
+        margin: 0 1rem;
+    }
+    
+    .step-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 0.5rem;
+    }
+    
+    .step.active .step-number {
+        background: #007bff;
+        color: white;
+    }
+    
+    .step.completed .step-number {
+        background: #28a745;
+        color: white;
+    }
+    
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 3rem;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .upload-area:hover {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+    
+    .upload-area.dragover {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+    
+    .file-info {
+        background: #e9ecef;
+        padding: 1rem;
+        border-radius: 4px;
+        margin-top: 1rem;
+        display: none;
+    }
+    
+    .preview-table {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    
+    .preview-table table {
+        margin: 0;
+    }
+    
+    .preview-table th {
+        background: #f8f9fa;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .error-row {
+        background-color: #f8d7da !important;
+    }
+    
+    .warning-row {
+        background-color: #fff3cd !important;
+    }
+    
+    .success-row {
+        background-color: #d4edda !important;
+    }
+    
+    .validation-summary {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .validation-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .validation-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .validation-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.5rem;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .validation-icon.error {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .validation-icon.warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .validation-icon.success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .progress-container {
+        margin: 1rem 0;
+    }
+    
+    .progress-bar {
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .import-summary {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 4px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .download-links {
+        margin-top: 1rem;
+    }
+    
+    .download-links a {
+        display: inline-block;
+        margin-right: 1rem;
+        padding: 0.5rem 1rem;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background 0.3s ease;
+    }
+    
+    .download-links a:hover {
+        background: #0056b3;
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Import Data Penduduk</h1>
+                    <p class="text-muted mb-0">Import data penduduk dari file Excel</p>
+                </div>
+                <div>
+                    <a href="{% url 'admin_panel:references:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step-1">
+                    <div class="step-number">1</div>
+                    <span>Upload File</span>
+                </div>
+                <div class="step" id="step-2">
+                    <div class="step-number">2</div>
+                    <span>Validasi Data</span>
+                </div>
+                <div class="step" id="step-3">
+                    <div class="step-number">3</div>
+                    <span>Import Data</span>
+                </div>
+                <div class="step" id="step-4">
+                    <div class="step-number">4</div>
+                    <span>Selesai</span>
+                </div>
+            </div>
+            
+            <!-- Download Template Links -->
+            <div class="download-links mb-4">
+                <a href="{% url 'admin_panel:references:download_template' %}" class="btn btn-success">
+                    <i class="fas fa-download"></i> Download Template Excel
+                </a>
+                <a href="{% url 'admin_panel:references:download_sample' %}" class="btn btn-info">
+                    <i class="fas fa-file-excel"></i> Download Sample Data
+                </a>
+            </div>
+            
+            <!-- Step 1: Upload File -->
+            <div class="import-container" id="upload-step">
+                <h4 class="mb-3">Upload File Excel</h4>
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                    <h5>Drag & Drop file Excel di sini</h5>
+                    <p class="text-muted">atau klik untuk memilih file</p>
+                    <input type="file" id="file-input" accept=".xlsx,.xls" style="display: none;">
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-folder-open"></i> Pilih File
+                    </button>
+                </div>
+                
+                <div class="file-info" id="file-info">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong id="file-name"></strong>
+                            <span class="text-muted" id="file-size"></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="remove-file">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="button" class="btn btn-success" id="validate-btn" disabled>
+                        <i class="fas fa-check-circle"></i> Validasi Data
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Validation -->
+            <div class="import-container" id="validation-step" style="display: none;">
+                <h4 class="mb-3">Validasi Data</h4>
+                
+                <div class="validation-summary" id="validation-summary">
+                    <!-- Validation summary will be populated here -->
+                </div>
+                
+                <div class="preview-table" id="preview-table">
+                    <!-- Preview table will be populated here -->
+                </div>
+                
+                <div class="mt-3">
+                    <button type="button" class="btn btn-secondary" id="back-to-upload">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </button>
+                    <button type="button" class="btn btn-success" id="import-btn" disabled>
+                        <i class="fas fa-upload"></i> Import Data
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Import Progress -->
+            <div class="import-container" id="import-step" style="display: none;">
+                <h4 class="mb-3">Import Data</h4>
+                
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                
+                <div id="import-log">
+                    <!-- Import log will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Step 4: Complete -->
+            <div class="import-container" id="complete-step" style="display: none;">
+                <h4 class="mb-3">Import Selesai</h4>
+                
+                <div class="import-summary" id="import-summary">
+                    <!-- Import summary will be populated here -->
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{% url 'admin_panel:references:dashboard' %}" class="btn btn-primary">
+                        <i class="fas fa-home"></i> Kembali ke Dashboard
+                    </a>
+                    <button type="button" class="btn btn-success" id="import-again">
+                        <i class="fas fa-plus"></i> Import Data Lain
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentStep = 1;
+let uploadedFile = null;
+let validationResults = null;
+
+// Step management
+function showStep(step) {
+    // Hide all steps
+    document.querySelectorAll('.import-container').forEach(container => {
+        container.style.display = 'none';
+    });
+    
+    // Show current step
+    document.getElementById(getStepId(step)).style.display = 'block';
+    
+    // Update step indicators
+    document.querySelectorAll('.step').forEach((stepEl, index) => {
+        stepEl.classList.remove('active', 'completed');
+        if (index + 1 < step) {
+            stepEl.classList.add('completed');
+        } else if (index + 1 === step) {
+            stepEl.classList.add('active');
+        }
+    });
+    
+    currentStep = step;
+}
+
+function getStepId(step) {
+    const stepIds = {
+        1: 'upload-step',
+        2: 'validation-step',
+        3: 'import-step',
+        4: 'complete-step'
+    };
+    return stepIds[step];
+}
+
+// File upload handling
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+    const fileInfo = document.getElementById('file-info');
+    const validateBtn = document.getElementById('validate-btn');
+    
+    // Drag and drop
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+    
+    // Remove file
+    document.getElementById('remove-file').addEventListener('click', function() {
+        uploadedFile = null;
+        fileInfo.style.display = 'none';
+        validateBtn.disabled = true;
+        fileInput.value = '';
+    });
+    
+    // Validate button
+    validateBtn.addEventListener('click', function() {
+        if (uploadedFile) {
+            validateData();
+        }
+    });
+    
+    // Back to upload
+    document.getElementById('back-to-upload').addEventListener('click', function() {
+        showStep(1);
+    });
+    
+    // Import button
+    document.getElementById('import-btn').addEventListener('click', function() {
+        importData();
+    });
+    
+    // Import again
+    document.getElementById('import-again').addEventListener('click', function() {
+        resetImport();
+    });
+});
+
+function handleFile(file) {
+    // Check file type
+    const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+    ];
+    
+    if (!allowedTypes.includes(file.type)) {
+        alert('File harus berupa Excel (.xlsx atau .xls)');
+        return;
+    }
+    
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Ukuran file maksimal 10MB');
+        return;
+    }
+    
+    uploadedFile = file;
+    
+    // Show file info
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+    document.getElementById('file-info').style.display = 'block';
+    
+    // Enable validate button
+    document.getElementById('validate-btn').disabled = false;
+}
+
+function validateData() {
+    if (!uploadedFile) return;
+    
+    showStep(2);
+    
+    // Show loading
+    const validationSummary = document.getElementById('validation-summary');
+    validationSummary.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Memvalidasi data...</div>';
+    
+    // Create FormData
+    const formData = new FormData();
+    formData.append('file', uploadedFile);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    // Send validation request
+    fetch('{% url "admin_panel:references:validate_import" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        validationResults = data;
+        displayValidationResults(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        validationSummary.innerHTML = '<div class="alert alert-danger">Error saat memvalidasi data</div>';
+    });
+}
+
+function displayValidationResults(data) {
+    const validationSummary = document.getElementById('validation-summary');
+    const previewTable = document.getElementById('preview-table');
+    const importBtn = document.getElementById('import-btn');
+    
+    // Validation summary
+    let summaryHtml = '<h6>Ringkasan Validasi:</h6>';
+    summaryHtml += `<div class="validation-item">
+        <div class="validation-icon ${data.errors > 0 ? 'error' : 'success'}">${data.errors}</div>
+        <span>Error: ${data.errors}</span>
+    </div>`;
+    summaryHtml += `<div class="validation-item">
+        <div class="validation-icon ${data.warnings > 0 ? 'warning' : 'success'}">${data.warnings}</div>
+        <span>Warning: ${data.warnings}</span>
+    </div>`;
+    summaryHtml += `<div class="validation-item">
+        <div class="validation-icon success">${data.total_rows}</div>
+        <span>Total Baris: ${data.total_rows}</span>
+    </div>`;
+    
+    validationSummary.innerHTML = summaryHtml;
+    
+    // Preview table
+    if (data.rows && data.rows.length > 0) {
+        let tableHtml = '<table class="table table-sm table-bordered">';
+        
+        // Header
+        tableHtml += '<thead><tr>';
+        data.headers.forEach(header => {
+            tableHtml += `<th>${header}</th>`;
+        });
+        tableHtml += '<th>Status</th>';
+        tableHtml += '</tr></thead>';
+        
+        // Rows
+        tableHtml += '<tbody>';
+        data.rows.forEach((row, index) => {
+            let rowClass = '';
+            if (row.errors && row.errors.length > 0) {
+                rowClass = 'error-row';
+            } else if (row.warnings && row.warnings.length > 0) {
+                rowClass = 'warning-row';
+            } else {
+                rowClass = 'success-row';
+            }
+            
+            tableHtml += `<tr class="${rowClass}">`;
+            row.data.forEach(cell => {
+                tableHtml += `<td>${cell || ''}</td>`;
+            });
+            
+            // Status column
+            let statusHtml = '';
+            if (row.errors && row.errors.length > 0) {
+                statusHtml = `<span class="text-danger"><i class="fas fa-times"></i> Error</span>`;
+            } else if (row.warnings && row.warnings.length > 0) {
+                statusHtml = `<span class="text-warning"><i class="fas fa-exclamation-triangle"></i> Warning</span>`;
+            } else {
+                statusHtml = `<span class="text-success"><i class="fas fa-check"></i> OK</span>`;
+            }
+            tableHtml += `<td>${statusHtml}</td>`;
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody></table>';
+        
+        previewTable.innerHTML = tableHtml;
+    }
+    
+    // Enable import button if no errors
+    importBtn.disabled = data.errors > 0;
+}
+
+function importData() {
+    if (!validationResults || validationResults.errors > 0) return;
+    
+    showStep(3);
+    
+    // Create FormData
+    const formData = new FormData();
+    formData.append('file', uploadedFile);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    // Start import
+    fetch('{% url "admin_panel:references:import_data" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayImportResults(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('import-log').innerHTML = '<div class="alert alert-danger">Error saat mengimport data</div>';
+    });
+}
+
+function displayImportResults(data) {
+    showStep(4);
+    
+    const importSummary = document.getElementById('import-summary');
+    let summaryHtml = '<h6>Hasil Import:</h6>';
+    summaryHtml += `<p><strong>Total Data:</strong> ${data.total}</p>`;
+    summaryHtml += `<p><strong>Berhasil:</strong> ${data.success}</p>`;
+    summaryHtml += `<p><strong>Gagal:</strong> ${data.failed}</p>`;
+    
+    if (data.errors && data.errors.length > 0) {
+        summaryHtml += '<h6>Error:</h6><ul>';
+        data.errors.forEach(error => {
+            summaryHtml += `<li>${error}</li>`;
+        });
+        summaryHtml += '</ul>';
+    }
+    
+    importSummary.innerHTML = summaryHtml;
+}
+
+function resetImport() {
+    currentStep = 1;
+    uploadedFile = null;
+    validationResults = null;
+    
+    // Reset form
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-info').style.display = 'none';
+    document.getElementById('validate-btn').disabled = true;
+    
+    // Clear validation results
+    document.getElementById('validation-summary').innerHTML = '';
+    document.getElementById('preview-table').innerHTML = '';
+    document.getElementById('import-summary').innerHTML = '';
+    
+    showStep(1);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,995 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load summonote_filters %}
+
+{% block page_title %}{% if news %}Edit Berita{% else %}Tambah Berita{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-section h5 {
+        color: #333;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #007bff;
+    }
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+    .conditional-field {
+        display: none;
+        transition: all 0.3s ease;
+    }
+    .conditional-field.show {
+        display: block;
+    }
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+    }
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .btn-success:hover {
+        background-color: #1e7e34;
+        border-color: #1e7e34;
+    }
+    
+    /* Summonote Editor Styling */
+    .summonote-editor {
+        border: 2px solid #F97316;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.02), rgba(251, 146, 60, 0.02));
+    }
+    
+    .summonote-editor .note-editor {
+        border: none;
+        border-radius: 6px;
+    }
+    
+    .summonote-editor .note-toolbar {
+        background: linear-gradient(135deg, #F97316, #FB923C);
+        border-radius: 6px 6px 0 0;
+    }
+    
+    .summonote-editor .note-toolbar .btn {
+        color: white;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .summonote-editor .note-toolbar .btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    
+    .summonote-editor .note-editing-area {
+        background: white;
+        border-radius: 0 0 6px 6px;
+    }
+    
+    /* Styling untuk Summernote yang sudah diinisialisasi oleh Django */
+    #id_excerpt + .note-editor {
+        transition: all 0.3s ease;
+    }
+    
+    .summonote-editor #id_excerpt + .note-editor {
+        border: 2px solid #F97316;
+        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.02), rgba(251, 146, 60, 0.02));
+    }
+    
+    .summonote-editor #id_excerpt + .note-editor .note-toolbar {
+        background: linear-gradient(135deg, #F97316, #FB923C);
+        border-radius: 6px 6px 0 0;
+    }
+    
+    .summonote-editor #id_excerpt + .note-editor .note-toolbar .btn {
+        color: white;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .summonote-editor #id_excerpt + .note-editor .note-toolbar .btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+    
+    .summonote-editor #id_excerpt + .note-editor .note-editing-area {
+        background: white;
+        border-radius: 0 0 6px 6px;
+    }
+    
+    /* Styling untuk class summonote-styled */
+    .summonote-styled {
+        border: 2px solid #F97316 !important;
+        border-radius: 8px !important;
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.02), rgba(251, 146, 60, 0.02)) !important;
+    }
+    
+    .summonote-styled .note-toolbar {
+        background: linear-gradient(135deg, #F97316, #FB923C) !important;
+        border-radius: 6px 6px 0 0 !important;
+    }
+    
+    .summonote-styled .note-toolbar .btn {
+        color: white !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .summonote-styled .note-toolbar .btn:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+    
+    .summonote-styled .note-editing-area {
+        background: white !important;
+        border-radius: 0 0 6px 6px !important;
+    }
+    
+    /* Preview styling */
+    .summonote-excerpt-preview {
+        transition: all 0.3s ease;
+    }
+    
+    .summonote-excerpt-preview:hover {
+        transform: translateX(2px);
+        box-shadow: 0 4px 8px rgba(249, 115, 22, 0.15);
+    }
+    
+    /* Visual indicator for Summonote mode */
+    .summonote-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #F97316, #FB923C);
+        color: white;
+        margin-left: 0.5rem;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Enhanced form styling */
+    .form-section h5 i {
+        margin-right: 0.5rem;
+    }
+    
+    .form-text.text-muted i {
+        margin-right: 0.25rem;
+    }
+    
+    /* Styling untuk section Konten Berita */
+    .form-section h5 {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #007bff;
+    }
+    
+    .form-section h5 i {
+        margin-right: 0.75rem;
+        color: #007bff;
+    }
+    
+    /* Styling untuk field Ringkasan di dalam Konten Berita */
+    .form-section .form-group.mb-4 {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        margin-bottom: 2rem !important;
+    }
+    
+    .form-section .form-group.mb-4 label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-section .form-group.mb-4 .form-text {
+        margin-top: 0.5rem;
+    }
+    
+    /* Styling untuk preview ringkasan di dalam section Konten Berita */
+    .form-section .form-group.mb-4 #excerpt-preview {
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        background: white;
+        min-height: 80px;
+        margin-top: 1rem;
+    }
+    
+    /* Styling untuk editor ringkasan di dalam section Konten Berita */
+    .form-section .form-group.mb-4 #excerpt-editor-container {
+        margin-bottom: 1rem;
+    }
+    
+    /* Styling untuk field Isi Berita */
+    .form-section .form-group.mb-3:last-child {
+        margin-bottom: 0 !important;
+    }
+    
+    /* Styling untuk section Konten Berita yang berisi Ringkasan dan Isi Berita */
+    .form-section:has(.form-group.mb-4) {
+        background: linear-gradient(135deg, rgba(0, 123, 255, 0.02), rgba(0, 123, 255, 0.05));
+        border: 1px solid rgba(0, 123, 255, 0.1);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* Styling untuk header section Konten Berita */
+    .form-section:has(.form-group.mb-4) h5 {
+        color: #007bff;
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid #007bff;
+    }
+    
+    /* Styling untuk field Ringkasan di dalam section Konten Berita */
+    .form-section:has(.form-group.mb-4) .form-group.mb-4 {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .form-section:has(.form-group.mb-4) .form-group.mb-4:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+    }
+    
+    /* Styling untuk field Isi Berita di dalam section Konten Berita */
+    .form-section:has(.form-group.mb-4) .form-group.mb-3:last-child {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .form-section:has(.form-group.mb-4) .form-group.mb-3:last-child:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+    }
+    
+    /* Styling untuk responsive design */
+    @media (max-width: 768px) {
+        .form-section:has(.form-group.mb-4) {
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-section:has(.form-group.mb-4) .form-group.mb-4,
+        .form-section:has(.form-group.mb-4) .form-group.mb-3:last-child {
+            padding: 1.5rem;
+        }
+        
+        .form-section:has(.form-group.mb-4) h5 {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .summonote-indicator {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+        }
+        
+        .summonote-editor {
+            border-width: 1px;
+        }
+    }
+    
+    /* Enhanced preview styling */
+    #excerpt-preview {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        background: #f8f9fa;
+        min-height: 60px;
+    }
+    
+    #excerpt-preview:empty::before {
+        content: "Preview akan muncul di sini...";
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    /* Styling untuk HTML yang di-render di preview */
+    #excerpt-preview h1, #excerpt-preview h2, #excerpt-preview h3,
+    #excerpt-preview h4, #excerpt-preview h5, #excerpt-preview h6 {
+        margin: 0.5rem 0;
+        font-weight: 600;
+    }
+    
+    #excerpt-preview p {
+        margin: 0.5rem 0;
+        line-height: 1.6;
+    }
+    
+    #excerpt-preview strong, #excerpt-preview b {
+        font-weight: 600;
+    }
+    
+    #excerpt-preview em, #excerpt-preview i {
+        font-style: italic;
+    }
+    
+    #excerpt-preview ul, #excerpt-preview ol {
+        margin: 0.5rem 0;
+        padding-left: 1.5rem;
+    }
+    
+    #excerpt-preview li {
+        margin: 0.25rem 0;
+    }
+    
+    /* Loading state */
+    .summonote-editor.loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+    
+    /* Success state */
+    .summonote-editor.success {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-newspaper mr-2"></i>
+                    {% if news %}Edit Berita{% else %}Tambah Berita{% endif %}
+                </h2>
+                <div>
+                    <a href="{% url 'admin_panel:news_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left mr-1"></i>Kembali
+                    </a>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="newsForm">
+                {% csrf_token %}
+                
+                <!-- Informasi Dasar -->
+                <div class="form-section">
+                    <h5><i class="fas fa-info-circle"></i> Informasi Dasar</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label required-field">Judul Berita</label>
+                                {{ form.title }}
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label required-field">Kategori</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">Prioritas</label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.priority.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.tags.id_for_label }}" class="form-label">Tags</label>
+                                {{ form.tags }}
+                                {% if form.tags.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.tags.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Pilih satu atau lebih tag (gunakan Ctrl+Click untuk multiple selection)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Konten Berita -->
+                <div class="form-section">
+                    <h5><i class="fas fa-edit"></i> Konten Berita</h5>
+                    
+                    <!-- Ringkasan -->
+                    <div class="form-group mb-4">
+                        <label for="{{ form.excerpt.id_for_label }}" class="form-label">
+                            Ringkasan
+                            <span id="summonote-indicator" class="summonote-indicator" style="display: none;">
+                                <i class="fas fa-sticky-note mr-1"></i>Summonote Mode
+                            </span>
+                        </label>
+                        <div id="excerpt-editor-container">
+                            {{ form.excerpt }}
+                        </div>
+                        {% if form.excerpt.errors %}
+                            <div class="invalid-feedback d-block">{{ form.excerpt.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Ringkasan singkat berita (opsional, maksimal 300 karakter). 
+                            <br><strong>Tips:</strong> Gunakan editor untuk memformat ringkasan dengan baik. 
+                            Jika menggunakan Summonote, ringkasan akan ditampilkan dengan styling khusus.
+                        </small>
+                        
+                        <!-- Preview Excerpt dengan Summonote -->
+                        <div class="mt-3">
+                            <h6 class="text-muted mb-2">Preview Ringkasan:</h6>
+                            <div id="excerpt-preview">
+                                <p class="text-muted"><i class="fas fa-info-circle mr-1"></i>Preview akan muncul di sini...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Isi Berita -->
+                    <div class="form-group mb-3">
+                        <label for="{{ form.content.id_for_label }}" class="form-label required-field">Isi Berita</label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="invalid-feedback d-block">{{ form.content.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Gunakan editor Summernote untuk memformat berita dengan baik</small>
+                    </div>
+                </div>
+
+                <!-- Media -->
+                <div class="form-section">
+                    <h5><i class="fas fa-images"></i> Media</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.featured_image.id_for_label }}" class="form-label">Gambar Utama</label>
+                                {{ form.featured_image }}
+                                {% if form.featured_image.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.featured_image.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Format: JPG, PNG, WEBP. Maksimal 5MB</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.featured_image_alt.id_for_label }}" class="form-label">Alt Text Gambar</label>
+                                {{ form.featured_image_alt }}
+                                {% if form.featured_image_alt.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.featured_image_alt.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Deskripsi gambar untuk SEO (opsional)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pengaturan -->
+                <div class="form-section">
+                    <h5><i class="fas fa-cog"></i> Pengaturan</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <div class="form-check">
+                                    {{ form.is_featured }}
+                                    <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                                        Berita Unggulan
+                                    </label>
+                                </div>
+                                {% if form.is_featured.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.is_featured.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <div class="form-check">
+                                    {{ form.is_breaking }}
+                                    <label class="form-check-label" for="{{ form.is_breaking.id_for_label }}">
+                                        Berita Breaking
+                                    </label>
+                                </div>
+                                {% if form.is_breaking.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.is_breaking.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <div class="form-check">
+                                    {{ form.is_summonote }}
+                                    <label class="form-check-label" for="{{ form.is_summonote.id_for_label }}">
+                                        <i class="fas fa-sticky-note text-warning mr-1"></i>Summonote
+                                    </label>
+                                </div>
+                                {% if form.is_summonote.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.is_summonote.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle text-info mr-1"></i>
+                                    Konten khusus dengan styling Summonote. Editor ringkasan akan berubah tampilan.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.published_date.id_for_label }}" class="form-label">Tanggal Publikasi</label>
+                                {{ form.published_date }}
+                                {% if form.published_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.published_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3 conditional-field" id="scheduled-date-field">
+                                <label for="{{ form.scheduled_date.id_for_label }}" class="form-label">Tanggal Terjadwal</label>
+                                {{ form.scheduled_date }}
+                                {% if form.scheduled_date.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.scheduled_date.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Atur tanggal untuk publikasi otomatis (opsional)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEO -->
+                <div class="form-section">
+                    <h5><i class="fas fa-search"></i> SEO</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.meta_title.id_for_label }}" class="form-label">Meta Title</label>
+                                {{ form.meta_title }}
+                                {% if form.meta_title.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.meta_title.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Judul SEO (opsional, maksimal 60 karakter)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="{{ form.meta_description.id_for_label }}" class="form-label">Meta Description</label>
+                                {{ form.meta_description }}
+                                {% if form.meta_description.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.meta_description.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Deskripsi SEO (opsional, maksimal 160 karakter)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="form-section">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="button" class="btn btn-outline-info" onclick="previewNews()">
+                                <i class="fas fa-eye mr-1"></i>Preview
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary mr-2" onclick="resetForm()">
+                                <i class="fas fa-undo mr-1"></i>Reset
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save mr-1"></i>Simpan Berita
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+$(document).ready(function() {
+    // Wait for Summernote to be available
+    function initializeEditors() {
+        if (typeof $.fn.summernote === 'function') {
+            // Initialize main content Summernote editor
+            $('#id_content').summernote({
+                height: 400,
+                minHeight: 300,
+                maxHeight: 600,
+                focus: false,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'underline', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['fontsize', ['fontsize']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture', 'video']],
+                    ['view', ['fullscreen', 'codeview', 'help']]
+                ],
+                styleTags: [
+                    'p',
+                    { title: 'Heading 1', tag: 'h1', className: 'heading1', value: 'h1' },
+                    { title: 'Heading 2', tag: 'h2', className: 'heading2', value: 'h2' },
+                    { title: 'Heading 3', tag: 'h3', className: 'heading3', value: 'h3' },
+                    { title: 'Heading 4', tag: 'h4', className: 'heading4', value: 'h4' },
+                    { title: 'Heading 5', tag: 'h5', className: 'heading5', value: 'h5' },
+                    { title: 'Heading 6', tag: 'h6', className: 'heading6', value: 'h6' }
+                ],
+                fontNames: ['Poppins', 'Arial', 'Helvetica', 'Times New Roman', 'Courier New'],
+                fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '36', '48'],
+                callbacks: {
+                    onChange: function(contents, $editable) {
+                        // Preview update removed - handled by forms.py
+                    },
+                    onInit: function() {
+                        // Set default font family
+                        $(this).summernote('fontName', 'Poppins');
+                    }
+                }
+            });
+            
+            // Configure excerpt Summernote editor with Summonote support
+            // The editor is already initialized by Django Summernote, we just need to configure it
+            $('#id_excerpt').on('summernote.init', function() {
+                // Apply Summonote styling if checkbox is checked
+                applySummonoteStyling();
+                // Initial preview update
+                updateExcerptPreview();
+            });
+            
+            // Listen for changes in excerpt editor
+            $('#id_excerpt').on('summernote.change', function() {
+                updateExcerptPreview();
+            });
+            
+            // Form initialization
+            $('#id_status').on('change', function() {
+                toggleConditionalFields();
+            });
+            toggleConditionalFields();
+            
+            // Update excerpt preview when summonote checkbox changes
+            $('#id_is_summonote').on('change', function() {
+                applySummonoteStyling();
+                updateExcerptPreview();
+            });
+            
+            // Initial Summonote styling check
+            applySummonoteStyling();
+            
+            // Re-apply styling when Summernote is ready
+            $(document).on('summernote.init', '#id_excerpt', function() {
+                applySummonoteStyling();
+                updateExcerptPreview();
+            });
+            
+        } else {
+            // Retry after 100ms if Summernote is not yet loaded
+            setTimeout(initializeEditors, 100);
+        }
+    }
+    
+    // Start initialization
+    initializeEditors();
+});
+
+function applySummonoteStyling() {
+    const isSummonote = document.getElementById('id_is_summonote').checked;
+    const excerptContainer = document.getElementById('excerpt-editor-container');
+    const summonoteIndicator = document.getElementById('summonote-indicator');
+    
+    if (isSummonote) {
+        excerptContainer.classList.add('summonote-editor');
+        summonoteIndicator.style.display = 'inline-flex';
+        
+        // Apply Summonote styling to the Summernote editor
+        const summernoteEditor = $('#id_excerpt').next('.note-editor');
+        if (summernoteEditor.length > 0) {
+            summernoteEditor.addClass('summonote-styled');
+        }
+    } else {
+        excerptContainer.classList.remove('summonote-editor');
+        summonoteIndicator.style.display = 'none';
+        
+        // Remove Summonote styling from the Summernote editor
+        const summernoteEditor = $('#id_excerpt').next('.note-editor');
+        if (summernoteEditor.length > 0) {
+            summernoteEditor.removeClass('summonote-styled');
+        }
+    }
+}
+
+function toggleConditionalFields() {
+    const status = document.getElementById('id_status').value;
+    const scheduledField = document.getElementById('scheduled-date-field');
+
+    if (status === 'scheduled') {
+        scheduledField.classList.add('show');
+        document.getElementById('id_scheduled_date').required = true;
+    } else {
+        scheduledField.classList.remove('show');
+        document.getElementById('id_scheduled_date').required = false;
+    }
+}
+
+function previewNews() {
+    const title = document.getElementById('id_title').value;
+    let content = '';
+    let excerpt = '';
+    
+    // Get content from Summernote editor safely
+    try {
+        if (typeof $.fn.summernote === 'function' && $('#id_content').summernote('code')) {
+            content = $('#id_content').summernote('code');
+        } else {
+            content = document.getElementById('id_content').value;
+        }
+    } catch (error) {
+        content = document.getElementById('id_content').value;
+        console.warn('Summernote content error:', error);
+    }
+    
+    // Get excerpt from Summernote editor if available
+    try {
+        if (typeof $.fn.summernote === 'function' && $('#id_excerpt').length > 0) {
+            // Check if Summernote is initialized
+            if ($('#id_excerpt').next('.note-editor').length > 0) {
+                excerpt = $('#id_excerpt').summernote('code');
+            } else {
+                excerpt = document.getElementById('id_excerpt').value;
+            }
+        } else {
+            excerpt = document.getElementById('id_excerpt').value;
+        }
+    } catch (error) {
+        // Fallback to textarea value if Summernote fails
+        excerpt = document.getElementById('id_excerpt').value;
+        console.warn('Summernote excerpt error in preview:', error);
+    }
+    
+    const isSummonote = document.getElementById('id_is_summonote').checked;
+    
+    if (!title || !content) {
+        alert('Judul dan konten harus diisi untuk preview');
+        return;
+    }
+    
+    // Validate content is not just empty HTML tags
+    const contentText = content.replace(/<[^>]*>/g, '').trim();
+    if (!contentText) {
+        alert('Konten tidak boleh kosong');
+        return;
+    }
+    
+    // Create excerpt HTML based on Summonote status
+    let excerptHTML = '';
+    if (excerpt) {
+        const excerptText = excerpt.replace(/<[^>]*>/g, '').trim();
+        if (excerptText) {
+            if (isSummonote) {
+                excerptHTML = `
+                    <div class="summonote-excerpt-preview" style="
+                        border-left: 3px solid #F97316;
+                        background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(251, 146, 60, 0.1));
+                        padding: 1rem 1.25rem;
+                        border-radius: 0 6px 6px 0;
+                        margin: 1rem 0;
+                        box-shadow: 0 2px 4px rgba(249, 115, 22, 0.1);
+                    ">
+                        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                            <i class="fas fa-sticky-note" style="color: #F97316; font-size: 1.125rem; margin-right: 0.5rem;"></i>
+                            <span style="color: #F97316; font-weight: 600; font-size: 0.875rem;">Summonote Excerpt</span>
+                        </div>
+                        <div style="color: #374151; margin: 0; line-height: 1.6; font-style: italic;">${excerpt}</div>
+                    </div>
+                `;
+            } else {
+                excerptHTML = `<div class="excerpt" style="background: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0;"><strong>Ringkasan:</strong> ${excerpt}</div>`;
+            }
+        }
+    }
+    
+    // Create preview window
+    const previewWindow = window.open('', '_blank', 'width=800,height=600');
+    previewWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Preview: ${title}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+                .content { line-height: 1.6; }
+                .summonote-excerpt-preview { margin: 20px 0; }
+                .excerpt { margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <h1>${title}</h1>
+            ${excerptHTML}
+            <div class="content">${content}</div>
+        </body>
+        </html>
+    `);
+    previewWindow.document.close();
+}
+
+function resetForm() {
+    if (confirm('Apakah Anda yakin ingin mereset form? Semua data yang belum disimpan akan hilang.')) {
+        document.getElementById('newsForm').reset();
+        toggleConditionalFields();
+    }
+}
+
+function showError(message) {
+    alert('Error: ' + message);
+}
+
+function showSuccess(message) {
+    alert('Success: ' + message);
+}
+
+function updateExcerptPreview() {
+    let excerpt = '';
+    const isSummonote = document.getElementById('id_is_summonote').checked;
+    const previewDiv = document.getElementById('excerpt-preview');
+    
+    // Get excerpt content from Summernote editor if available, otherwise from textarea
+    try {
+        if (typeof $.fn.summernote === 'function' && $('#id_excerpt').length > 0) {
+            // Check if Summernote is initialized
+            if ($('#id_excerpt').next('.note-editor').length > 0) {
+                excerpt = $('#id_excerpt').summernote('code');
+            } else {
+                excerpt = document.getElementById('id_excerpt').value;
+            }
+        } else {
+            excerpt = document.getElementById('id_excerpt').value;
+        }
+    } catch (error) {
+        // Fallback to textarea value if Summernote fails
+        excerpt = document.getElementById('id_excerpt').value;
+        console.warn('Summernote error:', error);
+    }
+    
+    // Strip HTML tags for plain text excerpt
+    const plainText = excerpt.replace(/<[^>]*>/g, '').trim();
+    
+    if (!plainText) {
+        previewDiv.innerHTML = '<p class="text-muted"><i class="fas fa-info-circle mr-1"></i>Tidak ada ringkasan</p>';
+        return;
+    }
+    
+    // Clean up excerpt HTML for better display
+    let cleanExcerpt = excerpt;
+    if (cleanExcerpt.includes('<div style="font-family: \'Poppins\', sans-serif; line-height: 1.8;">')) {
+        // Remove wrapper div and extract content
+        cleanExcerpt = cleanExcerpt.replace(/<div[^>]*>/, '').replace(/<\/div>$/, '');
+    }
+    
+    // Additional cleanup for better display
+    cleanExcerpt = cleanExcerpt.replace(/<div[^>]*style="[^"]*font-family:[^"]*"[^>]*>/g, '');
+    cleanExcerpt = cleanExcerpt.replace(/<\/div>/g, '');
+    
+    // Remove empty paragraphs and clean up whitespace
+    cleanExcerpt = cleanExcerpt.replace(/<p[^>]*>\s*<\/p>/g, '');
+    cleanExcerpt = cleanExcerpt.replace(/\s+/g, ' ').trim();
+    
+    // If excerpt is still empty after cleanup, show default message
+    if (!cleanExcerpt || cleanExcerpt.trim() === '') {
+        previewDiv.innerHTML = '<p class="text-muted"><i class="fas fa-info-circle mr-1"></i>Tidak ada ringkasan</p>';
+        return;
+    }
+    
+    // Final validation - check if we have actual content
+    const finalText = cleanExcerpt.replace(/<[^>]*>/g, '').trim();
+    if (!finalText) {
+        previewDiv.innerHTML = '<p class="text-muted"><i class="fas fa-info-circle mr-1"></i>Tidak ada ringkasan</p>';
+        return;
+    }
+    
+    // Debug log for troubleshooting
+    console.log('Original excerpt:', excerpt);
+    console.log('Clean excerpt:', cleanExcerpt);
+    console.log('Final text:', finalText);
+    
+    if (isSummonote) {
+        // Styling untuk Summonote excerpt dengan HTML content
+        previewDiv.innerHTML = `
+            <div class="summonote-excerpt-preview" style="
+                border-left: 3px solid #F97316;
+                background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(251, 146, 60, 0.1));
+                padding: 1rem 1.25rem;
+                border-radius: 0 6px 6px 0;
+                margin: 1rem 0;
+                box-shadow: 0 2px 4px rgba(249, 115, 22, 0.1);
+            ">
+                <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                    <i class="fas fa-sticky-note" style="color: #F97316; font-size: 1.125rem; margin-right: 0.5rem;"></i>
+                    <span style="color: #F97316; font-weight: 600; font-size: 0.875rem;">Summonote Excerpt</span>
+                </div>
+                <div style="color: #374151; margin: 0; line-height: 1.6; font-style: italic;">${cleanExcerpt}</div>
+            </div>
+        `;
+    } else {
+        // Styling untuk excerpt biasa dengan HTML content
+        previewDiv.innerHTML = `<div style="color: #6b7280; font-style: italic; margin: 1rem 0;">${cleanExcerpt}</div>`;
+    }
+}
+</script>
+{% endblock %}

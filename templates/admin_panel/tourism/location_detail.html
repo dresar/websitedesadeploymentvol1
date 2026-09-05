@@ -1,0 +1,272 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Detail Lokasi Wisata{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="td-wrapper">
+
+    <a href="{% url 'admin_panel:tourism_locations_list' %}" class="td-back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Daftar Lokasi
+    </a>
+
+    <div class="td-header">
+        <div class="td-header-content">
+            <div class="td-icon-wrapper">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+
+            <div class="td-header-info">
+                <h1>{{ location.title }}</h1>
+                <p class="td-header-subtitle">{{ location.short_description|safe|default:"Lokasi wisata menarik" }}</p>
+
+                <div class="td-meta-row">
+                    <div class="td-meta-item">
+                        <i class="fas fa-tag"></i>
+                        <span>{{ location.category.name }}</span>
+                    </div>
+                    <div class="td-meta-item">
+                        <i class="fas fa-{% if location.is_active %}check-circle{% else %}times-circle{% endif %}"></i>
+                        <span>{% if location.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</span>
+                    </div>
+                    {% if location.featured %}
+                    <div class="td-meta-item">
+                        <i class="fas fa-star"></i>
+                        <span>Unggulan</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="td-actions">
+                <a href="{% url 'admin_panel:tourism_location_edit' location.id %}" class="td-btn td-btn-primary">
+                    <i class="fas fa-edit"></i>
+                    Edit
+                </a>
+                <button onclick="deleteLocation({{ location.id }})" class="td-btn td-btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="td-stats-grid">
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-primary">
+                <i class="fas fa-{% if location.is_active %}check-circle{% else %}times-circle{% endif %}"></i>
+            </div>
+            <div class="td-stat-label">Status</div>
+            <div class="td-stat-value">{% if location.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</div>
+        </div>
+
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-warning">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="td-stat-label">Unggulan</div>
+            <div class="td-stat-value">{% if location.featured %}Ya{% else %}Tidak{% endif %}</div>
+        </div>
+
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-success">
+                <i class="fas fa-comment"></i>
+            </div>
+            <div class="td-stat-label">Total Review</div>
+            <div class="td-stat-value">{{ location.reviews.count }}</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informasi Lokasi
+                    </h3>
+                </div>
+
+                <div class="td-info-grid">
+                    <div class="td-info-row">
+                        <div class="td-info-label">Nama:</div>
+                        <div class="td-info-value">{{ location.title }}</div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Kategori:</div>
+                        <div class="td-info-value">
+                            <span class="td-badge td-badge-primary">{{ location.category.name }}</span>
+                        </div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Alamat:</div>
+                        <div class="td-info-value">{{ location.address }}</div>
+                    </div>
+
+                    {% if location.contact_phone %}
+                    <div class="td-info-row">
+                        <div class="td-info-label">Telepon:</div>
+                        <div class="td-info-value">{{ location.contact_phone }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if location.latitude and location.longitude %}
+                    <div class="td-info-row">
+                        <div class="td-info-label">Koordinat:</div>
+                        <div class="td-info-value">{{ location.latitude }}, {{ location.longitude }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Status:</div>
+                        <div class="td-info-value">
+                            {% if location.is_active %}
+                                <span class="td-badge td-badge-success">Aktif</span>
+                            {% else %}
+                                <span class="td-badge td-badge-gray">Tidak Aktif</span>
+                            {% endif %}
+
+                            {% if location.featured %}
+                                <span class="td-badge td-badge-warning">Unggulan</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if location.full_description %}
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-align-left"></i>
+                        Deskripsi
+                    </h3>
+                </div>
+                <div class="td-info-value">
+                    {{ location.full_description|safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if location.main_image %}
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-image"></i>
+                        Gambar Lokasi
+                    </h3>
+                </div>
+                <div class="td-image-wrapper">
+                    <img src="{{ location.main_image.url }}" alt="{{ location.title }}" class="td-image">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="td-sidebar">
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-tools"></i>
+                        Aksi Cepat
+                    </h6>
+                    <div class="td-actions-list">
+                        <a href="{% url 'admin_panel:tourism_location_edit' location.id %}" class="td-btn td-btn-primary">
+                            <i class="fas fa-edit"></i>
+                            Edit Lokasi
+                        </a>
+
+                        <a href="{% url 'admin_panel:tourism_location_toggle_status' location.id %}" class="td-btn td-btn-{% if location.is_active %}warning{% else %}success{% endif %}">
+                            <i class="fas fa-{% if location.is_active %}pause{% else %}play{% endif %}"></i>
+                            {% if location.is_active %}Nonaktifkan{% else %}Aktifkan{% endif %}
+                        </a>
+
+                        <a href="{% url 'admin_panel:tourism_location_toggle_featured' location.id %}" class="td-btn td-btn-{% if location.featured %}secondary{% else %}warning{% endif %}">
+                            <i class="fas fa-star"></i>
+                            {% if location.featured %}Hapus Unggulan{% else %}Jadikan Unggulan{% endif %}
+                        </a>
+                    </div>
+                </div>
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Statistik
+                    </h6>
+                    <div class="td-info-grid">
+                        <div class="td-info-row">
+                            <div class="td-info-label">Review:</div>
+                            <div class="td-info-value td-info-value-large">{{ location.reviews.count }}</div>
+                        </div>
+
+                        <div class="td-info-row">
+                            <div class="td-info-label">Rating:</div>
+                            <div class="td-info-value td-info-value-large">{{ location.ratings.count }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-info-circle"></i>
+                        Detail
+                    </h6>
+                    <div class="td-info-grid">
+                        <div class="td-info-row">
+                            <div class="td-info-label">Dibuat:</div>
+                            <div class="td-info-value">{{ location.created_at|date:"d M Y H:i" }}</div>
+                        </div>
+
+                        <div class="td-info-row">
+                            <div class="td-info-label">Diperbarui:</div>
+                            <div class="td-info-value">{{ location.updated_at|date:"d M Y H:i" }}</div>
+                        </div>
+
+                        {% if location.created_by %}
+                        <div class="td-info-row">
+                            <div class="td-info-label">Dibuat oleh:</div>
+                            <div class="td-info-value">{{ location.created_by.get_full_name|default:location.created_by.username }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>function deleteLocation(locationId) {
+    if (confirm('Apakah Anda yakin ingin menghapus lokasi ini?\n\nTindakan ini tidak dapat dibatalkan.')) {
+        fetch(`{% url 'admin_panel:tourism_location_delete' 0 %}`.replace('0', locationId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '{% url "admin_panel:tourism_locations_list" %}';
+            } else {
+                showError('Gagal menghapus lokasi: ' + (data.error || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Terjadi kesalahan saat menghapus lokasi');
+        });
+    }
+}
+</script>
+{% endblock %}

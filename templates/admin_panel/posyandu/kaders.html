@@ -1,0 +1,448 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Kader Posyandu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_list.css' %}?v=4.0">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% csrf_token %}
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-user-nurse text-primary mr-2"></i>
+                        Kader Posyandu
+                    </h2>
+                    <p class="text-muted mb-0 d-none d-md-block">Kelola data kader posyandu</p>
+                </div>
+                <div>
+                    <a href="{% url 'admin_panel:posyandu:kader_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus mr-1"></i>
+                        <span class="d-none d-sm-inline">Tambah</span>
+                    </a>
+                </div>
+            </div>
+            <a href="{% url 'admin_panel:posyandu:posyandu_admin' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-arrow-left mr-1"></i>
+                Kembali
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card">
+                <div class="stats-number" id="totalKaders">0</div>
+                <div class="stats-label">Total</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="stats-number" id="activeKaders">0</div>
+                <div class="stats-label">Aktif</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="stats-number" id="trainedKaders">0</div>
+                <div class="stats-label">Terlatih</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="stats-number" id="volunteerKaders">0</div>
+                <div class="stats-label">Relawan</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="filter-section">
+                <div class="row">
+                    <div class="col-12 col-md-4 mb-2">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" 
+                                   id="searchInput" 
+                                   class="form-control" 
+                                   placeholder="Cari nama atau NIK...">
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <select id="statusFilter" class="form-control">
+                            <option value="">Semua Status</option>
+                            <option value="aktif">Aktif</option>
+                            <option value="nonaktif">Non-Aktif</option>
+                            <option value="cuti">Cuti</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <select id="jabatanFilter" class="form-control">
+                            <option value="">Semua Jabatan</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 mb-2">
+                        <button id="resetFilters" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-redo mr-1"></i>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" id="kadersList">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Memuat data kader...</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Paginasi kader">
+                <ul class="pagination justify-content-center" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteKaderModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Konfirmasi Hapus
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Apakah Anda yakin ingin menghapus kader ini?</p>
+                <p class="text-muted small mb-0">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash mr-1"></i>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+if (typeof jQuery === 'undefined') {
+    console.error('❌ jQuery is not loaded! Kaders page will not work properly.');
+} else {
+    console.log('✅ jQuery loaded successfully for Kaders page');
+}
+
+$(document).ready(function() {
+    console.log('🔧 Kaders page initialization started...');
+    
+    let currentPage = 1;
+    let currentFilters = {
+        search: '',
+        jabatan: '',
+        status: ''
+    };
+    loadKaders();
+    
+    console.log('✅ Kaders page initialization complete!');
+
+    $('#searchInput').on('input', function() {
+        currentFilters.search = $(this).val();
+        currentPage = 1;
+        loadKaders();
+    });
+
+    $('#statusFilter').on('change', function() {
+        currentFilters.status = $(this).val();
+        currentPage = 1;
+        loadKaders();
+    });
+
+    $('#jabatanFilter').on('change', function() {
+        currentFilters.jabatan = $(this).val();
+        currentPage = 1;
+        loadKaders();
+    });
+
+    $('#resetFilters').on('click', function() {
+        $('#searchInput').val('');
+        $('#statusFilter').val('');
+        $('#jabatanFilter').val('');
+        currentFilters = { search: '', jabatan: '', status: '' };
+        currentPage = 1;
+        loadKaders();
+    });
+
+    function loadKaders() {
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_kader_list" %}',
+            method: 'GET',
+            data: {
+                page: currentPage,
+                search: currentFilters.search,
+                jabatan: currentFilters.jabatan,
+                status: currentFilters.status
+            },
+            success: function(response) {
+                console.log('✅ API Response:', response);
+                
+                displayKaders(response.results || []);
+                updatePagination(response.pagination || {});
+                updateStatistics(response.statistics || {});
+                updateJabatanFilter(response.statistics || {});
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ API Error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
+                
+                $('#kadersList').html(`
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <strong>Error ${xhr.status}:</strong> ${getErrorMessage(xhr)}
+                        </div>
+                    </div>
+                `);
+            }
+        });
+    }
+
+    function getErrorMessage(xhr) {
+        if (xhr.status === 404) {
+            return 'API endpoint tidak ditemukan. Silakan hubungi administrator.';
+        } else if (xhr.status === 500) {
+            return 'Server error. Silakan coba lagi atau hubungi administrator.';
+        } else if (xhr.status === 0) {
+            return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+        } else {
+            return xhr.statusText || 'Terjadi kesalahan saat memuat data.';
+        }
+    }
+
+    function displayKaders(kaders) {
+        const container = $('#kadersList');
+
+        if (kaders.length === 0) {
+            container.html(`
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="fas fa-user-nurse"></i>
+                        <h4>Tidak ada kader</h4>
+                        <p>Belum ada data kader yang tersedia.</p>
+                    </div>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+        kaders.forEach(function(kader) {
+            const statusClass = kader.status === 'aktif' ? 'success' : (kader.status === 'cuti' ? 'warning' : 'secondary');
+            const statusLabel = kader.status === 'aktif' ? 'Aktif' : (kader.status === 'cuti' ? 'Cuti' : 'Non-Aktif');
+
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="kader-card">
+                        <div class="text-center mb-3">
+                            <img src="${kader.avatar || '/static/images/defaults/avatar-placeholder.svg'}"
+                                 alt="${kader.name || 'Kader'}" 
+                                 class="kader-avatar"
+                                 onerror="this.src='/static/images/defaults/avatar-placeholder.svg'">
+                            <h6 class="mb-2 mt-2">${kader.name || 'Tidak ada nama'}</h6>
+                            <span class="badge badge-primary">${kader.jabatan || 'Tidak Ada Jabatan'}</span>
+                        </div>
+
+                        <div class="kader-info mb-3">
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <small class="text-muted d-block">NIK:</small>
+                                    <strong>${kader.nik || '-'}</strong>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <small class="text-muted d-block">Status:</small>
+                                    <strong class="text-${statusClass}">${statusLabel}</strong>
+                                </div>
+                                ${kader.posyandu_name ? `
+                                <div class="col-12 mb-2">
+                                    <small class="text-muted d-block">Posyandu:</small>
+                                    <strong>${kader.posyandu_name}</strong>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${kader.nomor_hp || kader.tanggal_mulai ? `
+                        <div class="contact-info mb-3">
+                            ${kader.nomor_hp ? `
+                                <div class="contact-item">
+                                    <i class="fas fa-phone"></i>
+                                    <span>${kader.nomor_hp}</span>
+                                </div>
+                            ` : ''}
+                            ${kader.tanggal_mulai ? `
+                                <div class="contact-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Mulai: ${kader.tanggal_mulai}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
+
+                        <div class="action-buttons mt-3">
+                            <a href="/admin-panel/posyandu/kaders/${kader.id}/"
+                               class="btn btn-sm btn-outline-primary" 
+                               title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="/admin-panel/posyandu/kaders/${kader.id}/edit/"
+                               class="btn btn-sm btn-outline-warning" 
+                               title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                    onclick="deleteKader(${kader.id})" 
+                                    title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.html(html);
+    }
+
+    function updateJabatanFilter(stats) {
+        if (!stats.jabatan_distribution) return;
+        
+        const jabatanDist = stats.jabatan_distribution;
+        const jabatans = Object.keys(jabatanDist).sort();
+        
+        let options = '<option value="">Semua Jabatan</option>';
+        jabatans.forEach(function(jabatan) {
+            const count = jabatanDist[jabatan];
+            options += `<option value="${jabatan}">${jabatan} (${count})</option>`;
+        });
+        
+        $('#jabatanFilter').html(options);
+        
+        if (currentFilters.jabatan) {
+            $('#jabatanFilter').val(currentFilters.jabatan);
+        }
+    }
+
+    function updateStatistics(stats) {
+        $('#totalKaders').text(stats.total || 0);
+        $('#activeKaders').text(stats.active || 0);
+        $('#trainedKaders').text(stats.trained || 0);
+        $('#volunteerKaders').text(stats.volunteer || 0);
+    }
+
+    function updatePagination(pagination) {
+        const container = $('#pagination');
+        
+        if (!pagination || pagination.total_pages <= 1) {
+            container.empty();
+            return;
+        }
+
+        let html = '';
+
+        html += `
+            <li class="page-item ${!pagination.has_previous ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="1">Awal</a>
+            </li>
+            <li class="page-item ${!pagination.has_previous ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${pagination.current_page - 1}">Sebelumnya</a>
+            </li>
+        `;
+
+        for (let i = 1; i <= pagination.total_pages; i++) {
+            if (
+                i === 1 || 
+                i === pagination.total_pages || 
+                (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)
+            ) {
+                html += `
+                    <li class="page-item ${i === pagination.current_page ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            } else if (
+                i === pagination.current_page - 3 || 
+                i === pagination.current_page + 3
+            ) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        html += `
+            <li class="page-item ${!pagination.has_next ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${pagination.current_page + 1}">Selanjutnya</a>
+            </li>
+            <li class="page-item ${!pagination.has_next ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${pagination.total_pages}">Akhir</a>
+            </li>
+        `;
+
+        container.html(html);
+
+        container.find('a').on('click', function(e) {
+            e.preventDefault();
+            if (!$(this).parent().hasClass('disabled') && !$(this).parent().hasClass('active')) {
+                currentPage = parseInt($(this).data('page'));
+                loadKaders();
+                $('html, body').animate({ scrollTop: 0 }, 300);
+            }
+        });
+    }
+
+    window.deleteKader = function(id) {
+        $('#deleteKaderModal').modal('show');
+        $('#confirmDelete').off('click').on('click', function() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            $.ajax({
+                url: `{% url "admin_panel:posyandu:api_kader_delete" 0 %}`.replace('0', id),
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken },
+                success: function(response) {
+                    $('#deleteKaderModal').modal('hide');
+                    showSuccess('Kader berhasil dihapus');
+                    loadKaders();
+                },
+                error: function(xhr, status, error) {
+                    $('#deleteKaderModal').modal('hide');
+                    showError('Gagal menghapus kader: ' + (xhr.statusText || error));
+                }
+            });
+        });
+    };
+});
+</script>
+{% endblock %}

@@ -1,0 +1,649 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}{{ form_title|default:"Form RW" }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/references/references-general.css' %}">
+<style>
+
+    .form-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .form-body {
+        padding: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Ensure Django form fields have proper styling */
+    #id_dusun, #id_rw_number, #id_description {
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    #id_dusun:focus, #id_rw_number:focus, #id_description:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+
+    /* Ensure select options are visible */
+    #id_dusun option {
+        padding: 0.5rem;
+        background: white;
+        color: #374151;
+    }
+
+    #id_dusun option:checked {
+        background: #10b981;
+        color: white;
+    }
+
+    .search-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        margin-top: 0.5rem;
+    }
+
+    .search-result-item {
+        padding: 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .search-result-item:hover {
+        background: #f9fafb;
+    }
+
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .avatar-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .result-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .result-name {
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .result-details {
+        font-size: 0.85rem;
+        color: #6b7280;
+        line-height: 1.4;
+    }
+
+    .result-details i {
+        width: 16px;
+        margin-right: 4px;
+    }
+
+    .ketua-selected-badge {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ketua-selected-badge i {
+        font-size: 1.25rem;
+    }
+
+    .ketua-selected-badge span:first-of-type {
+        flex: 1;
+        font-weight: 600;
+    }
+
+    .remove-badge {
+        cursor: pointer;
+        font-size: 1.5rem;
+        line-height: 1;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+
+    .remove-badge:hover {
+        opacity: 1;
+    }
+
+    .no-results {
+        padding: 2rem;
+        text-align: center;
+        color: #9ca3af;
+    }
+
+    .loading-search {
+        padding: 2rem;
+        text-align: center;
+        color: #10b981;
+    }
+
+    .loading-search i {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-secondary-custom {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .btn-secondary-custom:hover {
+        background: #e5e7eb;
+    }
+
+    .required-mark {
+        color: #ef4444;
+        margin-left: 2px;
+    }
+
+    .form-text {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .form-text i {
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 576px) {
+        .form-header {
+            padding: 1rem;
+        }
+
+        .form-header h4 {
+            font-size: 1.25rem;
+        }
+
+        .form-body {
+            padding: 1rem;
+        }
+
+        .form-control, .form-select {
+            font-size: 16px;
+        }
+
+        .btn-action {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .search-result-item {
+            padding: 0.75rem;
+        }
+
+        .avatar-placeholder {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+
+        .result-name {
+            font-size: 0.9rem;
+        }
+
+        .result-details {
+            font-size: 0.8rem;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .form-body {
+            padding: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb bg-transparent p-0 mb-2">
+            <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'admin_panel:references_rw_list' %}">Data RW</a></li>
+            <li class="breadcrumb-item active">{{ form_title|default:"Form RW" }}</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-8">
+            <div class="form-card">
+                <div class="form-header">
+                    <h4 class="mb-1 d-flex align-items-center">
+                        <i class="fas fa-{% if rw %}edit{% else %}plus{% endif %} me-2"></i>
+                        {{ form_title|default:"Form RW" }}
+                    </h4>
+                    <p class="mb-0 opacity-90 small">{{ form_subtitle|default:"Lengkapi formulir di bawah ini dengan data yang valid" }}</p>
+                </div>
+
+                {% if form.errors %}
+                <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3" role="alert">
+                    <strong><i class="fas fa-exclamation-triangle me-2"></i>Terjadi kesalahan:</strong>
+                    <ul class="mb-0 mt-2">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ field|title }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
+                <div class="form-body">
+                    <form method="post" id="rwForm">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="{{ form.dusun.id_for_label }}" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ form.dusun.label }}<span class="required-mark">*</span>
+                            </label>
+                            {{ form.dusun }}
+                            {% if form.dusun.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.dusun.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.rw_number.id_for_label }}" class="form-label">
+                                <i class="fas fa-hashtag me-1"></i>
+                                {{ form.rw_number.label }}<span class="required-mark">*</span>
+                            </label>
+                            {{ form.rw_number }}
+                            {% if form.rw_number.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.rw_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="ketua_rw_search" class="form-label">
+                                <i class="fas fa-user-tie me-1"></i>
+                                Ketua RW
+                            </label>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="ketua_rw_search"
+                                       placeholder="Ketik minimal 2 karakter untuk mencari..."
+                                       autocomplete="off" disabled>
+                                <input type="hidden" id="ketua_rw" name="ketua_rw" value="{{ rw.ketua_rw.id|default:'' }}">
+
+                                <div id="ketua_rw_dropdown" class="search-dropdown" style="display: none;">
+                                    <div id="ketua_rw_results"></div>
+                                </div>
+
+                                <div id="ketua_rw_selected" style="{% if not rw.ketua_rw %}display: none;{% endif %}">
+                                    <div class="ketua-selected-badge">
+                                        <i class="fas fa-user-check"></i>
+                                        <span id="ketua_rw_name_display">{{ rw.ketua_rw.name|default:'' }}</span>
+                                        <span class="remove-badge" onclick="clearSelectionRW()">×</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Pilih Dusun terlebih dahulu, lalu cari ketua RW (usia minimal 17 tahun)</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left me-1"></i>
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex flex-column flex-md-row gap-2 justify-content-end mt-4">
+                            <a href="{% url 'admin_panel:references_rw_list' %}" class="btn btn-secondary-custom btn-action">
+                                <i class="fas fa-times me-2"></i>
+                                Batal
+                            </a>
+                            <button type="submit" class="btn btn-primary-custom btn-action" id="submitBtn">
+                                <i class="fas fa-save me-2"></i>
+                                <span id="submitBtnText">{% if rw %}Update{% else %}Simpan{% endif %}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>let searchTimeout;
+
+$(document).ready(function() {
+    console.log('RW Form loaded');
+
+    // Load dusun options and set selected value for edit mode
+    loadDusunOptionsForEdit();
+
+    $('#id_dusun').on('change', function() {
+        const dusunId = $(this).val();
+        if (dusunId) {
+            $('#ketua_rw_search').prop('disabled', false);
+        } else {
+            $('#ketua_rw_search').prop('disabled', true);
+            clearSelectionRW();
+        }
+    });
+
+    $('#ketua_rw_search').on('input', function() {
+        const query = $(this).val();
+        searchPenduduk(query);
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#ketua_rw_search, #ketua_rw_dropdown').length) {
+            hideDropdown();
+        }
+    });
+
+    $('#rwForm').on('submit', function(e) {
+        const dusunId = $('#id_dusun').val();
+
+        if (!dusunId) {
+            e.preventDefault();
+            showWarning('Silakan pilih Dusun terlebih dahulu');
+            return false;
+        }
+
+        const submitBtn = $('#submitBtn');
+        const submitBtnText = $('#submitBtnText');
+
+        submitBtn.prop('disabled', true);
+        submitBtnText.html('<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan...');
+
+    });
+});
+
+function loadDusunOptionsForEdit() {
+    // Get the current dusun ID from the form (if editing)
+    const currentDusunId = {% if rw and rw.dusun %}{{ rw.dusun.id }}{% else %}null{% endif %};
+    
+    console.log('Loading dusun options for edit mode, current dusun ID:', currentDusunId);
+    
+    fetch('{% url "admin_panel:api_references_dusun_list" %}')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Dusun API response:', data);
+            if (data.success && data.data) {
+                const select = $('#id_dusun');
+                
+                // Clear existing options
+                select.empty();
+                
+                // Add default option
+                select.append('<option value="">Pilih Dusun</option>');
+                
+                // Add all dusun options
+                data.data.forEach(function(dusun) {
+                    const dusunName = dusun.name || dusun.nama || dusun.nama_dusun || 'Tidak ada nama';
+                    const option = $(`<option value="${dusun.id}">${dusunName}</option>`);
+                    
+                    // Mark as selected if this is the current dusun
+                    if (currentDusunId && dusun.id == currentDusunId) {
+                        option.prop('selected', true);
+                        console.log('Selected dusun:', dusunName, 'ID:', dusun.id);
+                    }
+                    
+                    select.append(option);
+                });
+                
+                // Enable ketua RW search if dusun is selected
+                if (currentDusunId) {
+                    $('#ketua_rw_search').prop('disabled', false);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dusun options:', error);
+            showWarning('Gagal memuat data dusun. Silakan refresh halaman.');
+        });
+}
+
+function searchPenduduk(query) {
+    const dusunId = $('#id_dusun').val();
+
+    if (!dusunId || query.length < 2) {
+        hideDropdown();
+        return;
+    }
+
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        showSearchLoading();
+
+        const url = `/admin-panel/api/references/penduduk-by-dusun/${dusunId}/?q=${encodeURIComponent(query)}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    displaySearchResults(data.data);
+                } else {
+                    showNoResults();
+                }
+            })
+            .catch(error => {
+                console.error('Error searching penduduk:', error);
+                showNoResults();
+            });
+    }, 300);
+}
+
+function showSearchLoading() {
+    const results = document.getElementById('ketua_rw_results');
+    results.innerHTML = '<div class="loading-search"><i class="fas fa-spinner"></i> Mencari...</div>';
+    showDropdown();
+}
+
+function displaySearchResults(pendudukList) {
+    const results = document.getElementById('ketua_rw_results');
+
+    if (pendudukList.length === 0) {
+        showNoResults();
+        return;
+    }
+
+    results.innerHTML = pendudukList.map(penduduk => {
+        const pendudukId = penduduk.id || '';
+        const pendudukName = (penduduk.name || 'Nama tidak tersedia').replace(/'/g, "\\'");
+        const nikDisplay = penduduk.nik || '-';
+        const phoneDisplay = penduduk.phone || '-';
+        const nameDisplay = penduduk.name || 'Nama tidak tersedia';
+
+        return `
+            <div class="search-result-item" data-penduduk-id="${pendudukId}" data-penduduk-name="${pendudukName}">
+                <div class="avatar-placeholder">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="result-info">
+                    <div class="result-name">${nameDisplay}</div>
+                    <div class="result-details">
+                        <i class="fas fa-id-card"></i>${nikDisplay}<br>
+                        <i class="fas fa-phone"></i>${phoneDisplay}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Add click event listeners
+    results.querySelectorAll('.search-result-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const id = this.getAttribute('data-penduduk-id');
+            const name = this.getAttribute('data-penduduk-name');
+            selectPenduduk(id, name);
+        });
+    });
+
+    showDropdown();
+}
+
+function showNoResults() {
+    const results = document.getElementById('ketua_rw_results');
+    results.innerHTML = '<div class="no-results"><i class="fas fa-search mb-2" style="font-size: 2rem;"></i><br>Tidak ada penduduk yang ditemukan</div>';
+    showDropdown();
+}
+
+function showDropdown() {
+    document.getElementById('ketua_rw_dropdown').style.display = 'block';
+}
+
+function hideDropdown() {
+    document.getElementById('ketua_rw_dropdown').style.display = 'none';
+}
+
+function selectPenduduk(id, name) {
+    document.getElementById('ketua_rw').value = id;
+    document.getElementById('ketua_rw_search').value = '';
+    document.getElementById('ketua_rw_name_display').textContent = name;
+    document.getElementById('ketua_rw_selected').style.display = 'block';
+    hideDropdown();
+}
+
+function clearSelectionRW() {
+    document.getElementById('ketua_rw').value = '';
+    document.getElementById('ketua_rw_search').value = '';
+    document.getElementById('ketua_rw_selected').style.display = 'none';
+    document.getElementById('ketua_rw_name_display').textContent = '';
+    hideDropdown();
+}
+
+function showWarning(message) {
+    // Create a simple alert for now, you can replace with a better notification system
+    alert(message);
+}
+</script>
+{% endblock %}
+

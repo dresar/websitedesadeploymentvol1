@@ -1,0 +1,510 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Manajemen Tag Berita{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/news/news_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="news-list-page">
+    <div class="container-fluid">
+        
+        <!-- Page Header -->
+        <div class="news-list-header">
+            <div class="news-list-header-content">
+                <div class="news-list-title-wrapper">
+                    <h1 class="news-list-main-title">
+                        <i class="fas fa-tags"></i>
+                        Manajemen Tag Berita
+                    </h1>
+                    <p class="news-list-subtitle">Kelola tag untuk mengorganisir dan mengkategorikan berita</p>
+                </div>
+                <div class="news-list-actions">
+                    <button class="news-list-header-btn news-list-header-btn-primary" data-toggle="modal" data-target="#createTagModal">
+                        <i class="fas fa-plus"></i>Tambah Tag
+                    </button>
+                    <a href="{% url 'admin_panel:news_dashboard' %}" class="news-list-header-btn news-list-header-btn-outline">
+                        <i class="fas fa-chart-pie"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="news-stats-bar" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center;">
+                <span style="font-size: 2rem; font-weight: 700;">{{ tags.paginator.count|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Total Tag</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #28a745, #20c997);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ tags|length|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Aktif</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #007bff, #0056b3);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ tags|length|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Populer</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #ffc107, #e0a800);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ tags|length|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Ditampilkan</span>
+            </div>
+        </div>
+
+        <!-- Tag Cloud -->
+        <div class="news-filter-section" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+            <h5 class="news-filter-title">
+                <i class="fas fa-cloud"></i>
+                Tag Cloud - Klik untuk filter
+            </h5>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem;">
+                {% for tag in tags %}
+                <a href="#" onclick="searchTagByName('{{ tag.name }}'); return false;" 
+                   style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 50px; background: linear-gradient(135deg, {{ tag.color }}20 0%, {{ tag.color }}10 100%); color: {{ tag.color }}; border: 2px solid {{ tag.color }}30; text-decoration: none; font-weight: 500; transition: all 0.3s ease; {% if tag.news_count > 10 %}font-size: 1.1rem;{% elif tag.news_count > 5 %}font-size: 1rem;{% else %}font-size: 0.9rem;{% endif %}">
+                    <span>{{ tag.name }}</span>
+                    <span style="background: {{ tag.color }}; color: white; padding: 0.2rem 0.5rem; border-radius: 50px; font-size: 0.75rem;">{{ tag.news_count }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Add Form -->
+        <div class="news-filter-section">
+            <h5 class="news-filter-title">
+                <i class="fas fa-plus-circle"></i>
+                Tambah Tag Cepat
+            </h5>
+            <form id="createTagForm" class="news-filter-form">
+                {% csrf_token %}
+                <div class="news-filter-group">
+                    <label for="tagName" class="news-filter-label">Nama Tag</label>
+                    <input type="text" class="news-filter-input" id="tagName" name="name" placeholder="Masukkan nama tag..." required>
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="tagColor" class="news-filter-label">Warna</label>
+                    <input type="color" class="news-filter-input" id="tagColor" name="color" value="#6c757d" style="height: 48px;">
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="tagDescription" class="news-filter-label">Deskripsi</label>
+                    <input type="text" class="news-filter-input" id="tagDescription" name="description" placeholder="Deskripsi singkat...">
+                </div>
+
+                <div class="news-filter-actions">
+                    <button type="submit" class="news-filter-btn news-filter-btn-primary">
+                        <i class="fas fa-save"></i> Simpan
+                    </button>
+                    <button type="reset" class="news-filter-btn news-filter-btn-reset">
+                        <i class="fas fa-times"></i> Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search & Sort -->
+        <div class="news-filter-section">
+            <h5 class="news-filter-title">
+                <i class="fas fa-search"></i>
+                Cari & Urutkan Tag
+            </h5>
+            <div class="news-filter-form">
+                <div class="news-filter-group">
+                    <label for="searchTags" class="news-filter-label">Cari Tag</label>
+                    <div class="news-filter-input-icon-wrapper">
+                        <i class="fas fa-search news-filter-input-icon"></i>
+                        <input type="text" class="news-filter-input news-filter-input-with-icon" 
+                               id="searchTags" placeholder="Ketik nama tag...">
+                    </div>
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="sortTags" class="news-filter-label">Urutkan</label>
+                    <select class="news-filter-select" id="sortTags">
+                        <option value="name">Nama A-Z</option>
+                        <option value="-name">Nama Z-A</option>
+                        <option value="-news_count">Paling Banyak Digunakan</option>
+                        <option value="news_count">Paling Sedikit Digunakan</option>
+                        <option value="-created_at">Terbaru</option>
+                        <option value="created_at">Terlama</option>
+                    </select>
+                </div>
+
+                <div class="news-filter-actions">
+                    <button class="news-filter-btn news-filter-btn-primary" onclick="searchTags()">
+                        <i class="fas fa-search"></i> Cari
+                    </button>
+                    <button class="news-filter-btn news-filter-btn-reset" onclick="resetSearch()">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tags Grid -->
+        <div class="news-grid-view" id="tagsList">
+            {% for tag in tags %}
+            <div class="news-item-card tag-item" data-name="{{ tag.name|lower }}" data-count="{{ tag.news_count }}">
+                <div class="news-item-content" style="padding-top: 1.5rem;">
+                    
+                    <!-- Tag Header -->
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <span style="width: 30px; height: 30px; border-radius: 50%; background-color: {{ tag.color }}; display: inline-block; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"></span>
+                        <h5 class="news-item-title" style="margin-bottom: 0; flex: 1;">
+                            {{ tag.name }}
+                        </h5>
+                    </div>
+
+                    <!-- Description -->
+                    {% if tag.description %}
+                    <p class="news-item-excerpt">{{ tag.description }}</p>
+                    {% else %}
+                    <p class="news-item-excerpt" style="color: #adb5bd; font-style: italic;">Tidak ada deskripsi</p>
+                    {% endif %}
+
+                    <!-- Stats -->
+                    <div class="news-item-stats">
+                        <div class="news-item-stat">
+                            <i class="fas fa-newspaper"></i>
+                            <span class="news-item-stat-number">{{ tag.news_count|default:0 }}</span>
+                            <span style="font-size: 0.75rem; margin-left: 0.25rem;">Berita</span>
+                        </div>
+                        <div class="news-item-stat">
+                            <i class="fas fa-eye"></i>
+                            <span class="news-item-stat-number">{{ tag.views_count|default:0 }}</span>
+                            <span style="font-size: 0.75rem; margin-left: 0.25rem;">Views</span>
+                        </div>
+                        <div class="news-item-stat">
+                            <i class="fas fa-heart"></i>
+                            <span class="news-item-stat-number">{{ tag.likes_count|default:0 }}</span>
+                            <span style="font-size: 0.75rem; margin-left: 0.25rem;">Likes</span>
+                        </div>
+                    </div>
+
+                    <!-- Meta Info -->
+                    <div class="news-item-meta" style="border-top: 1px solid #f0f0f0; padding-top: 1rem; margin-top: 1rem;">
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-calendar news-item-meta-icon"></i>
+                            <span>Dibuat: {{ tag.created_at|date:"d M Y" }}</span>
+                        </div>
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-palette news-item-meta-icon"></i>
+                            <span style="background: {{ tag.color }}; color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem;">{{ tag.color }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="news-item-actions">
+                        <button class="news-item-action-btn news-item-action-view" onclick="editTag({{ tag.id }})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="news-item-action-btn news-item-action-delete delete-btn" 
+                                data-id="{{ tag.id }}" data-title="{{ tag.name }}">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="news-empty-state">
+                    <i class="fas fa-tags news-empty-state-icon"></i>
+                    <h3 class="news-empty-state-title">Belum ada tag</h3>
+                    <p class="news-empty-state-text">Mulai dengan membuat tag pertama Anda.</p>
+                    <button class="news-empty-state-action" data-toggle="modal" data-target="#createTagModal">
+                        <i class="fas fa-plus"></i> Tambah Tag
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createTagModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 20px; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f8f9fa, #ffffff); border-radius: 20px 20px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-primary"></i> Tambah Tag Baru
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <form id="modalCreateTagForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="news-filter-label">Nama Tag</label>
+                        <input type="text" class="news-filter-input" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="news-filter-label">Warna</label>
+                        <input type="color" class="news-filter-input" name="color" value="#6c757d" style="height: 48px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="news-filter-label">Deskripsi</label>
+                        <textarea class="news-filter-input" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="background: #f8f9fa; border-radius: 0 0 20px 20px;">
+                <button type="button" class="news-filter-btn news-filter-btn-reset" data-dismiss="modal">Batal</button>
+                <button type="button" class="news-filter-btn news-filter-btn-primary" onclick="createTag()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editTagModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 20px; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f8f9fa, #ffffff); border-radius: 20px 20px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit text-primary"></i> Edit Tag
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 2rem;">
+                <form id="editTagForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="editTagId" name="id">
+                    <div class="form-group">
+                        <label class="news-filter-label">Nama Tag</label>
+                        <input type="text" class="news-filter-input" id="editTagName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="news-filter-label">Warna</label>
+                        <input type="color" class="news-filter-input" id="editTagColor" name="color" style="height: 48px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="news-filter-label">Deskripsi</label>
+                        <textarea class="news-filter-input" id="editTagDescription" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="background: #f8f9fa; border-radius: 0 0 20px 20px;">
+                <button type="button" class="news-filter-btn news-filter-btn-reset" data-dismiss="modal">Batal</button>
+                <button type="button" class="news-filter-btn news-filter-btn-primary" onclick="updateTag()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="news-delete-modal" id="deleteModal">
+    <div class="news-delete-modal-content">
+        <div class="news-delete-modal-header">
+            <h5 class="news-delete-modal-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                Konfirmasi Hapus
+            </h5>
+            <button type="button" class="news-delete-modal-close" onclick="closeDeleteModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="news-delete-modal-body">
+            <p class="news-delete-modal-text">
+                Apakah Anda yakin ingin menghapus tag <strong id="deleteTagName"></strong>?
+            </p>
+            <div class="news-delete-modal-warning">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Tag ini akan dihapus dari semua berita yang menggunakannya.</span>
+            </div>
+        </div>
+        <div class="news-delete-modal-footer">
+            <button type="button" class="news-delete-modal-btn news-delete-modal-btn-cancel" onclick="closeDeleteModal()">
+                Batal
+            </button>
+            <button type="button" class="news-delete-modal-btn news-delete-modal-btn-delete" id="confirmDelete">
+                Hapus
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function searchTags() {
+    const searchTerm = document.getElementById('searchTags').value.toLowerCase();
+    const sortBy = document.getElementById('sortTags').value;
+    const tagItems = document.querySelectorAll('.tag-item');
+
+    tagItems.forEach(item => {
+        const tagName = item.dataset.name;
+        if (tagName.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    const container = document.getElementById('tagsList');
+    const sortedItems = Array.from(tagItems).sort((a, b) => {
+        if (sortBy === 'name') return a.dataset.name.localeCompare(b.dataset.name);
+        if (sortBy === '-name') return b.dataset.name.localeCompare(a.dataset.name);
+        if (sortBy === '-news_count') return parseInt(b.dataset.count) - parseInt(a.dataset.count);
+        if (sortBy === 'news_count') return parseInt(a.dataset.count) - parseInt(b.dataset.count);
+        return 0;
+    });
+
+    sortedItems.forEach(item => container.appendChild(item));
+}
+
+function resetSearch() {
+    document.getElementById('searchTags').value = '';
+    document.getElementById('sortTags').value = 'name';
+    searchTags();
+}
+
+function searchTagByName(tagName) {
+    document.getElementById('searchTags').value = tagName;
+    searchTags();
+}
+
+function createTag() {
+    const form = document.getElementById('modalCreateTagForm');
+    const formData = new FormData(form);
+
+    fetch('{% url "admin_panel:news_tag_create" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat membuat tag');
+    });
+}
+
+function editTag(id) {
+    fetch(`{% url 'admin_panel:news_tag_update' 0 %}`.replace('0', id), {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.tag) {
+            document.getElementById('editTagId').value = data.tag.id;
+            document.getElementById('editTagName').value = data.tag.name;
+            document.getElementById('editTagColor').value = data.tag.color;
+            document.getElementById('editTagDescription').value = data.tag.description || '';
+
+            $('#editTagModal').modal('show');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat mengambil data tag');
+    });
+}
+
+function updateTag() {
+    const form = document.getElementById('editTagForm');
+    const formData = new FormData(form);
+    const tagId = document.getElementById('editTagId').value;
+
+    fetch(`{% url 'admin_panel:news_tag_update' 0 %}`.replace('0', tagId), {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat memperbarui tag');
+    });
+}
+
+// Delete buttons
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const title = this.getAttribute('data-title');
+            openDeleteModal(id, title);
+        });
+    });
+
+    // Quick add form
+    document.getElementById('createTagForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createTag();
+    });
+
+    // Search input
+    document.getElementById('searchTags').addEventListener('input', searchTags);
+    document.getElementById('sortTags').addEventListener('change', searchTags);
+});
+
+function openDeleteModal(id, name) {
+    document.getElementById('deleteTagName').textContent = name;
+    document.getElementById('deleteModal').classList.add('show');
+    
+    document.getElementById('confirmDelete').onclick = function() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        
+        fetch(`{% url 'admin_panel:news_tag_delete' 0 %}`.replace('0', id), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken.value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menghapus tag');
+        });
+    };
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('show');
+}
+
+// Close modal on outside click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

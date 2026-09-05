@@ -1,0 +1,464 @@
+{% extends 'public/base.html' %}
+{% load static %}
+{% load hero_tags %}
+
+{% block title %}Daftar Bisnis Baru - {{ website_settings.site_name|default:'Desa Pulosarok' }}{% endblock %}
+{% block meta_description %}Daftarkan bisnis Anda di Desa Pulosarok. Formulir pendaftaran bisnis untuk UMKM, Koperasi, BUMG, dan layanan jasa.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        transition: all 0.3s ease;
+    }
+    
+    .business-type-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .business-type-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .business-type-card.selected {
+        border-color: #3B82F6;
+        background-color: #EFF6FF;
+    }
+    
+    /* Fix Summernote fullscreen */
+    .note-editor.note-frame.fullscreen {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 9999 !important;
+        background: white !important;
+    }
+    
+    .note-editor.note-frame.fullscreen .note-editing-area {
+        height: calc(100vh - 50px) !important;
+    }
+    
+    .note-editor.note-frame.fullscreen .note-toolbar {
+        position: relative !important;
+        z-index: 10000 !important;
+    }
+    
+    .note-popover,
+    .note-dialog {
+        z-index: 10001 !important;
+    }
+    
+    .form-section {
+        overflow: visible !important;
+    }
+    
+    .note-editor {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+    
+    body.summernote-fullscreen {
+        overflow: hidden !important;
+    }
+    
+    .note-editor.note-frame.fullscreen .note-toolbar .note-btn {
+        position: relative !important;
+        z-index: 10001 !important;
+    }
+    
+    .note-editor.note-frame.fullscreen .note-popover,
+    .note-editor.note-frame.fullscreen .note-dialog {
+        z-index: 10002 !important;
+    }
+    
+    /* Ensure submit button is visible and prominent */
+    button[type="submit"] {
+        position: relative !important;
+        z-index: 10 !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background-color: #2563eb !important;
+        color: white !important;
+        border: 2px solid #1d4ed8 !important;
+        padding: 16px 32px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    button[type="submit"]:hover {
+        background-color: #1d4ed8 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    /* Make sure the submit section is visible */
+    .form-section:last-child {
+        margin-bottom: 2rem !important;
+        padding-bottom: 2rem !important;
+        background-color: white !important;
+        border: 1px solid #e5e7eb !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative overflow-hidden min-h-[40vh] flex items-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 text-white">
+    {% get_hero_image 'business' as hero_image %}
+    {% if hero_image %}
+    <div class="absolute inset-0 z-0">
+        <img src="{{ hero_image.image.url }}" alt="{{ hero_image.name }}" 
+             class="w-full h-full object-cover object-center">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary-600/85 via-primary-700/80 to-secondary-600/85"></div>
+    </div>
+    {% else %}
+    <div class="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600">
+        <div class="absolute inset-0 bg-black/20"></div>
+    </div>
+    {% endif %}
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+        <div class="text-center">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+                Daftarkan Bisnis Anda
+            </h1>
+            <p class="text-lg sm:text-xl text-primary-100 mb-8 max-w-3xl mx-auto">
+                Bergabunglah dengan komunitas bisnis Desa Pulosarok. Daftarkan bisnis Anda untuk mendapatkan visibilitas dan dukungan dari masyarakat desa.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Registration Form -->
+<section class="py-8 lg:py-12 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <form method="post" id="businessForm" class="space-y-6" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Business Type Selection -->
+            <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-store text-primary-600 mr-2"></i> Pilih Jenis Bisnis
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="business-type-card border-2 border-gray-200 rounded-lg p-4 text-center" data-type="umkm">
+                        <i class="fas fa-building text-2xl text-primary-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-900 mb-1">UMKM</h3>
+                        <p class="text-xs text-gray-600">Usaha Mikro, Kecil, dan Menengah</p>
+                    </div>
+                    <div class="business-type-card border-2 border-gray-200 rounded-lg p-4 text-center" data-type="koperasi">
+                        <i class="fas fa-handshake text-2xl text-primary-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-900 mb-1">Koperasi</h3>
+                        <p class="text-xs text-gray-600">Badan usaha bersama</p>
+                    </div>
+                    <div class="business-type-card border-2 border-gray-200 rounded-lg p-4 text-center" data-type="bumg">
+                        <i class="fas fa-landmark text-2xl text-primary-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-900 mb-1">BUMG</h3>
+                        <p class="text-xs text-gray-600">Badan Usaha Milik Gampong</p>
+                    </div>
+                    <div class="business-type-card border-2 border-gray-200 rounded-lg p-4 text-center" data-type="layanan_jasa">
+                        <i class="fas fa-tools text-2xl text-primary-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-900 mb-1">Layanan Jasa</h3>
+                        <p class="text-xs text-gray-600">Penyedia jasa profesional</p>
+                    </div>
+                </div>
+                {{ form.registration_type.as_hidden }}
+            </div>
+
+            <!-- Business Information -->
+            <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-primary-600 mr-2"></i> Informasi Bisnis
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.business_name.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.business_name }}
+                        {% if form.business_name.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.business_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.business_description.label }}
+                        </label>
+                        {{ form.business_description }}
+                        {% if form.business_description.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.business_description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.business_photo.label }}
+                            </label>
+                            {{ form.business_photo }}
+                            <p class="text-xs text-gray-500 mt-1">Upload foto bisnis (JPG, PNG, maksimal 5MB)</p>
+                            {% if form.business_photo.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.business_photo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.business_logo.label }}
+                            </label>
+                            {{ form.business_logo }}
+                            <p class="text-xs text-gray-500 mt-1">Upload logo bisnis (JPG, PNG, maksimal 2MB)</p>
+                            {% if form.business_logo.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.business_logo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.business_video.label }}
+                        </label>
+                        {{ form.business_video }}
+                        {% if form.business_video.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.business_video.errors.0 }}</div>
+                        {% endif %}
+                        <p class="text-sm text-gray-500 mt-1">Upload video promosi bisnis (MP4, AVI, MOV)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-phone text-primary-600 mr-2"></i> Informasi Kontak
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.owner_name.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.owner_name }}
+                        {% if form.owner_name.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.owner_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.owner_nik.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.owner_nik }}
+                        <p class="text-xs text-gray-500 mt-1">NIK harus 16 digit angka</p>
+                        {% if form.owner_nik.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.owner_nik.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.owner_phone.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.owner_phone }}
+                        <p class="text-xs text-gray-500 mt-1">Format: 08xx-xxxx-xxxx atau +62xxx</p>
+                        {% if form.owner_phone.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.owner_phone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.owner_email.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.owner_email }}
+                        <p class="text-xs text-gray-500 mt-1">Email untuk notifikasi</p>
+                        {% if form.owner_email.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.owner_email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.owner_address.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.owner_address }}
+                        {% if form.owner_address.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.owner_address.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.business_address.label }} <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.business_address }}
+                        {% if form.business_address.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.business_address.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.additional_documents.label }}
+                        </label>
+                        {{ form.additional_documents }}
+                        <p class="text-xs text-gray-500 mt-1">Upload dokumen pendukung (PDF, DOC, DOCX, maksimal 10MB)</p>
+                        {% if form.additional_documents.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.additional_documents.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Media -->
+            <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-share-alt text-primary-600 mr-2"></i> Media Sosial & Website
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fab fa-facebook text-blue-600 mr-2"></i>{{ form.facebook_url.label }}
+                        </label>
+                        {{ form.facebook_url }}
+                        {% if form.facebook_url.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.facebook_url.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fab fa-instagram text-pink-600 mr-2"></i>{{ form.instagram_url.label }}
+                        </label>
+                        {{ form.instagram_url }}
+                        {% if form.instagram_url.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.instagram_url.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fab fa-twitter text-blue-400 mr-2"></i>{{ form.twitter_url.label }}
+                        </label>
+                        {{ form.twitter_url }}
+                        {% if form.twitter_url.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.twitter_url.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fab fa-youtube text-red-600 mr-2"></i>{{ form.youtube_url.label }}
+                        </label>
+                        {{ form.youtube_url }}
+                        {% if form.youtube_url.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.youtube_url.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fab fa-tiktok text-black mr-2"></i>{{ form.tiktok_url.label }}
+                        </label>
+                        {{ form.tiktok_url }}
+                        {% if form.tiktok_url.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.tiktok_url.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-globe text-green-600 mr-2"></i>{{ form.website_url.label }}
+                        </label>
+                        {{ form.website_url }}
+                        {% if form.website_url.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.website_url.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terms and Submit -->
+            <div class="form-section bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-start">
+                        <input type="checkbox" name="terms_accepted" id="terms_accepted" 
+                               class="mt-1 mr-3 text-primary-600 focus:ring-primary-500" required>
+                        <label for="terms_accepted" class="text-sm text-gray-700">
+                            Saya menyetujui <a href="#" class="text-primary-600 hover:text-primary-700 underline">syarat dan ketentuan</a>
+                            pendaftaran bisnis di Desa Pulosarok dan menyatakan bahwa informasi yang diberikan adalah benar.
+                        </label>
+                    </div>
+                </div>
+
+                <div class="text-center mt-8">
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-16 py-4 rounded-lg font-bold text-xl shadow-lg border-2 border-blue-700">
+                        <i class="fas fa-paper-plane mr-2"></i> Daftarkan Bisnis
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedBusinessType = '';
+
+    // Business type selection
+    document.querySelectorAll('.business-type-card').forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selected class from all cards
+            document.querySelectorAll('.business-type-card').forEach(c => c.classList.remove('selected'));
+            
+            // Add selected class to clicked card
+            this.classList.add('selected');
+            
+            // Set business type
+            selectedBusinessType = this.dataset.type;
+            document.getElementById('id_registration_type').value = selectedBusinessType;
+        });
+    });
+
+    // Form submission
+    document.getElementById('businessForm').addEventListener('submit', function(e) {
+        // Validate business type selection
+        if (!selectedBusinessType) {
+            e.preventDefault();
+            alert('Silakan pilih jenis bisnis terlebih dahulu.');
+            return;
+        }
+
+        // Validate required fields
+        const requiredFields = ['business_name', 'owner_name', 'owner_nik', 'owner_phone', 'owner_email', 'owner_address', 'business_address'];
+        let hasErrors = false;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(`id_${fieldName}`);
+            if (field && !field.value.trim()) {
+                field.style.borderColor = '#ef4444';
+                hasErrors = true;
+            } else if (field) {
+                field.style.borderColor = '#d1d5db';
+            }
+        });
+
+        if (hasErrors) {
+            e.preventDefault();
+            alert('Silakan lengkapi semua field yang wajib diisi.');
+            return;
+        }
+
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mendaftarkan...';
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %}

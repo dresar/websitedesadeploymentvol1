@@ -1,0 +1,418 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load business_filters %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/business/business-detail.css' %}">
+<style>
+/* Logo Styling */
+.logo-container {
+    display: inline-block;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.logo-container:hover {
+    border-color: #007bff;
+    background: #f0f8ff;
+}
+
+.logo-image {
+    max-width: 150px;
+    max-height: 150px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.no-logo-placeholder {
+    padding: 40px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+/* Foto Styling */
+.foto-container {
+    display: inline-block;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.foto-container:hover {
+    border-color: #28a745;
+    background: #f0fff4;
+}
+
+.foto-image {
+    max-width: 400px;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.no-foto-placeholder {
+    padding: 40px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+/* Header Logo Styling */
+.business-detail-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.business-detail-header-info {
+    flex: 1;
+}
+
+.business-detail-header-logo {
+    flex-shrink: 0;
+}
+
+.header-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border-radius: 12px;
+    /* Tidak ada background, filter, atau shadow untuk logo transparan */
+}
+
+.header-logo-placeholder {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .business-detail-header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .header-logo, .header-logo-placeholder {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .logo-image {
+        max-width: 120px;
+        max-height: 120px;
+    }
+    
+    .foto-image {
+        max-width: 100%;
+        max-height: 250px;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="business-detail-container">
+
+    <div class="business-detail-page-header">
+        <div class="business-detail-header-content">
+            <div class="business-detail-header-logo">
+                {% if umkm.logo_usaha %}
+                    <img src="{{ umkm.logo_usaha.url }}" alt="Logo UMKM" class="header-logo">
+                {% else %}
+                    <div class="header-logo-placeholder">
+                        <i class="fas fa-image fa-2x text-muted"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="business-detail-header-info">
+                <h1 class="business-detail-page-title">
+                    <i class="fas fa-store"></i>
+                    {{ umkm.nama_usaha }}
+                </h1>
+                <p class="business-detail-page-subtitle">Detail lengkap UMKM - {{ umkm.pemilik }}</p>
+                <div class="business-detail-page-badges">
+                    <span class="business-detail-badge {% if umkm.status == 'aktif' %}business-detail-badge-success{% elif umkm.status == 'tidak_aktif' %}business-detail-badge-danger{% else %}business-detail-badge-warning{% endif %}">
+                        {% if umkm.status == 'aktif' %}
+                            <i class="fas fa-check-circle"></i> Aktif
+                        {% elif umkm.status == 'tidak_aktif' %}
+                            <i class="fas fa-times-circle"></i> Tidak Aktif
+                        {% else %}
+                            <i class="fas fa-clock"></i> Pending
+                        {% endif %}
+                    </span>
+                    <span class="business-detail-badge business-detail-badge-info">
+                        <i class="fas fa-layer-group"></i> {{ umkm.get_skala_usaha_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="business-detail-grid">
+
+        <div>
+
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-info-circle"></i>Informasi Dasar UMKM
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Nama Usaha:</div>
+                        <div class="business-detail-value">{{ umkm.nama_usaha|default:"-" }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Pemilik:</div>
+                        <div class="business-detail-value">{{ umkm.pemilik|default:"-" }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">NIK Pemilik:</div>
+                        <div class="business-detail-value">{{ umkm.nik_pemilik|default:"-" }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Jenis Usaha:</div>
+                        <div class="business-detail-value">{{ umkm.jenis_usaha|default:"-" }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Skala Usaha:</div>
+                        <div class="business-detail-value">{{ umkm.get_skala_usaha_display|default:"-" }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Tanggal Mulai:</div>
+                        <div class="business-detail-value">
+                            {% if umkm.tanggal_mulai %}
+                                {{ umkm.tanggal_mulai|date:"d F Y" }}
+                            {% else %}
+                                <span class="business-detail-value-muted">-</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if umkm.nomor_izin %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Nomor Izin:</div>
+                        <div class="business-detail-value">{{ umkm.nomor_izin }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-chart-line"></i>Data Keuangan
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Modal Awal:</div>
+                        <div class="business-detail-value business-detail-value-highlight">
+                            {% if umkm.modal_awal %}
+                                {{ umkm.modal_awal|rupiah }}
+                            {% else %}
+                                <span class="business-detail-value-muted">-</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Omzet Bulanan:</div>
+                        <div class="business-detail-value business-detail-value-highlight">
+                            {% if umkm.omzet_bulanan %}
+                                {{ umkm.omzet_bulanan|rupiah }}
+                            {% else %}
+                                <span class="business-detail-value-muted">-</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Jumlah Karyawan:</div>
+                        <div class="business-detail-value">
+                            {% if umkm.jumlah_karyawan %}
+                                {{ umkm.jumlah_karyawan }} orang
+                            {% else %}
+                                <span class="business-detail-value-muted">-</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-map-marker-alt"></i>Alamat & Kontak
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Alamat Usaha:</div>
+                        <div class="business-detail-value">{{ umkm.alamat_usaha|default:"-" }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Alamat Pemilik:</div>
+                        <div class="business-detail-value">{{ umkm.alamat_pemilik|default:"-" }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Telepon:</div>
+                        <div class="business-detail-value">
+                            {% if umkm.telepon %}
+                                <i class="fas fa-phone"></i> {{ umkm.telepon }}
+                            {% else %}
+                                <span class="business-detail-value-muted">-</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if umkm.email %}
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Email:</div>
+                        <div class="business-detail-value">
+                            <i class="fas fa-envelope"></i> {{ umkm.email }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-box"></i>Produk & Pasar
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Produk Utama:</div>
+                        <div class="business-detail-value">{{ umkm.produk_utama|safe|default:"-" }}</div>
+                    </div>
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-label">Target Pasar:</div>
+                        <div class="business-detail-value">{{ umkm.target_pasar|safe|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if umkm.keterangan %}
+
+            <div class="business-detail-card">
+                <div class="business-detail-card-header">
+                    <h5 class="business-detail-card-title">
+                        <i class="fas fa-sticky-note"></i>Keterangan
+                    </h5>
+                </div>
+                <div class="business-detail-card-body">
+                    <div class="business-detail-info-row">
+                        <div class="business-detail-value">{{ umkm.keterangan|safe }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <div class="business-detail-sidebar-sticky">
+
+                <div class="business-detail-card">
+                    <div class="business-detail-card-header">
+                        <h5 class="business-detail-card-title">
+                            <i class="fas fa-cogs"></i>Aksi
+                        </h5>
+                    </div>
+                    <div class="business-detail-card-body">
+                        <div class="business-detail-actions">
+                            <a href="{% url 'admin_panel:umkm_edit' umkm.id %}" class="business-detail-btn business-detail-btn-warning">
+                                <i class="fas fa-edit"></i>Edit UMKM
+                            </a>
+                            <a href="{% url 'admin_panel:umkm_list' %}" class="business-detail-btn business-detail-btn-secondary">
+                                <i class="fas fa-arrow-left"></i>Kembali ke Daftar
+                            </a>
+                            <button type="button" class="business-detail-btn business-detail-btn-danger"
+                                    onclick="showBusinessDeleteModal('{% url 'admin_panel:umkm_delete' umkm.id %}', '{{ umkm.nama_usaha|escapejs }}', 'UMKM')">
+                                <i class="fas fa-trash-alt"></i>Hapus UMKM
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="business-detail-card">
+                    <div class="business-detail-card-header">
+                        <h5 class="business-detail-card-title">
+                            <i class="fas fa-info"></i>Informasi Tambahan
+                        </h5>
+                    </div>
+                    <div class="business-detail-card-body">
+                        <div class="business-detail-info-row">
+                            <div class="business-detail-label">ID UMKM:</div>
+                            <div class="business-detail-value">#{{ umkm.id }}</div>
+                        </div>
+                        <div class="business-detail-info-row">
+                            <div class="business-detail-label">Dibuat:</div>
+                            <div class="business-detail-value">
+                                {% if umkm.created_at %}
+                                    {{ umkm.created_at|date:"d M Y, H:i" }}
+                                {% else %}
+                                    <span class="business-detail-value-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="business-detail-info-row">
+                            <div class="business-detail-label">Diperbarui:</div>
+                            <div class="business-detail-value">
+                                {% if umkm.updated_at %}
+                                    {{ umkm.updated_at|date:"d M Y, H:i" }}
+                                {% else %}
+                                    <span class="business-detail-value-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Foto Usaha Section -->
+        <div class="business-detail-card">
+            <div class="business-detail-card-header">
+                <h5 class="business-detail-card-title">
+                    <i class="fas fa-camera"></i> Foto Usaha
+                </h5>
+            </div>
+            <div class="business-detail-card-body">
+                {% if umkm.foto_usaha %}
+                    <div class="foto-container text-center">
+                        <img src="{{ umkm.foto_usaha.url }}" alt="Foto Usaha" class="foto-image">
+                    </div>
+                {% else %}
+                    <div class="no-foto-placeholder text-center">
+                        <i class="fas fa-camera fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Tidak ada foto</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script></script>
+{% endblock extra_js %}

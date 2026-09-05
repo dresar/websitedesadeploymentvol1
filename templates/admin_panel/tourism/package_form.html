@@ -1,0 +1,934 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}{{ title|default:"Form Paket Wisata" }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-form.css' %}">
+
+<style>
+    .gallery-preview-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .gallery-preview-item {
+        position: relative;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .gallery-preview-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+    .gallery-preview-item .remove-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+    .gallery-preview-item .remove-btn:hover {
+        background: #dc2626;
+    }
+    .add-gallery-item-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+    .add-gallery-item-btn:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+        transform: translateY(-1px);
+    }
+    .add-gallery-item-btn i {
+        font-size: 1rem;
+    }
+    .gallery-item-card {
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    .gallery-item-card:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+    .gallery-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .gallery-item-number {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .remove-gallery-item-btn {
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.375rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: all 0.2s ease;
+    }
+    .remove-gallery-item-btn:hover {
+        background: #dc2626;
+        transform: scale(1.05);
+    }
+    .gallery-item-preview {
+        width: 100%;
+        max-width: 200px;
+        height: 200px;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        margin-top: 0.75rem;
+        overflow: hidden;
+    }
+    .gallery-item-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .gallery-item-preview.empty {
+        color: #9ca3af;
+        font-size: 0.875rem;
+        flex-direction: column;
+    }
+    #gallery-items-container:empty::after {
+        content: "Belum ada gambar ditambahkan. Klik tombol '+ Tambah Gambar' untuk menambahkan gambar ke galeri.";
+        display: block;
+        padding: 2rem;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 0.875rem;
+        background: #f9fafb;
+        border: 2px dashed #e5e7eb;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    .tf-error-message {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        color: #dc2626;
+        font-size: 0.875rem;
+        margin-top: 0.375rem;
+        font-weight: 500;
+    }
+    .tf-error-message i {
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tf-form-wrapper">
+    <div class="tf-container">
+        <!-- Tombol Kembali -->
+        <a href="{% url 'admin_panel:tourism_packages_list' %}" class="td-back-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border-radius: 6px; text-decoration: none; margin-bottom: 1.5rem; transition: all 0.2s ease;">
+            <i class="fas fa-arrow-left"></i>
+            Kembali ke Daftar Paket
+        </a>
+
+        <div class="tf-header">
+            <h1 class="tf-title">
+                <i class="fas fa-box-open"></i>
+                {{ title|default:"Form Paket Wisata" }}
+            </h1>
+            <p class="tf-subtitle">
+                {% if form.instance.pk %}
+                    Perbarui informasi paket wisata
+                {% else %}
+                    Buat paket wisata baru untuk menarik wisatawan
+                {% endif %}
+            </p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="packageForm">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="tf-card-section" style="background: #fef2f2; border: 2px solid #ef4444; margin-bottom: 1.5rem;">
+                <h3 style="color: #dc2626; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Terdapat Kesalahan pada Form
+                </h3>
+                <ul style="list-style: disc; margin-left: 1.5rem; color: #dc2626;">
+                    {% for field in form %}
+                        {% if field.errors %}
+                            <li><strong>{{ field.label }}:</strong> {{ field.errors.0 }}</li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if form.non_field_errors %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informasi Dasar
+                </h2>
+                
+                <div class="tf-row">
+                    <div class="tf-form-group tf-col-span-2">
+                    <label for="{{ form.title.id_for_label }}" class="tf-label tf-label-required">
+                            <i class="fas fa-heading"></i>
+                        Nama Paket
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.title.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.tourism_location.id_for_label }}" class="tf-label tf-label-required">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Lokasi Wisata
+                        </label>
+                        {{ form.tourism_location }}
+                        {% if form.tourism_location.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.tourism_location.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.package_type.id_for_label }}" class="tf-label tf-label-required">
+                            <i class="fas fa-tag"></i>
+                            Jenis Paket
+                        </label>
+                        {{ form.package_type }}
+                        {% if form.package_type.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.package_type.errors.0 }}
+                        </span>
+                    {% endif %}
+                    </div>
+                </div>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.description.id_for_label }}" class="tf-label tf-label-required">
+                        <i class="fas fa-align-left"></i>
+                        Deskripsi Paket
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ form.description.errors.0 }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-list-ul"></i>
+                    Detail Paket
+                </h2>
+                
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.duration.id_for_label }}" class="tf-label tf-label-required">
+                            <i class="fas fa-clock"></i>
+                            Durasi
+                        </label>
+                        {{ form.duration }}
+                        {% if form.duration.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.duration.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <span class="tf-help-text">Contoh: 2 hari 1 malam</span>
+                </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.price.id_for_label }}" class="tf-label tf-label-required">
+                            <i class="fas fa-dollar-sign"></i>
+                            Harga Paket (Rp)
+                        </label>
+                        {{ form.price }}
+                        <div id="price_usd" class="tf-help-text" style="color: #10b981; font-weight: 600; margin-top: 0.5rem; display: none;">
+                            <i class="fas fa-dollar-sign"></i> <span id="price_usd_value">0</span> USD
+                        </div>
+                        {% if form.price.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.price.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <span class="tf-help-text">Format otomatis: 999.999 (gunakan angka saja)</span>
+                    </div>
+                </div>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.min_participants.id_for_label }}" class="tf-label">
+                            <i class="fas fa-users"></i>
+                            Minimal Peserta
+                        </label>
+                        {{ form.min_participants }}
+                        {% if form.min_participants.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.min_participants.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.max_participants.id_for_label }}" class="tf-label">
+                            <i class="fas fa-users-cog"></i>
+                            Maksimal Peserta
+                        </label>
+                        {{ form.max_participants }}
+                        {% if form.max_participants.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.max_participants.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.booking_deadline.id_for_label }}" class="tf-label">
+                        <i class="fas fa-calendar-times"></i>
+                        Deadline Booking (hari)
+                    </label>
+                    {{ form.booking_deadline }}
+                    {% if form.booking_deadline.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ form.booking_deadline.errors.0 }}
+                        </span>
+                    {% endif %}
+                    <span class="tf-help-text">Berapa hari sebelum keberangkatan peserta harus booking</span>
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-phone"></i>
+                    Informasi Kontak
+                </h2>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.whatsapp.id_for_label }}" class="tf-label">
+                            <i class="fab fa-whatsapp"></i>
+                            Nomor WhatsApp
+                        </label>
+                        {{ form.whatsapp }}
+                        {% if form.whatsapp.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.whatsapp.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <span class="tf-help-text">Format: 6281234567890 (dengan kode negara)</span>
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.website.id_for_label }}" class="tf-label">
+                            <i class="fas fa-globe"></i>
+                            Website/Portofolio
+                        </label>
+                        {{ form.website }}
+                        {% if form.website.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.website.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <span class="tf-help-text">Link website atau portofolio paket wisata</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-photo-video"></i>
+                    Media Paket
+                </h2>
+                
+                <div class="tf-row">
+                <div class="tf-form-group">
+                    <label for="{{ form.image.id_for_label }}" class="tf-label">
+                            <i class="fas fa-image"></i>
+                            Gambar Utama
+                    </label>
+                    {{ form.image }}
+                    {% if form.image.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.image.errors.0 }}
+                        </span>
+                    {% endif %}
+
+                        <div class="tf-image-preview-container" style="margin-top: 0.75rem;">
+                    {% if form.instance.image %}
+                            <div class="tf-image-preview" id="current-image-preview">
+                                <img src="{{ form.instance.image.url }}" alt="Current Image" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid #e5e7eb;">
+                                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">Gambar saat ini</p>
+                            </div>
+                            {% endif %}
+                            <div class="tf-image-preview" id="image-preview" style="display: none;">
+                                <img src="" alt="Preview" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid #3b82f6;">
+                                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">Preview gambar baru</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.hero_image.id_for_label }}" class="tf-label">
+                            <i class="fas fa-image"></i>
+                            Gambar Hero
+                        </label>
+                        {{ form.hero_image }}
+                        {% if form.hero_image.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.hero_image.errors.0 }}
+                            </span>
+                        {% endif %}
+
+                        <div class="tf-image-preview-container" style="margin-top: 0.75rem;">
+                            {% if form.instance.hero_image %}
+                            <div class="tf-image-preview" id="current-hero-image-preview">
+                                <img src="{{ form.instance.hero_image.url }}" alt="Current Hero Image" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid #e5e7eb;">
+                                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">Gambar hero saat ini</p>
+                            </div>
+                            {% endif %}
+                            <div class="tf-image-preview" id="hero-image-preview" style="display: none;">
+                                <img src="" alt="Preview" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 2px solid #3b82f6;">
+                                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">Preview gambar hero baru</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.video.id_for_label }}" class="tf-label">
+                            <i class="fas fa-video"></i>
+                            Video Paket
+                        </label>
+                        {{ form.video }}
+                        {% if form.video.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.video.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <span class="tf-help-text">Upload video dokumentasi paket</span>
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.hero_video.id_for_label }}" class="tf-label">
+                            <i class="fas fa-video"></i>
+                            Video Hero
+                        </label>
+                        {{ form.hero_video }}
+                        {% if form.hero_video.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.hero_video.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <span class="tf-help-text">Upload video untuk hero section</span>
+                    </div>
+                </div>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.youtube_link.id_for_label }}" class="tf-label">
+                            <i class="fab fa-youtube"></i>
+                            Link YouTube Dokumentasi
+                        </label>
+                        {{ form.youtube_link }}
+                        {% if form.youtube_link.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.youtube_link.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <span class="tf-help-text">Link YouTube dokumentasi paket wisata</span>
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.hero_youtube.id_for_label }}" class="tf-label">
+                            <i class="fab fa-youtube"></i>
+                            Link YouTube Hero
+                        </label>
+                        {{ form.hero_youtube }}
+                        {% if form.hero_youtube.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.hero_youtube.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <span class="tf-help-text">Link YouTube untuk hero section</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-images"></i>
+                    Galeri Paket (Multi Gambar)
+                </h2>
+
+                <div class="tf-form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <label class="tf-label" style="margin: 0;">
+                            <i class="fas fa-camera"></i>
+                            Gambar Galeri
+                        </label>
+                        <button type="button" class="add-gallery-item-btn" onclick="addGalleryItem()">
+                            <i class="fas fa-plus-circle"></i>
+                            Tambah Gambar
+                        </button>
+                    </div>
+                    <span class="tf-help-text">Klik tombol "<i class="fas fa-plus-circle"></i> Tambah Gambar" untuk menambahkan gambar baru ke galeri</span>
+
+                    <div id="gallery-items-container" style="margin-top: 1rem;">
+
+                    </div>
+
+                    {% if form.instance.pk and form.instance.gallery.all %}
+                    <div style="margin-top: 1.5rem;">
+                        <h4 style="margin-bottom: 1rem; font-size: 0.875rem; color: #6b7280; font-weight: 600;">
+                            <i class="fas fa-images"></i> Gambar Galeri Existing:
+                        </h4>
+                        <div class="gallery-preview-container">
+                            {% for gallery_item in form.instance.gallery.all %}
+                            <div class="gallery-preview-item" data-gallery-id="{{ gallery_item.id }}">
+                                <img src="{{ gallery_item.image.url }}" alt="{{ gallery_item.title }}">
+                                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                    {{ gallery_item.title|default:"Gambar"|truncatewords:3 }}
+                                </div>
+                                <button type="button" class="remove-btn" onclick="removeExistingGallery({{ gallery_item.id }})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <input type="hidden" id="gallery-to-delete" name="gallery_to_delete" value="">
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-toggle-on"></i>
+                    Status Paket
+                </h2>
+                
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <div class="tf-checkbox-wrapper">
+                            {{ form.is_active }}
+                            <label for="{{ form.is_active.id_for_label }}" class="tf-checkbox-label">
+                                Paket Aktif
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="tf-form-group">
+                        <div class="tf-checkbox-wrapper">
+                            {{ form.is_featured }}
+                            <label for="{{ form.is_featured.id_for_label }}" class="tf-checkbox-label">
+                                Paket Unggulan
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tf-form-actions">
+                <a href="{% url 'admin_panel:tourism_packages_list' %}" class="tf-btn tf-btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
+                </a>
+                <button type="submit" class="tf-btn tf-btn-primary">
+                    <i class="fas fa-save"></i>
+                    Simpan Paket
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+function showWarning(message) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Perhatian',
+            text: message,
+            confirmButtonColor: '#3b82f6'
+        });
+    } else {
+        showWarning(message);
+    }
+}
+
+const galleryToDelete = [];
+
+function removeExistingGallery(galleryId) {
+    if (confirm('Apakah Anda yakin ingin menghapus gambar ini?')) {
+        const item = document.querySelector(`[data-gallery-id="${galleryId}"]`);
+        if (item) {
+            item.style.display = 'none';
+            galleryToDelete.push(galleryId);
+            document.getElementById('gallery-to-delete').value = galleryToDelete.join(',');
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    const form = document.getElementById('packageForm');
+    const inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="url"]');
+    const textareas = form.querySelectorAll('textarea');
+    const selects = form.querySelectorAll('select');
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    
+    inputs.forEach(input => input.classList.add('tf-input'));
+    textareas.forEach(textarea => textarea.classList.add('tf-textarea'));
+    selects.forEach(select => select.classList.add('tf-select'));
+    fileInputs.forEach(fileInput => fileInput.classList.add('tf-file-input'));
+    checkboxes.forEach(checkbox => checkbox.classList.add('tf-checkbox'));
+
+    const priceInput = document.getElementById('{{ form.price.id_for_label }}');
+    const priceUsdDisplay = document.getElementById('price_usd');
+    const priceUsdValue = document.getElementById('price_usd_value');
+    const USD_RATE = 17000;
+
+    function formatRupiah(value) {
+        if (!value) return '';
+
+        const numericValue = value.toString().replace(/\D/g, '');
+
+        return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function parsePrice(value) {
+
+        if (!value) return '';
+
+        const cleanValue = value.toString()
+            .replace(/\./g, '')
+            .replace(',', '.')
+            .split('.')[0];
+
+        return cleanValue;
+    }
+
+    function updateUSD(rupiahValue, displayElement, valueElement) {
+        if (!rupiahValue || rupiahValue === '0') {
+            displayElement.style.display = 'none';
+            return;
+        }
+
+        const numericValue = parseInt(rupiahValue.toString().replace(/\D/g, ''));
+        if (isNaN(numericValue) || numericValue === 0) {
+            displayElement.style.display = 'none';
+            return;
+        }
+
+        const usdValue = (numericValue / USD_RATE).toFixed(2);
+        valueElement.textContent = usdValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        displayElement.style.display = 'block';
+    }
+    
+    if (priceInput) {
+
+        if (priceInput.value) {
+            const parsedValue = parsePrice(priceInput.value);
+            if (parsedValue) {
+                priceInput.value = formatRupiah(parsedValue);
+                updateUSD(parsedValue, priceUsdDisplay, priceUsdValue);
+            }
+        }
+        
+        priceInput.addEventListener('input', function(e) {
+            
+            const cursorPosition = this.selectionStart;
+            const oldLength = this.value.length;
+            
+            let value = this.value.replace(/\D/g, '');
+
+            this.value = formatRupiah(value);
+            
+            updateUSD(value, priceUsdDisplay, priceUsdValue);
+            
+            const newLength = this.value.length;
+            const diff = newLength - oldLength;
+            this.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+        });
+        
+        priceInput.addEventListener('blur', function() {
+            if (this.value) {
+                const value = this.value.replace(/\D/g, '');
+                this.value = formatRupiah(value);
+                updateUSD(value, priceUsdDisplay, priceUsdValue);
+            }
+        });
+    }
+    
+    form.addEventListener('submit', function(e) {
+        if (priceInput && priceInput.value) {
+
+            const originalValue = priceInput.value;
+            priceInput.value = priceInput.value.replace(/\./g, '');
+
+            console.log('Price before submit:', originalValue);
+            console.log('Price after cleaning:', priceInput.value);
+        }
+
+        const requiredFields = form.querySelectorAll('[required]');
+        let hasError = false;
+
+        requiredFields.forEach(field => {
+            if (!field.value || field.value.trim() === '') {
+                hasError = true;
+                field.style.borderColor = '#ef4444';
+
+                const errorSpan = field.parentElement.querySelector('.tf-error-message');
+                if (!errorSpan) {
+                    const error = document.createElement('span');
+                    error.className = 'tf-error-message';
+                    error.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Field ini wajib diisi';
+                    field.parentElement.appendChild(error);
+                }
+            } else {
+                field.style.borderColor = '';
+                const errorSpan = field.parentElement.querySelector('.tf-error-message');
+                if (errorSpan && !field.dataset.serverError) {
+                    errorSpan.remove();
+                }
+            }
+        });
+
+        if (hasError) {
+            e.preventDefault();
+            showWarning('Mohon lengkapi semua field yang wajib diisi!');
+
+            const firstError = form.querySelector('[style*="border-color: rgb(239, 68, 68)"]');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+            return false;
+        }
+    });
+
+    function setupImagePreview(inputId, previewId, currentPreviewId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById(previewId);
+            const currentPreview = document.getElementById(currentPreviewId);
+
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const img = preview.querySelector('img');
+                    img.src = e.target.result;
+                    preview.style.display = 'block';
+                    if (currentPreview) {
+                        currentPreview.style.display = 'none';
+                    }
+                };
+
+                reader.readAsDataURL(file);
+            } else if (!file) {
+                preview.style.display = 'none';
+                if (currentPreview) {
+                    currentPreview.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    setupImagePreview('{{ form.image.id_for_label }}', 'image-preview', 'current-image-preview');
+    setupImagePreview('{{ form.hero_image.id_for_label }}', 'hero-image-preview', 'current-hero-image-preview');
+});
+
+let galleryItemCounter = 0;
+
+function addGalleryItem() {
+    galleryItemCounter++;
+    const container = document.getElementById('gallery-items-container');
+
+    const itemCard = document.createElement('div');
+    itemCard.className = 'gallery-item-card';
+    itemCard.id = `gallery-item-${galleryItemCounter}`;
+    itemCard.innerHTML = `
+        <div class="gallery-item-header">
+            <span class="gallery-item-number">
+                <i class="fas fa-image"></i> Gambar #${galleryItemCounter}
+            </span>
+            <button type="button" class="remove-gallery-item-btn" onclick="removeGalleryItem(${galleryItemCounter})">
+                <i class="fas fa-times"></i> Hapus
+            </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <label class="tf-label" style="margin-bottom: 0.5rem; display: block;">
+                    <i class="fas fa-heading"></i> Judul Gambar (Opsional)
+                </label>
+                <input type="text" name="gallery_title_${galleryItemCounter}"
+                       class="tf-input"
+                       placeholder="Contoh: Pemandangan Pantai">
+            </div>
+
+            <div>
+                <label class="tf-label" style="margin-bottom: 0.5rem; display: block;">
+                    <i class="fas fa-upload"></i> Pilih Gambar
+                </label>
+                <input type="file" name="gallery_images"
+                       id="gallery-file-${galleryItemCounter}"
+                       accept="image/*"
+                       class="tf-file-input"
+                       onchange="previewGalleryImage(${galleryItemCounter})"
+                       required>
+            </div>
+        </div>
+
+        <div>
+            <label class="tf-label" style="margin: 0.75rem 0 0.5rem 0; display: block;">
+                <i class="fas fa-align-left"></i> Deskripsi (Opsional)
+            </label>
+            <textarea name="gallery_description_${galleryItemCounter}"
+                      class="tf-textarea"
+                      rows="2"
+                      placeholder="Deskripsi singkat tentang gambar ini"></textarea>
+        </div>
+
+        <div class="gallery-item-preview empty" id="preview-${galleryItemCounter}">
+            <i class="fas fa-image" style="font-size: 2rem; color: #d1d5db;"></i>
+            <span style="margin-top: 0.5rem;">Belum ada gambar</span>
+        </div>
+    `;
+
+    container.appendChild(itemCard);
+
+    setTimeout(() => {
+        itemCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+}
+
+function removeGalleryItem(itemId) {
+    if (confirm('Hapus gambar ini dari galeri?')) {
+        const item = document.getElementById(`gallery-item-${itemId}`);
+        if (item) {
+            item.style.opacity = '0';
+            item.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                item.remove();
+            }, 300);
+        }
+    }
+}
+
+function previewGalleryImage(itemId) {
+    const fileInput = document.getElementById(`gallery-file-${itemId}`);
+    const preview = document.getElementById(`preview-${itemId}`);
+
+    if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+
+        if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                preview.classList.remove('empty');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            };
+
+                reader.readAsDataURL(file);
+            }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    const isNewForm = !document.querySelector('[data-gallery-id]');
+    if (isNewForm) {
+
+    }
+});
+
+</script>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/layanan/layanan-list.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="layanan-list-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+                <div class="mb-3">
+                    <a href="{% url 'admin_panel:layanan:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Kembali ke Dashboard
+                    </a>
+                </div>
+
+                <div class="layanan-page-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4>Kontak Layanan</h4>
+                            <p class="text-muted mb-0">Kelola informasi kontak layanan</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'admin_panel:layanan:contact_form' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Tambah Kontak
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layanan-filter-card">
+                        <form method="get" id="filterForm" class="row g-2 g-md-3">
+                            <div class="col-12 col-md-3">
+                            <label class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">Semua Status</option>
+                                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Aktif</option>
+                                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Tidak Aktif</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Departemen</label>
+                                <select class="form-select" id="department" name="department">
+                                    <option value="">Semua Departemen</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept }}" {% if selected_department == dept %}selected{% endif %}>{{ dept }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                            <label class="form-label">Pencarian</label>
+                                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Cari kontak...">
+                            </div>
+                            <div class="col-12 col-md-2">
+                            <label class="form-label d-none d-md-block">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="fas fa-search me-1 d-none d-md-inline"></i>Cari
+                                </button>
+                                    <a href="{% url 'admin_panel:layanan:contact_list' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                </div>
+
+                <div class="layanan-table-card d-none d-md-block">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-phone me-2"></i>Daftar Kontak
+                        </h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table layanan-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">ID</th>
+                                    <th width="25%">Kontak</th>
+                                    <th width="20%" class="d-none d-lg-table-cell">Telepon</th>
+                                    <th width="20%" class="d-none d-lg-table-cell">Email</th>
+                                    <th width="15%">Departemen</th>
+                                    <th width="10%">Status</th>
+                                    <th width="15%" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for contact in contacts %}
+                                <tr>
+                                    <td><small class="text-muted">#{{ contact.id }}</small></td>
+                                    <td>
+                                        <strong>{{ contact.name }}</strong>
+                                        <br><small class="text-muted">{{ contact.position }}</small>
+                                    </td>
+                                    <td class="d-none d-lg-table-cell"><small>{{ contact.phone }}</small></td>
+                                    <td class="d-none d-lg-table-cell"><small>{{ contact.email }}</small></td>
+                                    <td><small class="text-muted">{{ contact.department }}</small></td>
+                                    <td><small>{% if contact.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</small></td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'admin_panel:layanan:contact_form' %}?id={{ contact.id }}"
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-outline-{% if contact.is_active %}warning{% else %}success{% endif %}"
+                                                    title="{% if contact.is_active %}Nonaktifkan{% else %}Aktifkan{% endif %}"
+                                                    onclick="toggleContact({{ contact.id }})">
+                                                <i class="fas fa-{% if contact.is_active %}pause{% else %}play{% endif %}"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" title="Hapus"
+                                                    onclick="deleteContact({{ contact.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="fas fa-phone fa-4x text-muted mb-3"></i>
+                                        <h5 class="text-muted">Belum ada Kontak</h5>
+                                        <p class="text-muted">Belum ada kontak layanan yang tersedia</p>
+                                        <a href="{% url 'admin_panel:layanan:contact_form' %}" class="btn btn-primary mt-3">
+                                            <i class="fas fa-plus me-1"></i>Tambah Kontak
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="layanan-mobile-list d-md-none">
+                    {% for contact in contacts %}
+                    <div class="layanan-mobile-card">
+                        <div class="layanan-mobile-header">
+                            <div>
+                                <strong class="d-block">{{ contact.name }}</strong>
+                                <small class="text-muted">{{ contact.position }}</small>
+                            </div>
+                            <div class="layanan-mobile-actions">
+                                <a href="{% url 'admin_panel:layanan:contact_form' %}?id={{ contact.id }}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-{% if contact.is_active %}warning{% else %}success{% endif %}"
+                                        onclick="toggleContact({{ contact.id }})">
+                                    <i class="fas fa-{% if contact.is_active %}pause{% else %}play{% endif %}"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger"
+                                        onclick="deleteContact({{ contact.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="layanan-mobile-info">
+                            <small class="text-muted">{{ contact.department }}</small>
+                            <small>{% if contact.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="layanan-empty-state text-center py-5">
+                        <i class="fas fa-phone fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">Belum ada Kontak</h5>
+                        <p class="text-muted">Belum ada kontak layanan yang tersedia</p>
+                        <a href="{% url 'admin_panel:layanan:contact_form' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-plus me-1"></i>Tambah Kontak
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if contacts.has_other_pages %}
+                <div class="pagination">
+                    <ul class="pagination">
+                        {% if contacts.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}{% if search %}&search={{ search }}{% endif %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ contacts.previous_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">{{ contacts.number }} of {{ contacts.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if contacts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ contacts.next_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ contacts.paginator.num_pages }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_department %}&department={{ selected_department }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+
+    $('#filterForm select, #filterForm input').on('change', function() {
+        $('#filterForm').submit();
+    });
+
+    $('[data-bs-toggle="tooltip"]').tooltip();
+
+});
+
+function toggleContact(id) {
+    if (confirm('Ubah status kontak ini?')) {
+        $.ajax({
+            url: '{% url "admin_panel:layanan:ajax_toggle_status" %}',
+            type: 'POST',
+            data: {
+                'type': 'contact',
+                'id': id,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert(response.message, 'success');
+                    location.reload();
+                } else {
+                    showAlert(response.message || 'Terjadi kesalahan', 'error');
+                }
+            },
+            error: function() {
+                showAlert('Terjadi kesalahan saat mengupdate status', 'error');
+            }
+        });
+    }
+}
+
+function deleteContact(id) {
+    if (confirm('Hapus kontak ini? Tindakan ini tidak dapat dibatalkan.')) {
+        $.ajax({
+            url: '{% url "admin_panel:layanan:ajax_delete_item" %}',
+            type: 'POST',
+            data: JSON.stringify({
+                'type': 'contact',
+                'id': id,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            }),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    showAlert(response.message, 'success');
+                    location.reload();
+                } else {
+                    showAlert(response.message || 'Terjadi kesalahan', 'error');
+                }
+            },
+            error: function() {
+                showAlert('Terjadi kesalahan saat menghapus data', 'error');
+            }
+        });
+    }
+}
+
+</script>
+{% endblock extra_js %}

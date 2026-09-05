@@ -1,0 +1,273 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/layanan/layanan-list.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="layanan-list-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+                <div class="mb-3">
+                    <a href="{% url 'admin_panel:layanan:dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Kembali ke Dashboard
+                    </a>
+                </div>
+
+                <div class="layanan-page-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4>FAQ Layanan</h4>
+                            <p class="text-muted mb-0">Kelola pertanyaan yang sering diajukan</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'admin_panel:layanan:faq_form' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Tambah FAQ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layanan-filter-card">
+                        <form method="get" id="filterForm" class="row g-2 g-md-3">
+                            <div class="col-12 col-md-3">
+                            <label class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">Semua Status</option>
+                                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Aktif</option>
+                                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Tidak Aktif</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-3">
+                            <label class="form-label">Kategori</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">Semua Kategori</option>
+                                    <option value="general" {% if selected_category == 'general' %}selected{% endif %}>Umum</option>
+                                    <option value="documents" {% if selected_category == 'documents' %}selected{% endif %}>Dokumen</option>
+                                    <option value="services" {% if selected_category == 'services' %}selected{% endif %}>Layanan</option>
+                                    <option value="technical" {% if selected_category == 'technical' %}selected{% endif %}>Teknis</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                            <label class="form-label">Pencarian</label>
+                                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Cari FAQ...">
+                            </div>
+                            <div class="col-12 col-md-2">
+                            <label class="form-label d-none d-md-block">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="fas fa-search me-1 d-none d-md-inline"></i>Cari
+                                </button>
+                                    <a href="{% url 'admin_panel:layanan:faq_list' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                </div>
+
+                <div class="layanan-table-card d-none d-md-block">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-question-circle me-2"></i>Daftar FAQ
+                        </h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table layanan-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">ID</th>
+                                    <th width="25%">Pertanyaan</th>
+                                    <th width="30%" class="d-none d-lg-table-cell">Jawaban</th>
+                                    <th width="15%">Kategori</th>
+                                    <th width="10%">Status</th>
+                                    <th width="15%" class="d-none d-lg-table-cell">Tanggal</th>
+                                    <th width="15%" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for faq in faqs %}
+                                <tr>
+                                    <td><small class="text-muted">#{{ faq.id }}</small></td>
+                                    <td><strong>{{ faq.question|truncatechars:50 }}</strong></td>
+                                    <td class="d-none d-lg-table-cell">{{ faq.answer|truncatechars:60 }}</td>
+                                    <td><small class="text-muted">{{ faq.get_category_display }}</small></td>
+                                    <td><small>{% if faq.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</small></td>
+                                    <td class="d-none d-lg-table-cell">{{ faq.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'admin_panel:layanan:faq_form' %}?id={{ faq.id }}"
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-outline-{% if faq.is_active %}warning{% else %}success{% endif %}"
+                                                    title="{% if faq.is_active %}Nonaktifkan{% else %}Aktifkan{% endif %}"
+                                                    onclick="toggleFAQ({{ faq.id }})">
+                                                <i class="fas fa-{% if faq.is_active %}pause{% else %}play{% endif %}"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" title="Hapus"
+                                                    onclick="deleteFAQ({{ faq.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="fas fa-question-circle fa-4x text-muted mb-3"></i>
+                                        <h5 class="text-muted">Belum ada FAQ</h5>
+                                        <p class="text-muted">Belum ada FAQ yang tersedia</p>
+                                        <a href="{% url 'admin_panel:layanan:faq_form' %}" class="btn btn-primary mt-3">
+                                            <i class="fas fa-plus me-1"></i>Tambah FAQ
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="layanan-mobile-list d-md-none">
+                    {% for faq in faqs %}
+                    <div class="layanan-mobile-card">
+                        <div class="layanan-mobile-header">
+                            <strong>{{ faq.question }}</strong>
+                            <div class="layanan-mobile-actions">
+                                <a href="{% url 'admin_panel:layanan:faq_form' %}?id={{ faq.id }}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-{% if faq.is_active %}warning{% else %}success{% endif %}"
+                                        onclick="toggleFAQ({{ faq.id }})">
+                                    <i class="fas fa-{% if faq.is_active %}pause{% else %}play{% endif %}"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger"
+                                        onclick="deleteFAQ({{ faq.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="layanan-mobile-info">
+                            <small class="text-muted">{{ faq.get_category_display }}</small>
+                            <small>{% if faq.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="layanan-empty-state text-center py-5">
+                        <i class="fas fa-question-circle fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">Belum ada FAQ</h5>
+                        <p class="text-muted">Belum ada FAQ yang tersedia</p>
+                        <a href="{% url 'admin_panel:layanan:faq_form' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-plus me-1"></i>Tambah FAQ
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if faqs.has_other_pages %}
+                <div class="pagination">
+                    <ul class="pagination">
+                        {% if faqs.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ faqs.previous_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">{{ faqs.number }} of {{ faqs.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if faqs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ faqs.next_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ faqs.paginator.num_pages }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+
+    $('#filterForm select, #filterForm input').on('change', function() {
+        $('#filterForm').submit();
+    });
+
+    $('[data-bs-toggle="tooltip"]').tooltip();
+
+});
+
+function toggleFAQ(id) {
+    if (confirm('Ubah status FAQ ini?')) {
+        $.ajax({
+            url: '{% url "admin_panel:layanan:ajax_toggle_status" %}',
+            type: 'POST',
+            data: JSON.stringify({
+                'type': 'faq',
+                'id': id,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            }),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    showAlert(response.message, 'success');
+                    location.reload();
+                } else {
+                    showAlert(response.message || 'Terjadi kesalahan', 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr.responseText);
+                showAlert('Terjadi kesalahan saat mengupdate status', 'error');
+            }
+        });
+    }
+}
+
+function deleteFAQ(id) {
+    if (confirm('Hapus FAQ ini? Tindakan ini tidak dapat dibatalkan.')) {
+        $.ajax({
+            url: '{% url "admin_panel:layanan:ajax_delete_item" %}',
+            type: 'POST',
+            data: JSON.stringify({
+                'type': 'faq',
+                'id': id,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            }),
+            dataType: 'json',
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    showAlert(response.message, 'success');
+                    location.reload();
+                } else {
+                    showAlert(response.message || 'Terjadi kesalahan', 'error');
+                }
+            },
+            error: function() {
+                showAlert('Terjadi kesalahan saat menghapus data', 'error');
+            }
+        });
+    }
+}
+
+</script>
+{% endblock extra_js %}

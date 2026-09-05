@@ -1,0 +1,602 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .config-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .config-header h2 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .config-meta {
+        margin-top: 15px;
+        opacity: 0.9;
+    }
+    
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 0.9em;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-running {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-failed {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .status-cancelled {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+    
+    .info-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .info-card h5 {
+        color: #495057;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+    
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .module-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .module-item.selected {
+        background: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+    }
+    
+    .module-item i {
+        font-size: 1.5em;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .option-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .option-item i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .option-item.enabled {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .option-item.disabled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .execution-log {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-execute {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .btn-execute:hover {
+        background: #c82333;
+        border-color: #bd2130;
+    }
+    
+    .btn-execute:disabled {
+        background: #6c757d;
+        border-color: #6c757d;
+    }
+    
+    .btn-backup {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .btn-backup:hover {
+        background: #218838;
+        border-color: #1e7e34;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+        padding-left: 20px;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 5px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #007bff;
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px #dee2e6;
+    }
+    
+    .timeline-item.completed::before {
+        background: #28a745;
+    }
+    
+    .timeline-item.failed::before {
+        background: #dc3545;
+    }
+    
+    .timeline-content {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+    }
+    
+    .timeline-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .timeline-time {
+        font-size: 0.85em;
+        color: #6c757d;
+    }
+    
+    .records-deleted {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 6px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .records-deleted h6 {
+        color: #856404;
+        margin-bottom: 10px;
+    }
+    
+    .record-count {
+        display: inline-block;
+        background: #856404;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        margin-right: 8px;
+        margin-bottom: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="config-header">
+                <h2><i class="fas fa-cogs"></i> {{ config.name }}</h2>
+                <div class="config-meta">
+                    <span class="status-badge status-{{ config.status }}">
+                        {{ config.get_status_display }}
+                    </span>
+                    <span class="ml-3">
+                        <i class="fas fa-calendar"></i> Dibuat: {{ config.created_at|date:"d F Y H:i" }}
+                    </span>
+                    {% if config.created_by %}
+                        <span class="ml-3">
+                            <i class="fas fa-user"></i> Oleh: {{ config.created_by.get_full_name|default:config.created_by.username }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="info-card">
+                <div class="action-buttons">
+                    <a href="{% url 'core:database_reset_edit' config.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Konfigurasi
+                    </a>
+                    
+                    {% if config.status == 'pending' %}
+                        <button class="btn btn-execute" onclick="executeReset({{ config.id }})">
+                            <i class="fas fa-play"></i> Eksekusi Reset
+                        </button>
+                    {% elif config.status == 'running' %}
+                        <button class="btn btn-execute" disabled>
+                            <i class="fas fa-spinner fa-spin"></i> Sedang Berjalan...
+                        </button>
+                    {% endif %}
+                    
+                    <button class="btn btn-backup" onclick="createBackup()">
+                        <i class="fas fa-save"></i> Buat Backup
+                    </button>
+                    
+                    <a href="{% url 'core:database_reset_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Kembali ke Daftar
+                    </a>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-8">
+                    <!-- Configuration Details -->
+                    <div class="info-card">
+                        <h5><i class="fas fa-info-circle"></i> Detail Konfigurasi</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Tipe Reset:</strong><br>
+                                <span class="badge badge-info">{{ config.get_reset_type_display }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Status:</strong><br>
+                                <span class="status-badge status-{{ config.status }}">
+                                    {{ config.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        {% if config.description %}
+                            <div class="mt-3">
+                                <strong>Deskripsi:</strong><br>
+                                <p class="text-muted">{{ config.description }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Selected Modules -->
+                    <div class="info-card">
+                        <h5><i class="fas fa-cubes"></i> Modul yang akan di-Reset</h5>
+                        
+                        {% if config.reset_type == 'full' %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Reset Lengkap:</strong> Semua data akan dihapus kecuali data pengguna dan pengaturan (jika dipilih).
+                            </div>
+                        {% else %}
+                            <div class="module-grid">
+                                <div class="module-item {% if config.reset_penduduk %}selected{% endif %}">
+                                    <i class="fas fa-users"></i>
+                                    <div>Data Penduduk</div>
+                                </div>
+                                <div class="module-item {% if config.reset_dusun %}selected{% endif %}">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <div>Data Dusun</div>
+                                </div>
+                                <div class="module-item {% if config.reset_lorong %}selected{% endif %}">
+                                    <i class="fas fa-road"></i>
+                                    <div>Data Lorong</div>
+                                </div>
+                                <div class="module-item {% if config.reset_rt_rw %}selected{% endif %}">
+                                    <i class="fas fa-sitemap"></i>
+                                    <div>Data RT/RW</div>
+                                </div>
+                                <div class="module-item {% if config.reset_keluarga %}selected{% endif %}">
+                                    <i class="fas fa-home"></i>
+                                    <div>Data Keluarga</div>
+                                </div>
+                                <div class="module-item {% if config.reset_pelajar %}selected{% endif %}">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    <div>Data Pelajar</div>
+                                </div>
+                                <div class="module-item {% if config.reset_disabilitas %}selected{% endif %}">
+                                    <i class="fas fa-wheelchair"></i>
+                                    <div>Data Disabilitas</div>
+                                </div>
+                                <div class="module-item {% if config.reset_beneficiaries %}selected{% endif %}">
+                                    <i class="fas fa-hand-holding-heart"></i>
+                                    <div>Data Penerima Bantuan</div>
+                                </div>
+                                <div class="module-item {% if config.reset_business %}selected{% endif %}">
+                                    <i class="fas fa-store"></i>
+                                    <div>Data Usaha</div>
+                                </div>
+                                <div class="module-item {% if config.reset_complaints %}selected{% endif %}">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <div>Data Keluhan</div>
+                                </div>
+                                <div class="module-item {% if config.reset_documents %}selected{% endif %}">
+                                    <i class="fas fa-file-alt"></i>
+                                    <div>Data Dokumen</div>
+                                </div>
+                                <div class="module-item {% if config.reset_tourism %}selected{% endif %}">
+                                    <i class="fas fa-camera"></i>
+                                    <div>Data Wisata</div>
+                                </div>
+                                <div class="module-item {% if config.reset_posyandu %}selected{% endif %}">
+                                    <i class="fas fa-heartbeat"></i>
+                                    <div>Data Posyandu</div>
+                                </div>
+                                <div class="module-item {% if config.reset_news %}selected{% endif %}">
+                                    <i class="fas fa-newspaper"></i>
+                                    <div>Data Berita</div>
+                                </div>
+                                <div class="module-item {% if config.reset_organization %}selected{% endif %}">
+                                    <i class="fas fa-building"></i>
+                                    <div>Data Organisasi</div>
+                                </div>
+                                <div class="module-item {% if config.reset_layanan %}selected{% endif %}">
+                                    <i class="fas fa-concierge-bell"></i>
+                                    <div>Data Layanan</div>
+                                </div>
+                                <div class="module-item {% if config.reset_letters %}selected{% endif %}">
+                                    <i class="fas fa-envelope"></i>
+                                    <div>Data Surat Menyurat</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Execution Log -->
+                    {% if config.execution_log %}
+                        <div class="info-card">
+                            <h5><i class="fas fa-terminal"></i> Log Eksekusi</h5>
+                            <div class="execution-log">{{ config.execution_log }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Error Log -->
+                    {% if config.error_log %}
+                        <div class="info-card">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Log Error</h5>
+                            <div class="execution-log" style="background: #f8d7da; border-color: #f5c6cb;">{{ config.error_log }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Right Column -->
+                <div class="col-md-4">
+                    <!-- Options -->
+                    <div class="info-card">
+                        <h5><i class="fas fa-sliders-h"></i> Opsi Konfigurasi</h5>
+                        
+                        <div class="option-item {% if config.backup_before_reset %}enabled{% else %}disabled{% endif %}">
+                            <i class="fas fa-save"></i>
+                            <div>
+                                <strong>Backup Sebelum Reset</strong><br>
+                                <small>{{ config.backup_before_reset|yesno:"Ya,Tidak" }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="option-item {% if config.keep_users %}enabled{% else %}disabled{% endif %}">
+                            <i class="fas fa-user-shield"></i>
+                            <div>
+                                <strong>Tetap Simpan Data Pengguna</strong><br>
+                                <small>{{ config.keep_users|yesno:"Ya,Tidak" }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="option-item {% if config.keep_settings %}enabled{% else %}disabled{% endif %}">
+                            <i class="fas fa-cog"></i>
+                            <div>
+                                <strong>Tetap Simpan Pengaturan</strong><br>
+                                <small>{{ config.keep_settings|yesno:"Ya,Tidak" }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="option-item {% if config.keep_media %}enabled{% else %}disabled{% endif %}">
+                            <i class="fas fa-images"></i>
+                            <div>
+                                <strong>Tetap Simpan File Media</strong><br>
+                                <small>{{ config.keep_media|yesno:"Ya,Tidak" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline -->
+                    <div class="info-card">
+                        <h5><i class="fas fa-history"></i> Timeline</h5>
+                        
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Konfigurasi Dibuat</div>
+                                    <div class="timeline-time">{{ config.created_at|date:"d F Y H:i" }}</div>
+                                    {% if config.created_by %}
+                                        <small class="text-muted">oleh {{ config.created_by.get_full_name|default:config.created_by.username }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if config.executed_at %}
+                                <div class="timeline-item {% if config.status == 'completed' %}completed{% elif config.status == 'failed' %}failed{% endif %}">
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">Reset Dieksekusi</div>
+                                        <div class="timeline-time">{{ config.executed_at|date:"d F Y H:i" }}</div>
+                                        {% if config.executed_by %}
+                                            <small class="text-muted">oleh {{ config.executed_by.get_full_name|default:config.executed_by.username }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if config.completed_at %}
+                                <div class="timeline-item completed">
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">Reset Selesai</div>
+                                        <div class="timeline-time">{{ config.completed_at|date:"d F Y H:i" }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Records Deleted -->
+                    {% if config.records_deleted %}
+                        <div class="records-deleted">
+                            <h6><i class="fas fa-trash"></i> Record yang Dihapus</h6>
+                            {% for model, count in config.records_deleted.items %}
+                                <span class="record-count">{{ model }}: {{ count }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function executeReset(configId) {
+    if (!confirm('⚠️ PERINGATAN!\n\nApakah Anda yakin ingin mengeksekusi reset ini?\n\nOperasi ini akan menghapus data dan TIDAK DAPAT DIBATALKAN!\n\nPastikan Anda sudah membuat backup jika diperlukan.')) {
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menjalankan Reset...';
+    button.disabled = true;
+    
+    fetch('{% url "core:database_reset_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            action: 'execute_reset',
+            config_id: configId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Reset berhasil dieksekusi!');
+            location.reload();
+        } else {
+            alert('❌ Error: ' + data.message);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        alert('❌ Error: ' + error.message);
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function createBackup() {
+    if (!confirm('Apakah Anda yakin ingin membuat backup database?')) {
+        return;
+    }
+    
+    fetch('{% url "core:database_backup_create" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('✅ Backup berhasil dibuat!');
+        } else {
+            alert('❌ Error saat membuat backup');
+        }
+    })
+    .catch(error => {
+        alert('❌ Error: ' + error.message);
+    });
+}
+
+// Auto-refresh if status is running
+{% if config.status == 'running' %}
+setTimeout(function() {
+    location.reload();
+}, 5000);
+{% endif %}
+</script>
+{% endblock %}

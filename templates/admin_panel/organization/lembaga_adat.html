@@ -1,0 +1,400 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Lembaga Adat{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/organization/organization-list.css' %}">
+<style>
+    /* HILANGKAN horizontal scrollbar yang bikin kedip-kedip */
+    .table-responsive {
+        overflow-x: hidden !important;
+        overflow-y: visible;
+    }
+    
+    .table {
+        width: 100%;
+        table-layout: fixed;
+    }
+    
+    .table-responsive::-webkit-scrollbar-horizontal {
+        display: none !important;
+        height: 0 !important;
+    }
+    
+    .table-responsive {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    body {
+        overflow-x: hidden !important;
+    }
+    
+    .container-fluid {
+        overflow-x: hidden !important;
+        max-width: 100%;
+    }
+    
+    .table-container {
+        overflow: visible;
+        max-width: 100%;
+    }
+    
+    .table td, .table th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .table td:nth-child(3) {
+        white-space: normal;
+        word-break: break-word;
+    }
+    
+    /* Mobile Card Layout */
+    @media (max-width: 768px) {
+        .table-responsive {
+            display: none !important;
+        }
+        
+        .mobile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #f6c23e;
+            display: block !important;
+        }
+        
+        .mobile-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .mobile-card-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+        
+        .mobile-card-title {
+            flex: 1;
+        }
+        
+        .mobile-card-title h6 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .mobile-card-title small {
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .mobile-card-body {
+            margin-bottom: 12px;
+        }
+        
+        .mobile-card-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fc;
+        }
+        
+        .mobile-card-item:last-child {
+            border-bottom: none;
+        }
+        
+        .mobile-card-label {
+            font-weight: 600;
+            color: #5a6c7d;
+            font-size: 13px;
+        }
+        
+        .mobile-card-value {
+            color: #2c3e50;
+            font-size: 13px;
+            text-align: right;
+        }
+        
+        .mobile-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .mobile-card-actions .btn {
+            flex: 1;
+            font-size: 13px;
+            padding: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Lembaga Adat</h1>
+            <p class="text-muted mb-0">Kelola data lembaga adat</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <a href="{% url 'admin_panel:organization:admin_lembaga_adat_create' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Tambah Lembaga
+            </a>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="filter-compact">
+            <div class="form-group">
+                <label for="search" class="form-label">Cari</label>
+                <input type="text" id="search" class="form-control search-input" placeholder="Nama lembaga atau ketua...">
+            </div>
+            <div class="form-group">
+                <label for="status" class="form-label">Status</label>
+                <select id="status" class="form-select">
+                    <option value="aktif">Aktif</option>
+                    <option value="non_aktif">Non Aktif</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header lembaga-adat">
+            <div class="header-content">
+                <h5 class="mb-0">Data Lembaga Adat</h5>
+                <div class="header-actions">
+                    <button class="btn btn-light btn-sm" onclick="exportData()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-light btn-sm" onclick="printData()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="5%">No</th>
+                        <th width="10%">Logo</th>
+                        <th width="25%">Nama Lembaga</th>
+                        <th width="15%">Ketua</th>
+                        <th width="15%">Jenis</th>
+                        <th width="10%">Didirikan</th>
+                        <th width="10%">Status</th>
+                        <th width="10%">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="lembagaTableBody">
+                    {% if lembaga_adat %}
+                        {% for lembaga in lembaga_adat %}
+                        <tr>
+                            <td><span class="badge badge-light">{{ forloop.counter }}</span></td>
+                            <td>
+                                {% if lembaga.foto_kegiatan %}
+                                    <img src="{{ lembaga.foto_kegiatan.url }}" class="lembaga-photo" alt="{{ lembaga.nama_lembaga }}">
+                                {% else %}
+                                    <div class="lembaga-photo-placeholder">
+                                        <i class="fas fa-landmark"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="lembaga-info">{{ lembaga.nama_lembaga }}</div>
+                                <div class="lembaga-details">{{ lembaga.get_jenis_lembaga_display }}</div>
+                            </td>
+                            <td>{% if lembaga.ketua %}{{ lembaga.ketua.name }}{% else %}-{% endif %}</td>
+                            <td>{{ lembaga.get_jenis_lembaga_display }}</td>
+                            <td>{% if lembaga.tanggal_terbentuk %}{{ lembaga.tanggal_terbentuk|date:"d M Y" }}{% else %}-{% endif %}</td>
+                            <td>
+                                {% if lembaga.status == 'aktif' %}
+                                    <span class="badge badge-success">Aktif</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Non Aktif</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group-vertical btn-group-sm" role="group">
+                                    <div class="btn-group mb-1" role="group">
+                                        <a href="{% url 'admin_panel:organization:admin_lembaga_adat_detail' lembaga.id %}" class="btn btn-sm btn-outline-primary" title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'admin_panel:organization:admin_lembaga_adat_edit' lembaga.id %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-danger" title="Hapus"
+                                                onclick="window.deleteLembagaAdat({{ lembaga.id }}, '{{ lembaga.nama_lembaga }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-university fa-4x text-muted mb-3"></i>
+                                <h5 class="text-muted">Belum ada lembaga adat</h5>
+                                <p class="text-muted">Silakan tambah lembaga adat baru</p>
+                                <a href="{% url 'admin_panel:organization:admin_lembaga_adat_create' %}" class="btn btn-danger">
+                                    <i class="fas fa-plus mr-1"></i>Tambah Lembaga Adat
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Mobile Cards (Hidden on Desktop) -->
+        {% if lembaga_adat %}
+            {% for lembaga in lembaga_adat %}
+            <div class="mobile-card" style="display: none;">
+                <div class="mobile-card-header">
+                    {% if lembaga.foto_kegiatan %}
+                        <img src="{{ lembaga.foto_kegiatan.url }}" alt="{{ lembaga.nama_lembaga }}" class="mobile-card-avatar">
+                    {% else %}
+                        <div class="mobile-card-avatar" style="background: linear-gradient(135deg, #f6c23e 0%, #f39c12 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
+                            <i class="fas fa-landmark"></i>
+                        </div>
+                    {% endif %}
+                    <div class="mobile-card-title">
+                        <h6>{{ lembaga.nama_lembaga }}</h6>
+                        <small>{{ lembaga.get_jenis_lembaga_display }}</small>
+                    </div>
+                </div>
+                <div class="mobile-card-body">
+                    <div class="mobile-card-item">
+                        <span class="mobile-card-label">No.</span>
+                        <span class="mobile-card-value">{{ forloop.counter }}</span>
+                    </div>
+                    <div class="mobile-card-item">
+                        <span class="mobile-card-label">Ketua</span>
+                        <span class="mobile-card-value">{% if lembaga.ketua %}{{ lembaga.ketua.name }}{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="mobile-card-item">
+                        <span class="mobile-card-label">Jenis</span>
+                        <span class="mobile-card-value">{{ lembaga.get_jenis_lembaga_display }}</span>
+                    </div>
+                    <div class="mobile-card-item">
+                        <span class="mobile-card-label">Didirikan</span>
+                        <span class="mobile-card-value">{% if lembaga.tanggal_terbentuk %}{{ lembaga.tanggal_terbentuk|date:"d M Y" }}{% else %}-{% endif %}</span>
+                    </div>
+                    <div class="mobile-card-item">
+                        <span class="mobile-card-label">Status</span>
+                        <span class="mobile-card-value">
+                            {% if lembaga.status == 'aktif' %}
+                                <span class="badge badge-success">Aktif</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Non Aktif</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="mobile-card-actions">
+                    <a href="{% url 'admin_panel:organization:admin_lembaga_adat_detail' lembaga.id %}" class="btn btn-info btn-sm">
+                        <i class="fas fa-eye"></i> Detail
+                    </a>
+                    <a href="{% url 'admin_panel:organization:admin_lembaga_adat_edit' lembaga.id %}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button class="btn btn-danger btn-sm" onclick="window.deleteLembagaAdat({{ lembaga.id }}, '{{ lembaga.nama_lembaga }}')">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="mobile-card" style="display: none;">
+                <div class="text-center py-5">
+                    <i class="fas fa-university fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Belum ada lembaga adat</h5>
+                    <p class="text-muted">Silakan tambah lembaga adat baru</p>
+                    <a href="{% url 'admin_panel:organization:admin_lembaga_adat_create' %}" class="btn btn-danger">
+                        <i class="fas fa-plus mr-1"></i>Tambah Lembaga Adat
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus data lembaga adat <strong id="lembagaToDelete"></strong>?</p>
+                <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script></script>
+<script>$(document).ready(function() {
+    let deleteLembagaId = null;
+
+    window.deleteLembagaAdat = function(lembagaId, lembagaName) {
+        deleteLembagaId = lembagaId;
+        $('#lembagaToDelete').text(lembagaName);
+        $('#deleteModal').modal('show');
+    };
+
+    $('#confirmDeleteBtn').click(async function() {
+        if (deleteLembagaId) {
+            const submitBtn = $(this);
+            const originalText = submitBtn.html();
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Menghapus...');
+
+            try {
+
+                window.location.href = `/admin-panel/organization/lembaga-adat/${deleteLembagaId}/delete/`;
+            } catch (error) {
+                showError('Terjadi kesalahan saat menghapus data');
+                console.error('Delete error:', error);
+            } finally {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        }
+    });
+
+    $('#deleteModal').on('hidden.bs.modal', function() {
+        deleteLembagaId = null;
+    });
+});
+</script>
+{% endblock %}

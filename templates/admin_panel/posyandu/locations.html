@@ -1,0 +1,534 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Lokasi Posyandu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid posyandu-container">
+
+    <div class="location-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-3">
+                    <a href="{% url 'admin_panel:posyandu:posyandu_admin' %}" class="btn btn-outline-light btn-sm me-3">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Kembali
+                    </a>
+                </div>
+                <h1 class="mb-2">
+                    <i class="fas fa-map-marker-alt mr-3"></i>
+                    Lokasi Posyandu
+                </h1>
+                <p class="mb-0 opacity-90 fs-5">Kelola dan pantau data lokasi posyandu dengan mudah</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{% url 'admin_panel:posyandu:location_create' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Lokasi
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stats-card">
+                <div class="stats-number" id="totalLocations">0</div>
+                <div class="stats-label">Total Lokasi</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card gradient-pink">
+                <div class="stats-number" id="activeLocations">0</div>
+                <div class="stats-label">Aktif</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card gradient-blue">
+                <div class="stats-number" id="maintenanceLocations">0</div>
+                <div class="stats-label">Maintenance</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card gradient-green">
+                <div class="stats-number" id="totalCapacity">0</div>
+                <div class="stats-label">Total Kapasitas</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-4">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cari nama lokasi...">
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <select class="form-control" id="statusFilter">
+                    <option value="">Semua Status</option>
+                    <option value="active">Aktif</option>
+                    <option value="inactive">Tidak Aktif</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <select class="form-control" id="capacityFilter">
+                    <option value="">Semua Kapasitas</option>
+                    <option value="small">Kecil (< 50)</option>
+                    <option value="medium">Sedang (50-100)</option>
+                    <option value="large">Besar (> 100)</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="clearFilters">
+                    <i class="fas fa-times mr-1"></i>
+                    Reset
+                </button>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="view-toggle">
+                    <button class="btn btn-view-toggle active" data-view="list">
+                        <i class="fas fa-list"></i>
+                        List
+                    </button>
+                    <button class="btn btn-view-toggle" data-view="grid">
+                        <i class="fas fa-th"></i>
+                        Grid
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="locations-data-table" id="locationsContainer">
+
+        <div class="locations-list-view" id="locationsListView" style="display: none;">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="locationsTable">
+                            <thead>
+                                <tr>
+                                    <th class="th-no">No</th>
+                                    <th class="th-photo d-none d-md-table-cell">Foto</th>
+                                    <th class="th-name">Nama Lokasi</th>
+                                    <th class="th-code d-none d-sm-table-cell">Kode</th>
+                                    <th class="th-capacity d-none d-md-table-cell">Kapasitas</th>
+                                    <th class="th-address d-none d-lg-table-cell">Alamat</th>
+                                    <th class="th-status d-none d-lg-table-cell">Status</th>
+                                    <th class="th-action">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="locationsTableBody">
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="locationsGridView">
+
+        </div>
+    </div>
+
+    <div class="pagination-wrapper">
+        <nav aria-label="Locations pagination">
+            <ul class="pagination" id="pagination">
+
+            </ul>
+        </nav>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+    let currentPage = 1;
+    let currentView = 'list';
+    let currentFilters = {
+        search: '',
+        status: '',
+        capacity: ''
+    };
+
+    loadLocations();
+
+    $('.btn-view-toggle').on('click', function() {
+        const view = $(this).data('view');
+        currentView = view;
+
+        $('.btn-view-toggle').removeClass('active');
+        $(this).addClass('active');
+
+        loadLocations();
+    });
+
+    $(document).on('click', '.view-location', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        window.location.href = `{% url 'admin_panel:posyandu:locations_detail' 0 %}`.replace('0', id);
+    });
+
+    $(document).on('click', '.edit-location', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        window.location.href = `{% url 'admin_panel:posyandu:location_update' 0 %}`.replace('0', id);
+    });
+
+    $(document).on('click', '.show-map', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        showMap(id);
+    });
+
+    $(document).on('click', '.delete-location', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        if (confirm('Apakah Anda yakin ingin menghapus lokasi ini?')) {
+            window.location.href = `{% url 'admin_panel:posyandu:location_delete' 0 %}`.replace('0', id);
+        }
+    });
+
+    $('#searchInput').on('input', function() {
+        currentFilters.search = $(this).val();
+        currentPage = 1;
+        loadLocations();
+    });
+
+    $('#statusFilter').on('change', function() {
+        currentFilters.status = $(this).val();
+        currentPage = 1;
+        loadLocations();
+    });
+
+    $('#capacityFilter').on('change', function() {
+        currentFilters.capacity = $(this).val();
+        currentPage = 1;
+        loadLocations();
+    });
+
+    $('#clearFilters').on('click', function() {
+        $('#searchInput').val('');
+        $('#statusFilter').val('');
+        $('#capacityFilter').val('');
+
+        currentFilters = {
+            search: '',
+            status: '',
+            capacity: ''
+        };
+        currentPage = 1;
+        loadLocations();
+    });
+
+    function loadLocations() {
+        console.log('Loading locations...');
+        console.log('Current filters:', currentFilters);
+        console.log('Current page:', currentPage);
+        
+        const apiUrl = '{% url "admin_panel:posyandu:api_location_list" %}';
+        console.log('API URL:', apiUrl);
+        
+        $.ajax({
+            url: apiUrl,
+            method: 'GET',
+            data: {
+                page: currentPage,
+                search: currentFilters.search,
+                status: currentFilters.status,
+                capacity: currentFilters.capacity
+            },
+            success: function(response) {
+                console.log('API Response:', response);
+                // Check if response is valid
+                if (response && typeof response === 'object') {
+                    console.log('Results:', response.results);
+                    console.log('Statistics:', response.statistics);
+                    displayLocations(response.results || []);
+                    updatePagination(response.pagination || {});
+                    updateStatistics(response.statistics || {});
+                } else {
+                    console.error('Invalid response format:', response);
+                    displayLocations([]);
+                    updateStatistics({});
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading locations:', error);
+                console.error('XHR:', xhr);
+                console.error('Status:', status);
+                console.error('Response Text:', xhr.responseText);
+                showAlert('Error loading data', 'error');
+            }
+        });
+    }
+
+    function displayLocations(locations) {
+        console.log('displayLocations called with:', locations);
+        // Check if locations is valid array
+        if (!locations || !Array.isArray(locations) || locations.length === 0) {
+            if (currentView === 'list') {
+                $('#locationsTableBody').html(`
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>Tidak ada data lokasi posyandu yang tersedia</p>
+                        </td>
+                    </tr>
+                `);
+            } else {
+                $('#locationsGridView').html(`
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <h4>Tidak ada lokasi</h4>
+                            <p>Belum ada data lokasi posyandu yang tersedia.</p>
+                        </div>
+                    </div>
+                `);
+            }
+            return;
+        }
+
+        let html = '';
+        let counter = 1;
+        
+        // Ensure locations is an array before iterating
+        if (Array.isArray(locations)) {
+            locations.forEach(function(location) {
+            const statusLabels = {
+                'active': 'Aktif',
+                'inactive': 'Tidak Aktif',
+                'maintenance': 'Maintenance'
+            };
+
+            const statusClasses = {
+                'active': 'active',
+                'inactive': 'inactive',
+                'maintenance': 'maintenance'
+            };
+
+            const amenities = location.amenities ? location.amenities.split(',').map(a => a.trim()) : [];
+
+            if (currentView === 'list') {
+
+                html += `
+                    <tr>
+                        <td class="td-no">
+                            <span class="badge badge-light">${counter}</span>
+                        </td>
+                        <td class="td-photo d-none d-md-table-cell">
+                            <img src="${location.image}" alt="${location.name}" class="location-avatar rounded-circle">
+                        </td>
+                        <td class="td-name">
+                            <div class="d-flex align-items-start">
+                                <div class="d-md-none mr-2">
+                                    <img src="${location.image}" alt="${location.name}" class="location-avatar-sm rounded-circle">
+                                </div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-bold text-dark">${location.name}</div>
+                                    <div class="d-sm-none text-muted small">
+                                        ${location.code || '-'}
+                                    </div>
+                                    <div class="d-md-none text-muted small">
+                                        Kapasitas: ${location.capacity || '-'} orang
+                                    </div>
+                                    <div class="d-lg-none text-muted small">
+                                        ${location.address}
+                                        <span class="status-badge ${statusClasses[location.status]} ms-1">${statusLabels[location.status]}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="td-code d-none d-sm-table-cell">${location.code || '-'}</td>
+                        <td class="td-capacity d-none d-md-table-cell">
+                            <span class="badge badge-info">${location.capacity || '-'} orang</span>
+                        </td>
+                        <td class="td-address d-none d-lg-table-cell">${location.address}</td>
+                        <td class="td-status d-none d-lg-table-cell">
+                            <span class="status-badge ${statusClasses[location.status]}">${statusLabels[location.status]}</span>
+                        </td>
+                        <td class="td-action">
+                            <div class="d-none d-md-inline-block">
+                                <a href="#" class="btn btn-sm btn-outline-primary view-location" data-id="${location.id || 0}" title="Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-outline-warning edit-location" data-id="${location.id || 0}" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-info show-map" data-id="${location.id || 0}" title="Peta">
+                                    <i class="fas fa-map"></i>
+                                </button>
+                                <a href="#" class="btn btn-sm btn-outline-danger delete-location" data-id="${location.id || 0}" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                            <div class="d-md-none btn-group-mobile">
+                                <a href="#" class="btn btn-sm btn-outline-primary view-location" data-id="${location.id || 0}" title="Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-outline-warning edit-location" data-id="${location.id || 0}" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-info show-map" data-id="${location.id || 0}" title="Peta">
+                                    <i class="fas fa-map"></i>
+                                </button>
+                                <a href="#" class="btn btn-sm btn-outline-danger delete-location" data-id="${location.id || 0}" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                counter++;
+            } else {
+
+                html += `
+                    <div class="col-6 col-md-6 col-lg-4 mb-3 mb-md-4">
+                        <div class="location-card">
+                            <img src="${location.image}"
+                                 alt="${location.name}" class="location-image">
+
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h6 class="mb-1">${location.name}</h6>
+                                    <small class="text-muted">${location.code || '-'}</small>
+                                </div>
+                                <span class="status-badge ${statusClasses[location.status]}">
+                                    ${statusLabels[location.status]}
+                                </span>
+                            </div>
+
+                            <div class="location-info">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Kapasitas:</small><br>
+                                        <strong>${location.capacity || '-'} orang</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Status:</small><br>
+                                        <strong class="text-${location.status === 'active' ? 'success' : location.status === 'maintenance' ? 'warning' : 'danger'}">
+                                            ${statusLabels[location.status]}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="contact-info">
+                                ${location.phone ? `
+                                    <div class="contact-item">
+                                        <i class="fas fa-phone"></i>
+                                        <span>${location.phone}</span>
+                                    </div>
+                                ` : ''}
+                                ${location.email ? `
+                                    <div class="contact-item">
+                                        <i class="fas fa-envelope"></i>
+                                        <span>${location.email}</span>
+                                    </div>
+                                ` : ''}
+                                <div class="contact-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>${location.address}</span>
+                                </div>
+                            </div>
+
+                            ${amenities.length > 0 ? `
+                                <div class="location-amenities">
+                                    <h6 class="mb-2">Fasilitas</h6>
+                                    ${amenities.map(amenity => `
+                                        <div class="amenity-item">
+                                            <i class="fas fa-check"></i>
+                                            <span>${amenity}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+
+                            <div class="action-buttons mt-3">
+                                <a href="#" class="btn btn-sm btn-outline-primary view-location" data-id="${location.id || 0}">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-outline-warning edit-location" data-id="${location.id || 0}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-info show-map" data-id="${location.id || 0}">
+                                    <i class="fas fa-map"></i>
+                                </button>
+                                <a href="#" class="btn btn-sm btn-outline-danger delete-location" data-id="${location.id || 0}">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        }
+
+        if (currentView === 'list') {
+            $('#locationsTableBody').html(html);
+            $('#locationsListView').show();
+            $('#locationsGridView').hide();
+        } else {
+            $('#locationsGridView').html(html);
+            $('#locationsListView').hide();
+            $('#locationsGridView').show();
+        }
+    }
+
+    window.showMap = function(id) {
+
+        $.ajax({
+            url: `{% url "admin_panel:posyandu:api_location_update" 0 %}`.replace('0', id),
+            method: 'GET',
+            success: function(response) {
+                // Check if response is valid
+                if (response && typeof response === 'object') {
+                    const lat = response.latitude;
+                    const lng = response.longitude;
+
+                    if (lat && lng) {
+                        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                        window.open(mapsUrl, '_blank');
+                    } else {
+                        showAlert('Koordinat tidak tersedia untuk menampilkan peta', 'warning');
+                    }
+                } else {
+                    console.error('Invalid response format:', response);
+                    showAlert('Error loading location data', 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                showAlert('Error loading location data', 'error');
+            }
+        });
+    };
+
+    function updateStatistics(stats) {
+        if (!stats) {
+            console.warn('Statistics data is undefined');
+            return;
+        }
+        $('#totalLocations').text(stats.total || 0);
+        $('#activeLocations').text(stats.active || 0);
+        $('#maintenanceLocations').text(stats.maintenance || 0);
+        $('#totalCapacity').text(stats.total_capacity || 0);
+    }
+
+    function updatePagination(pagination) {
+
+    }
+
+});
+</script>
+{% endblock %}

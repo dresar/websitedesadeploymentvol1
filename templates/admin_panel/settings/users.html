@@ -1,0 +1,240 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Manajemen Pengguna{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/users.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="users-container">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Stats Card -->
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">
+                        <i class="fas fa-users me-2"></i>
+                    Statistik Pengguna
+                </h4>
+                    <div class="row text-center">
+                        <div class="col-6 col-md-3">
+                            <div class="h2 mb-1">{{ total_users }}</div>
+                            <div class="small">Total Pengguna</div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="h2 mb-1">{{ active_users }}</div>
+                            <div class="small">Aktif</div>
+                    </div>
+                        <div class="col-6 col-md-3">
+                            <div class="h2 mb-1">{{ staff_users }}</div>
+                            <div class="small">Staff</div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="h2 mb-1">{{ super_users }}</div>
+                            <div class="small">Superuser</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                    Filter Pengguna
+                    </h5>
+                </div>
+                <div class="card-body">
+                <form id="filterForm" method="get">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select">
+                                <option value="">Semua Status</option>
+                                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Aktif</option>
+                                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Nonaktif</option>
+                                <option value="staff" {% if request.GET.status == 'staff' %}selected{% endif %}>Staff</option>
+                                <option value="superuser" {% if request.GET.status == 'superuser' %}selected{% endif %}>Superuser</option>
+                            </select>
+                        </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Grup</label>
+                                <select name="group" class="form-select">
+                                <option value="">Semua Grup</option>
+                                {% for group in groups %}
+                                <option value="{{ group.id }}" {% if request.GET.group == group.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ group.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Pencarian</label>
+                                <input type="text" name="search" class="form-control" placeholder="Cari nama, email, atau username..." value="{{ request.GET.search }}">
+                        </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <div class="btn-group w-100" role="group">
+                                    <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                                    <a href="{% url 'core:user_management' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </a>
+                                </div>
+                        </div>
+                    </div>
+                </form>
+                </div>
+            </div>
+
+            <!-- Add User Button -->
+            <div class="d-flex justify-content-end mb-3">
+                <a href="{% url 'core:add_user' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Tambah Pengguna
+                </a>
+            </div>
+
+            <!-- Users List -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Daftar Pengguna
+                    </h5>
+                    <p class="mb-0 mt-1">Kelola pengguna yang terdaftar di sistem</p>
+                </div>
+                <div class="card-body">
+                    {% if users %}
+                        {% for user in users %}
+                        <div class="card mb-2">
+                            <div class="card-body py-3">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="user-avatar me-3">
+                                        {{ user.first_name|first|default:user.username|first|upper }}
+                                    </div>
+                                            <div>
+                                                <h6 class="mb-1">{{ user.get_full_name|default:user.username }}</h6>
+                                                <p class="text-muted mb-1 small">{{ user.email }}</p>
+                                        {% if user.position %}
+                                                <small class="text-muted">{{ user.position }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                    {% if user.is_superuser %}
+                                        <span class="status-badge status-superuser">Superuser</span>
+                                    {% elif user.is_staff %}
+                                        <span class="status-badge status-staff">Staff</span>
+                                    {% elif user.is_active %}
+                                        <span class="status-badge status-active">Aktif</span>
+                                    {% else %}
+                                        <span class="status-badge status-inactive">Nonaktif</span>
+                                    {% endif %}
+                                        <br>
+                                    <small class="text-muted">{{ user.date_joined|date:"d M Y" }}</small>
+                                </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <a href="{% url 'core:edit_user' user.id %}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="post" action="{% url 'core:toggle_user_status' user.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-warning btn-sm">
+                                                    <i class="fas fa-power-off"></i>
+                                </button>
+                                            </form>
+                                {% if not user.is_superuser %}
+                                            <form method="post" action="{% url 'core:delete_user' user.id %}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?')">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-trash"></i>
+                                </button>
+                                            </form>
+                                {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        {% if users.has_other_pages %}
+                        <nav aria-label="User pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if users.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">&laquo; First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ users.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Previous</a>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in users.paginator.page_range %}
+                                    {% if users.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > users.number|add:'-3' and num < users.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if users.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ users.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ users.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Last &raquo;</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Tidak Ada Pengguna</h5>
+                        <p class="text-muted">Tidak ada pengguna yang ditemukan dengan filter yang dipilih.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto submit filter form when select changes
+    $('.form-select').on('change', function() {
+        $('#filterForm').submit();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,964 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Dashboard Wisata{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+
+@media (max-width: 768px) {
+    .admin-dashboard {
+        padding: 0.25rem !important;
+    }
+
+    .dashboard-header {
+        padding: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+        border-radius: 8px !important;
+    }
+
+    .dashboard-title {
+        font-size: 1.1rem !important;
+        gap: 0.25rem !important;
+    }
+
+    .dashboard-title i {
+        font-size: 1rem !important;
+    }
+
+    .dashboard-subtitle {
+        font-size: 0.75rem !important;
+    }
+
+    .time-info, .date-info {
+        font-size: 0.7rem !important;
+    }
+
+    .stats-cart-container,
+    .info-cart-container,
+    .activities-cart-container,
+    .analytics-cart-container {
+        padding: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+        border-radius: 8px !important;
+    }
+
+    .cart-header {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .cart-title {
+        font-size: 1rem !important;
+        gap: 0.25rem !important;
+    }
+
+    .cart-title i {
+        font-size: 0.9rem !important;
+    }
+
+    .cart-subtitle {
+        font-size: 0.7rem !important;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+
+    .stat-cart {
+        padding: 0.5rem !important;
+        border-radius: 6px !important;
+    }
+
+    .stat-icon {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .stat-number {
+        font-size: 1.1rem !important;
+        margin-bottom: 0.15rem !important;
+    }
+
+    .stat-label {
+        font-size: 0.7rem !important;
+        margin-bottom: 0.15rem !important;
+        line-height: 1.1;
+    }
+
+    .stat-description {
+        font-size: 0.6rem !important;
+        line-height: 1.1;
+    }
+
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+
+    .info-cart {
+        padding: 0.5rem !important;
+        border-radius: 6px !important;
+    }
+
+    .info-icon {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .info-label {
+        font-size: 0.7rem !important;
+        margin-bottom: 0.15rem !important;
+    }
+
+    .info-description {
+        font-size: 0.6rem !important;
+        line-height: 1.1;
+    }
+
+    .info-status {
+        font-size: 0.6rem !important;
+        gap: 0.2rem !important;
+    }
+
+    .status-indicator {
+        width: 5px !important;
+        height: 5px !important;
+    }
+
+    .activities-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
+
+    .activity-cart {
+        padding: 0.5rem !important;
+        border-radius: 6px !important;
+    }
+
+    .activity-header {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .activity-title {
+        font-size: 0.85rem !important;
+        gap: 0.25rem !important;
+    }
+
+    .activity-title i {
+        font-size: 0.8rem !important;
+    }
+
+    .activity-subtitle {
+        font-size: 0.65rem !important;
+    }
+
+    .activity-body {
+        max-height: 200px !important;
+    }
+
+    .activity-item {
+        padding: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
+        border-radius: 4px !important;
+    }
+
+    .activity-icon {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .activity-title-text {
+        font-size: 0.75rem !important;
+        margin-bottom: 0.15rem !important;
+    }
+
+    .activity-time {
+        font-size: 0.65rem !important;
+    }
+
+    .status-badge {
+        padding: 2px 5px !important;
+        font-size: 0.6rem !important;
+        border-radius: 8px !important;
+    }
+
+    .analytics-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
+
+    .chart-cart {
+        padding: 0.5rem !important;
+        border-radius: 6px !important;
+    }
+
+    .chart-header {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .chart-title {
+        font-size: 0.85rem !important;
+        gap: 0.25rem !important;
+    }
+
+    .chart-title i {
+        font-size: 0.8rem !important;
+    }
+
+    .chart-subtitle {
+        font-size: 0.65rem !important;
+    }
+
+    .chart-body {
+        padding: 0.25rem !important;
+    }
+
+    .chart-container {
+        height: 150px !important;
+        padding: 0.25rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .chart-legend {
+        gap: 0.5rem !important;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        font-size: 0.7rem !important;
+        gap: 0.25rem !important;
+    }
+
+    .legend-color {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    .empty-state {
+        padding: 1rem !important;
+    }
+
+    .empty-state i {
+        font-size: 1.2rem !important;
+    }
+
+    .empty-state p {
+        font-size: 0.7rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard {
+        padding: 0.2rem !important;
+    }
+
+    .dashboard-header {
+        padding: 0.6rem !important;
+        margin-bottom: 0.6rem !important;
+    }
+
+    .dashboard-title {
+        font-size: 0.95rem !important;
+    }
+
+    .dashboard-subtitle {
+        font-size: 0.7rem !important;
+    }
+
+    .stats-cart-container,
+    .info-cart-container,
+    .activities-cart-container,
+    .analytics-cart-container {
+        padding: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+
+    .cart-title {
+        font-size: 0.9rem !important;
+    }
+
+    .cart-subtitle {
+        font-size: 0.65rem !important;
+    }
+
+    .stats-grid,
+    .info-grid {
+        gap: 0.4rem !important;
+    }
+
+    .stat-cart,
+    .info-cart {
+        padding: 0.4rem !important;
+    }
+
+    .stat-icon,
+    .info-icon {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .stat-number {
+        font-size: 1rem !important;
+    }
+
+    .stat-label,
+    .info-label {
+        font-size: 0.65rem !important;
+    }
+
+    .stat-description,
+    .info-description {
+        font-size: 0.55rem !important;
+    }
+
+    .activity-cart,
+    .chart-cart {
+        padding: 0.4rem !important;
+    }
+
+    .activity-item {
+        padding: 0.35rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+
+    .activity-icon {
+        width: 22px !important;
+        height: 22px !important;
+        font-size: 0.7rem !important;
+    }
+
+    .activity-title-text {
+        font-size: 0.7rem !important;
+    }
+
+    .activity-time {
+        font-size: 0.6rem !important;
+    }
+
+    .status-badge {
+        padding: 1px 4px !important;
+        font-size: 0.55rem !important;
+    }
+
+    .chart-container {
+        height: 130px !important;
+        padding: 0.2rem !important;
+    }
+
+    .legend-item {
+        font-size: 0.65rem !important;
+    }
+}
+
+/* Chart Legend Styles */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.legend-value {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #6b7280;
+    text-align: center;
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    .info-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    .activities-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <a href="{% url 'admin_panel:dashboard' %}" class="btn btn-outline-secondary mb-3" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-radius: 10px; font-weight: 600; transition: all 0.3s ease; text-decoration: none;">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Admin Panel
+    </a>
+
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-map-marked-alt"></i>
+                    Dashboard Wisata
+                </h1>
+                <p class="dashboard-subtitle">Kelola dan pantau semua aspek wisata Desa Pulosarok</p>
+            </div>
+            <div class="header-meta">
+                <div class="time-info">
+                    <i class="fas fa-clock"></i>
+                    <span id="current-time"></span>
+                </div>
+                <div class="date-info">
+                    <i class="fas fa-calendar"></i>
+                    <span id="current-date"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-chart-bar"></i>
+                Statistik Wisata
+            </h2>
+            <p class="cart-subtitle">Ringkasan data wisata Desa Pulosarok</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-cart stat-cart-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_locations|default:"0" }}</div>
+                    <div class="stat-label">Total Lokasi Wisata</div>
+                    <div class="stat-description">Jumlah keseluruhan destinasi wisata</div>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-success">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ active_locations|default:"0" }}</div>
+                    <div class="stat-label">Lokasi Aktif</div>
+                    <div class="stat-description">Destinasi yang sedang beroperasi</div>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-info">
+                <div class="stat-icon">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_categories|default:"0" }}</div>
+                    <div class="stat-label">Total Kategori</div>
+                    <div class="stat-description">Jenis kategori wisata tersedia</div>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_reviews|default:"0" }}</div>
+                    <div class="stat-label">Total Review</div>
+                    <div class="stat-description">Ulasan dari pengunjung</div>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-info">
+                <div class="stat-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_packages|default:"0" }}</div>
+                    <div class="stat-label">Total Paket</div>
+                    <div class="stat-description">Paket wisata yang ditawarkan</div>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_events|default:"0" }}</div>
+                    <div class="stat-label">Total Event</div>
+                    <div class="stat-description">Acara wisata yang diselenggarakan</div>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ pending_reviews|default:"0" }}</div>
+                    <div class="stat-label">Review Pending</div>
+                    <div class="stat-description">Menunggu persetujuan admin</div>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-success">
+                <div class="stat-icon">
+                    <i class="fas fa-star-half-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ avg_rating|floatformat:1|default:"0.0" }}</div>
+                    <div class="stat-label">Rating Rata-rata</div>
+                    <div class="stat-description">Dari semua lokasi wisata</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-bolt"></i>
+                Aksi Cepat
+            </h2>
+            <p class="cart-subtitle">Kelola semua aspek wisata dengan mudah</p>
+        </div>
+
+        <div class="info-grid">
+            <a href="{% url 'admin_panel:tourism_locations_list' %}" class="info-cart info-cart-primary" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Kelola Lokasi</div>
+                    <div class="info-description">Tambah, edit, dan hapus lokasi wisata</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator active"></span>
+                    <span>Online</span>
+                </div>
+            </a>
+
+            <a href="{% url 'admin_panel:tourism_packages_list' %}" class="info-cart info-cart-success" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Kelola Paket</div>
+                    <div class="info-description">Atur paket wisata dan harga</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator active"></span>
+                    <span>Online</span>
+                </div>
+            </a>
+
+            <a href="{% url 'admin_panel:tourism_events_list' %}" class="info-cart info-cart-warning" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Kelola Event</div>
+                    <div class="info-description">Jadwal event dan kegiatan wisata</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator pending"></span>
+                    <span>{{ total_events }} Event</span>
+                </div>
+            </a>
+
+            <a href="{% url 'admin_panel:tourism_reviews_list' %}" class="info-cart info-cart-danger" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Kelola Review</div>
+                    <div class="info-description">Moderasi dan tanggapi review</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator pending"></span>
+                    <span>{{ pending_reviews }} Pending</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="activities-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-history"></i>
+                Aktivitas Terbaru
+            </h2>
+            <p class="cart-subtitle">Pantau perkembangan wisata terkini</p>
+        </div>
+
+        <div class="activities-grid">
+
+            <div class="activity-cart">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Lokasi Wisata Terbaru
+                    </h3>
+                    <p class="activity-subtitle">Destinasi yang baru ditambahkan</p>
+                </div>
+                <div class="activity-body">
+                    {% if recent_locations %}
+                        {% for location in recent_locations %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title-text">
+                                    <a href="{% url 'admin_panel:tourism_location_detail' location.id %}" style="text-decoration: none; color: inherit;">
+                                        {{ location.title|truncatechars:30 }}
+                                    </a>
+                                </div>
+                                <div class="activity-time">
+                                    <i class="fas fa-tag"></i> {{ location.category.name }} • {{ location.created_at|date:"d/m/Y" }}
+                                </div>
+                            </div>
+                            <div class="activity-status">
+                                {% if location.is_active %}
+                                    <span class="status-badge status-success">Aktif</span>
+                                {% else %}
+                                    <span class="status-badge status-secondary">Non-aktif</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>Belum ada lokasi wisata</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="activity-cart">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-star"></i>
+                        Review Terbaru
+                    </h3>
+                    <p class="activity-subtitle">Ulasan dari pengunjung</p>
+                </div>
+                <div class="activity-body">
+                    {% if recent_reviews %}
+                        {% for review in recent_reviews %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title-text">
+                                    {{ review.tourism_location.title|truncatechars:25 }}
+                                </div>
+                                <div class="activity-time">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i class="fas fa-star" style="color: #ffc107; font-size: 0.75rem;"></i>
+                                        {% else %}
+                                            <i class="far fa-star" style="color: #ffc107; font-size: 0.75rem;"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    • {{ review.created_at|date:"d/m/Y" }}
+                                </div>
+                            </div>
+                            <div class="activity-status">
+                                {% if review.is_approved %}
+                                    <span class="status-badge status-success">Disetujui</span>
+                                {% else %}
+                                    <span class="status-badge status-warning">Pending</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-star"></i>
+                            <p>Belum ada review</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="analytics-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-chart-line"></i>
+                Analitik & Grafik
+            </h2>
+            <p class="cart-subtitle">Visualisasi data wisata</p>
+        </div>
+
+        <div class="analytics-grid">
+
+            <div class="chart-cart">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-line"></i>
+                        Statistik Bulanan
+                    </h3>
+                    <p class="chart-subtitle">Perkembangan lokasi wisata dan review</p>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #2563eb;"></span>
+                            <span class="legend-label">Lokasi:</span>
+                            <span class="legend-value">{{ total_locations }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #10b981;"></span>
+                            <span class="legend-label">Review:</span>
+                            <span class="legend-value">{{ total_reviews }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-cart">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="fas fa-star"></i>
+                        Distribusi Rating
+                    </h3>
+                    <p class="chart-subtitle">Sebaran rating dari pengunjung</p>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-container">
+                        <canvas id="ratingChart"></canvas>
+                    </div>
+                    <div class="chart-legend" id="ratingLegend">
+                        <!-- Legend akan diisi oleh JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateString = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        const timeElement = document.getElementById('current-time');
+        const dateElement = document.getElementById('current-date');
+
+        if (timeElement) timeElement.textContent = timeString;
+        if (dateElement) dateElement.textContent = dateString;
+    }
+
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    const monthlyCtx = document.getElementById('monthlyChart');
+    if (monthlyCtx) {
+        new Chart(monthlyCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+                datasets: [{
+                    label: 'Lokasi Wisata',
+                    data: [12, 19, 3, 5, 2, 3, 8, 12, 15, 18, 22, 25],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Review',
+                    data: [8, 15, 12, 18, 25, 30, 35, 28, 32, 38, 42, 45],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const ratingCtx = document.getElementById('ratingChart');
+    const ratingLegend = document.getElementById('ratingLegend');
+    
+    if (ratingCtx) {
+        try {
+            // Prepare rating data from backend
+            const ratingData = JSON.parse('{{ rating_distribution|escapejs }}');
+            const ratingPercentages = JSON.parse('{{ rating_percentages|escapejs }}');
+            
+            // Create arrays for chart data
+            const labels = [];
+            const data = [];
+            const colors = [];
+            
+            // Sort ratings from 5 to 1 stars
+            for (let i = 5; i >= 1; i--) {
+                const ratingInfo = ratingData.find(r => r.rating === i);
+                const count = ratingInfo ? ratingInfo.count : 0;
+                const percentage = ratingPercentages[i] || 0;
+                
+                labels.push(`${i} Bintang`);
+                data.push(percentage);
+                
+                // Set colors based on rating
+                if (i === 5) colors.push('#10b981');
+                else if (i === 4) colors.push('#3b82f6');
+                else if (i === 3) colors.push('#f59e0b');
+                else if (i === 2) colors.push('#ef4444');
+                else colors.push('#6b7280');
+            }
+            
+            // Check if we have any data
+            const hasData = data.some(value => value > 0);
+            
+            if (hasData) {
+                // Create chart
+                const chart = new Chart(ratingCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + context.parsed + '%';
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+                
+                // Create custom legend
+                if (ratingLegend) {
+                    ratingLegend.innerHTML = '';
+                    for (let i = 0; i < labels.length; i++) {
+                        const legendItem = document.createElement('div');
+                        legendItem.className = 'legend-item';
+                        legendItem.innerHTML = `
+                            <span class="legend-color" style="background: ${colors[i]};"></span>
+                            <span class="legend-label">${labels[i]}:</span>
+                            <span class="legend-value">${data[i]}%</span>
+                        `;
+                        ratingLegend.appendChild(legendItem);
+                    }
+                }
+            } else {
+                // Show empty state
+                ratingCtx.style.display = 'none';
+                if (ratingLegend) {
+                    ratingLegend.innerHTML = '<div class="empty-state"><i class="fas fa-star"></i><p>Belum ada data rating</p></div>';
+                }
+            }
+        } catch (error) {
+            console.error('Error creating rating chart:', error);
+            // Show error state
+            ratingCtx.style.display = 'none';
+            if (ratingLegend) {
+                ratingLegend.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error loading chart</p></div>';
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

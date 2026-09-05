@@ -1,0 +1,1199 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load role_permissions %}
+
+{% block page_title %}Data Lorong{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/references/references-general.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% csrf_token %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <div class="mb-2 mb-md-0">
+                    <h1 class="h3 mb-1 text-dark font-weight-bold">
+                        <i class="fas fa-road text-primary me-2"></i>
+                        Data Lorong
+                    </h1>
+                    <p class="text-muted small mb-0">Kelola data lorong di desa</p>
+                </div>
+                <div class="header-buttons-wrapper">
+                    <a href="{% url 'admin_panel:references_dashboard' %}" class="btn btn-outline-secondary btn-header-action">
+                        <i class="fas fa-arrow-left"></i>
+                        <span class="d-none d-sm-inline ms-1">Kembali</span>
+                    </a>
+                    <a href="{% url 'admin_panel:references_lorong_add' %}" class="btn btn-primary btn-header-action">
+                        <i class="fas fa-plus"></i>
+                        <span class="ms-1">Tambah</span>
+                    </a>
+                    
+                    <a href="{% url 'references:global_import' %}" class="btn btn-info btn-header-action">
+                        <i class="fas fa-file-import"></i>
+                        <span class="d-none d-sm-inline ms-1">Global Import</span>
+                    </a>
+
+                    <a href="{% url 'references:import_export_dashboard' %}" class="btn btn-success btn-header-action">
+                        <i class="fas fa-download"></i>
+                        <span class="d-none d-sm-inline ms-1">Export Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4 filter-card">
+        <div class="card-header py-2">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-filter me-2"></i>
+                Filter
+            </h6>
+        </div>
+        <div class="card-body p-2">
+            <form id="filterForm" class="row g-2">
+                <div class="col-lg-3 col-md-4 col-6 mb-2">
+                    <label for="search" class="form-label small mb-1">Cari</label>
+                    <input type="text" class="form-control form-control-sm" id="search" placeholder="Nama lorong...">
+                </div>
+                <div class="col-lg-3 col-md-4 col-6 mb-2">
+                    <label for="dusun_filter" class="form-label small mb-1">Dusun</label>
+                    <select class="form-control form-control-sm" id="dusun_filter">
+                        <option value="">Semua</option>
+                        {% for dusun in dusun_list %}
+                        <option value="{{ dusun.id }}">{{ dusun.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-4 col-6 mb-2">
+                    <label class="form-label small mb-1">&nbsp;</label>
+                    <div class="d-flex gap-1">
+                        <button type="submit" class="btn btn-sm btn-primary flex-fill" id="filterBtn">
+                            <i class="fas fa-search"></i>
+                            <span class="d-none d-md-inline ms-1">Cari</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="resetBtn">
+                            <i class="fas fa-undo"></i>
+                            <span class="d-none d-md-inline ms-1">Reset</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list me-2"></i>
+                Daftar Lorong
+            </h6>
+            <div class="d-flex align-items-center gap-2">
+                <small class="text-muted d-none d-md-inline">
+                    Menampilkan <span id="paginationStart">0</span> - <span id="paginationEnd">0</span> dari <span id="paginationTotal">0</span>
+                </small>
+                <small class="text-muted d-inline d-md-none">
+                    <span id="paginationStartMobile">0</span>-<span id="paginationEndMobile">0</span>/<span id="paginationTotalMobile">0</span>
+                </small>
+            </div>
+        </div>
+
+        <div class="d-block d-md-none text-center py-2 bg-light border-bottom">
+            <small class="text-muted">
+                <i class="fas fa-hand-point-right"></i> Geser ke kanan untuk melihat lebih banyak
+            </small>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="lorongTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th width="35">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="selectAll">
+                                    <label class="custom-control-label" for="selectAll"></label>
+                                </div>
+                            </th>
+                            <th width="40">No</th>
+                            <th width="220">Nama Lorong</th>
+                            <th width="100">Kode</th>
+                            <th width="160">Dusun</th>
+                            <th width="60">RT</th>
+                            <th width="60">KK</th>
+                            <th width="85">Penduduk</th>
+                            <th width="80">Status</th>
+                            <th width="105">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lorongTableBody">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-footer py-2">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                <div class="bulk-actions-container dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="bulkActionsDropdown" aria-haspopup="true" aria-expanded="false" onclick="toggleBulkActionsDropdown(event)">
+                        <i class="fas fa-tasks"></i>
+                        <span class="d-none d-sm-inline ms-1">Aksi</span>
+                        <span class="badge badge-light ms-1" id="bulkActionsCount">0</span>
+                    </button>
+                    <div class="dropdown-menu" id="bulkActionsMenu" aria-labelledby="bulkActionsDropdown" style="position: absolute; z-index: 9999;">
+                        <a class="dropdown-item" href="#" onclick="executeBulkAction('activate'); return false;">
+                            <i class="fas fa-check text-success me-2"></i>Aktifkan
+                        </a>
+                        <a class="dropdown-item" href="#" onclick="executeBulkAction('deactivate'); return false;">
+                            <i class="fas fa-pause text-warning me-2"></i>Nonaktifkan
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="#" onclick="executeBulkAction('delete'); return false;">
+                            <i class="fas fa-trash me-2"></i>Hapus
+                        </a>
+                    </div>
+                </div>
+                <nav aria-label="Pagination" class="flex-grow-1 d-flex justify-content-center">
+                    <ul class="pagination pagination-sm mb-0" id="paginationList">
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title mb-0" id="deleteModalLabel">
+                    <i class="fas fa-trash mr-1"></i>
+                    Hapus Lorong
+                </h6>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="margin: 0; padding: 0; font-size: 1.5rem; line-height: 1;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center py-3">
+                <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                <h6 class="mt-3 mb-2"><strong id="deleteNamaLorong">-</strong></h6>
+                <small class="text-muted d-block mb-3">
+                    Kode: <span id="deleteKode">-</span><br>
+                    Dusun: <span id="deleteDusun">-</span>
+                </small>
+
+                <form id="deleteForm" method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="lorong_id" id="deleteLorongId">
+                    <input type="hidden" name="reason" value="Dihapus melalui sistem">
+
+                    <div class="custom-control custom-checkbox text-left">
+                        <input type="checkbox" class="custom-control-input" id="deleteConfirm" required>
+                        <label class="custom-control-label small" for="deleteConfirm">
+                            Yakin hapus data lorong ini?
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-sm btn-danger px-3" id="confirmDeleteBtn" disabled>
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+
+    loadLorongData();
+
+    $('#selectAll').change(function() {
+        $('.lorong-checkbox').prop('checked', this.checked);
+        updateBulkActions();
+    });
+
+    $(document).on('change', '.lorong-checkbox', function() {
+        updateBulkActions();
+    });
+
+    $('#filterBtn').click(function(e) {
+        e.preventDefault();
+        loadLorongData(1);
+    });
+
+    $('#filterForm').submit(function(e) {
+        e.preventDefault();
+        loadLorongData(1);
+    });
+
+    $('#resetBtn').click(function() {
+        $('#filterForm')[0].reset();
+        loadLorongData(1);
+    });
+
+    $('#deleteConfirm').on('change', function() {
+        validateDeleteForm();
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+        if (validateDeleteForm()) {
+            submitDeleteForm();
+        }
+    });
+});
+
+function loadLorongData(page = 1) {
+    const search = $('#search').val();
+    const dusun = $('#dusun_filter').val();
+
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (dusun) params.append('dusun', dusun);
+    params.append('page', page);
+
+    fetch(`/admin-panel/api/references/lorong/?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data && Array.isArray(data.data)) {
+                renderLorongTable(data.data);
+                updatePagination(data.pagination);
+            } else {
+                console.error('API returned error or invalid data structure:', data);
+                console.error('Error message:', data.message || 'Unknown error');
+                showErrorState(data.message || 'Tidak dapat memuat data');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading lorong data:', error);
+            showErrorState();
+        });
+}
+
+function renderLorongTable(lorongData) {
+    const tbody = $('#lorongTableBody');
+    tbody.empty();
+
+    if (lorongData.length === 0) {
+        tbody.append(`
+            <tr>
+                <td colspan="10" class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Tidak ada data lorong</p>
+                </td>
+            </tr>
+        `);
+        return;
+    }
+
+    lorongData.forEach((lorong, index) => {
+        const rowNumber = index + 1;
+
+        let namaLorongRaw = lorong.nama_lorong || lorong.name || '-';
+        let namaLorong = namaLorongRaw;
+
+        if (namaLorongRaw.includes(' - Dusun ')) {
+            namaLorong = namaLorongRaw.split(' - Dusun ')[0];
+        } else if (namaLorongRaw.includes(' - ')) {
+
+            const parts = namaLorongRaw.split(' - ');
+            namaLorong = parts[0];
+        }
+
+        const kode = lorong.kode || lorong.code || '-';
+        const dusunName = lorong.dusun_name || '-';
+        const rt = lorong.rt || lorong.rt_name || '-';
+        const houseCount = lorong.house_count || 0;
+        const populationCount = lorong.population_count || 0;
+        const isActive = lorong.is_active !== undefined ? lorong.is_active : true;
+
+        const row = `
+            <tr>
+                <td class="text-center">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input lorong-checkbox" id="lorong_${lorong.id}" value="${lorong.id}">
+                        <label class="custom-control-label" for="lorong_${lorong.id}"></label>
+                    </div>
+                </td>
+                <td class="text-center"><span class="badge badge-light">${rowNumber}</span></td>
+                <td class="td-name">
+                    <div class="text-truncate" style="max-width: 200px;" title="${namaLorong}">
+                        ${namaLorong}
+                    </div>
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-primary badge-sm">${kode}</span>
+                </td>
+                <td class="text-truncate-dusun">
+                    <span class="badge badge-info badge-sm" title="${dusunName}">${dusunName}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-sm ${rt === '-' ? 'badge-secondary' : 'badge-warning'}">${rt}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-sm badge-info">${houseCount}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-sm badge-success">${populationCount}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-sm ${isActive ? 'badge-success' : 'badge-secondary'}">
+                        <i class="fas fa-${isActive ? 'check-circle' : 'times-circle'}"></i>
+                        <span class="d-none d-lg-inline ms-1">${isActive ? 'Aktif' : 'Nonaktif'}</span>
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="/admin-panel/references/lorong/detail/${lorong.id}/" class="btn btn-sm btn-outline-primary" title="Lihat">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="/admin-panel/references/lorong/edit/${lorong.id}/" class="btn btn-sm btn-outline-warning" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" title="Hapus" onclick="showDeleteModal(${lorong.id}, '${namaLorong.replace(/'/g, "\\'")}', '${kode}', '${dusunName}', '${rt}', '${houseCount}', '${populationCount}', '${isActive}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.append(row);
+    });
+}
+
+function toggleBulkActionsDropdown(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const menu = document.getElementById('bulkActionsMenu');
+    menu.classList.toggle('show');
+}
+
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('bulkActionsMenu');
+    const button = document.getElementById('bulkActionsDropdown');
+
+    if (dropdown && !dropdown.contains(event.target) && event.target !== button) {
+        dropdown.classList.remove('show');
+    }
+});
+
+function updatePagination(pagination) {
+    const paginationList = $('#paginationList');
+
+    const totalItems = pagination.total_items || 0;
+    const perPage = pagination.per_page || 20;
+    const currentPage = pagination.current_page || 1;
+    const totalPages = pagination.total_pages || 1;
+
+    const startItem = totalItems > 0 ? ((currentPage - 1) * perPage + 1) : 0;
+    const endItem = totalItems > 0 ? Math.min(currentPage * perPage, totalItems) : 0;
+
+    $('#paginationStart').text(startItem);
+    $('#paginationEnd').text(endItem);
+    $('#paginationTotal').text(totalItems);
+
+    $('#paginationStartMobile').text(startItem);
+    $('#paginationEndMobile').text(endItem);
+    $('#paginationTotalMobile').text(totalItems);
+
+    paginationList.empty();
+
+    if (totalPages <= 1) {
+        paginationList.parent().hide();
+        return;
+    }
+
+    paginationList.parent().show();
+
+    if (pagination.has_previous) {
+        paginationList.append(`
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="loadLorongData(${pagination.previous_page}); return false;">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `);
+    } else {
+        paginationList.append(`
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-chevron-left"></i>
+                </span>
+            </li>
+        `);
+    }
+
+    const maxVisible = 5;
+
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+    if (endPage - startPage < maxVisible - 1) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    if (startPage > 1) {
+        paginationList.append(`
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="loadLorongData(1); return false;">1</a>
+            </li>
+        `);
+        if (startPage > 2) {
+            paginationList.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `);
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            paginationList.append(`
+                <li class="page-item active">
+                    <span class="page-link">${i}</span>
+                </li>
+            `);
+        } else {
+            paginationList.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="loadLorongData(${i}); return false;">${i}</a>
+                </li>
+            `);
+        }
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            paginationList.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            `);
+        }
+        paginationList.append(`
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="loadLorongData(${totalPages}); return false;">${totalPages}</a>
+            </li>
+        `);
+    }
+
+    if (pagination.has_next) {
+        paginationList.append(`
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="loadLorongData(${pagination.next_page}); return false;">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `);
+    } else {
+        paginationList.append(`
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-chevron-right"></i>
+                </span>
+            </li>
+        `);
+    }
+}
+
+function showErrorState() {
+    const tbody = $('#lorongTableBody');
+    tbody.empty();
+    tbody.append(`
+        <tr>
+            <td colspan="10" class="text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <p class="text-muted">Gagal memuat data lorong</p>
+                <button class="btn btn-outline-primary" onclick="loadLorongData()">
+                    <i class="fas fa-refresh mr-1"></i>
+                    Coba Lagi
+                </button>
+            </td>
+        </tr>
+    `);
+}
+
+function showDeleteModal(id, namaLorong, kode, dusun, rt, jumlahRumah, jumlahPenduduk, isActive) {
+
+    $('#deleteForm').attr('action', `/admin-panel/references/lorong/delete/${id}/`);
+    $('#deleteLorongId').val(id);
+
+    $('#deleteNamaLorong').text(namaLorong);
+    $('#deleteKode').text(kode);
+    $('#deleteDusun').text(dusun);
+
+    $('#deleteConfirm').prop('checked', false);
+    $('#confirmDeleteBtn').prop('disabled', true);
+
+    $('#deleteModal').modal('show');
+}
+
+function validateDeleteForm() {
+    const confirmed = $('#deleteConfirm').is(':checked');
+
+    if (confirmed) {
+        $('#confirmDeleteBtn').prop('disabled', false);
+        return true;
+    } else {
+        $('#confirmDeleteBtn').prop('disabled', true);
+        return false;
+    }
+}
+
+function submitDeleteForm() {
+    if (!validateDeleteForm()) {
+        return;
+    }
+
+    const form = $('#deleteForm');
+    const formData = new FormData(form[0]);
+    const btn = $('#confirmDeleteBtn');
+    const originalText = btn.html();
+
+    btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Menghapus...');
+    btn.prop('disabled', true);
+
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(response) {
+            if (response.success) {
+
+                $('#deleteModal').modal('hide');
+
+                setTimeout(function() {
+                    location.reload();
+                }, 500);
+            } else {
+                showAlert(response.message || 'Terjadi kesalahan saat menghapus data', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            let message = 'Terjadi kesalahan saat menghapus data';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            }
+            showAlert(message, 'error');
+        },
+        complete: function() {
+
+            btn.prop('disabled', false).html(originalText);
+        }
+    });
+}
+
+function showAlert(message, type) {
+
+    const toastId = 'toast_' + Date.now();
+    const iconMap = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    };
+    const bgMap = {
+        'success': '#28a745',
+        'error': '#dc3545',
+        'warning': '#ffc107',
+        'info': '#17a2b8'
+    };
+
+    const textColor = type === 'warning' ? '#212529' : 'white';
+
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${bgMap[type] || bgMap.info};
+        color: ${textColor};
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        min-width: 300px;
+        max-width: 400px;
+        animation: slideIn 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    `;
+
+    toast.innerHTML = `
+        <i class="fas ${iconMap[type] || iconMap.info}" style="font-size: 1.2rem; color: ${textColor};"></i>
+        <span style="flex: 1; color: ${textColor};">${message}</span>
+        <button onclick="document.getElementById('${toastId}').remove()" style="background: none; border: none; color: ${textColor}; cursor: pointer; font-size: 1.2rem; padding: 0; margin-left: 10px; opacity: 0.8;">&times;</button>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        if (document.getElementById(toastId)) {
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+}
+
+if (!document.getElementById('toastAnimations')) {
+    const style = document.createElement('style');
+    style.id = 'toastAnimations';
+    style.innerHTML = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function exportData() {
+    showLoading('Mengekspor data...');
+    const exportUrl = '{% url "admin_panel:references_lorong_export_csv" %}';
+
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'data_lorong_' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('Data CSV berhasil diekspor');
+    }, 1000);
+}
+
+function exportExcel() {
+    showLoading('Mengekspor ke Excel...');
+    const exportUrl = '{% url "admin_panel:references_lorong_export_excel" %}';
+
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'data_lorong_' + new Date().toISOString().split('T')[0] + '.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('File Excel berhasil dibuat');
+    }, 1000);
+}
+
+function exportPDF() {
+    showLoading('Mengekspor ke PDF...');
+    const exportUrl = '{% url "admin_panel:references_lorong_export_pdf" %}';
+
+    window.open(exportUrl, '_blank');
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('File PDF berhasil dibuat');
+    }, 1000);
+}
+
+function importData() {
+    showInfo('Fitur import data akan segera tersedia');
+}
+
+function downloadTemplate() {
+    showInfo('Template import akan segera tersedia');
+}
+
+function showLoading(message) {
+
+    if (!document.getElementById('loadingOverlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        `;
+        overlay.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-2">${message}</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function showSuccess(message) {
+    showAlert(message, 'success');
+}
+
+function showInfo(message) {
+    showAlert(message, 'info');
+}
+
+function showWarning(message) {
+    showAlert(message, 'warning');
+}
+
+function updateBulkActions() {
+    const selected = $('.lorong-checkbox:checked').length;
+    const count = $('#bulkActionsCount');
+    const dropdown = $('#bulkActionsDropdown');
+
+    count.text(selected);
+
+    if (selected > 0) {
+        dropdown.removeClass('btn-outline-primary').addClass('btn-primary');
+        const icon = dropdown.find('i');
+        if (icon.length) {
+            icon.removeClass('fa-tasks').addClass('fa-check');
+        }
+    } else {
+        dropdown.removeClass('btn-primary').addClass('btn-outline-primary');
+        const icon = dropdown.find('i');
+        if (icon.length) {
+            icon.removeClass('fa-check').addClass('fa-tasks');
+        }
+    }
+
+    const totalCheckboxes = $('.lorong-checkbox').length;
+    const selectAll = $('#selectAll');
+
+    if (selected === 0) {
+        selectAll.prop('indeterminate', false).prop('checked', false);
+    } else if (selected === totalCheckboxes) {
+        selectAll.prop('indeterminate', false).prop('checked', true);
+    } else {
+        selectAll.prop('indeterminate', true);
+    }
+}
+
+function executeBulkAction(action) {
+    const selected = $('.lorong-checkbox:checked');
+
+    if (selected.length === 0) {
+        showError('Pilih minimal satu data');
+        return;
+    }
+
+    const selectedIds = [];
+    selected.each(function() {
+        const value = $(this).val();
+
+        if (value && !isNaN(value) && value !== 'on') {
+            selectedIds.push(value);
+        }
+    });
+
+    if (selectedIds.length === 0) {
+        showError('Tidak ada data lorong yang valid untuk diproses');
+        return;
+    }
+
+    if (action === 'delete') {
+        if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} data lorong?`)) {
+            return;
+        }
+    }
+
+    showLoading(`Menjalankan aksi ${action} pada ${selectedIds.length} data...`);
+
+    if (action === 'delete') {
+        bulkDeleteLorong(selectedIds);
+    } else if (action === 'activate') {
+        bulkActivateLorong(selectedIds);
+    } else if (action === 'deactivate') {
+        bulkDeactivateLorong(selectedIds);
+    }
+}
+
+function bulkDeleteLorong(ids) {
+    $.ajax({
+        url: '{% url "admin_panel:references_lorong_bulk_delete" %}',
+        type: 'POST',
+        data: {
+            'lorong_ids[]': ids,
+            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', $('[name=csrfmiddlewaretoken]').val());
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil menghapus ${response.deleted_count} data lorong`, 'success');
+
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                let errorMessage = response.message || 'Gagal menghapus data lorong';
+                if (response.errors && response.errors.length > 0) {
+                    errorMessage += '\n\nDetail error:\n' + response.errors.join('\n');
+                }
+                showAlert(errorMessage, 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            console.error('Bulk delete error:', xhr.responseText);
+            showAlert('Terjadi kesalahan saat menghapus data lorong: ' + xhr.responseText, 'error');
+        }
+    });
+}
+
+function bulkActivateLorong(ids) {
+    $.ajax({
+        url: '{% url "admin_panel:references_lorong_bulk_activate" %}',
+        type: 'POST',
+        data: {
+            'lorong_ids[]': ids,
+            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', $('[name=csrfmiddlewaretoken]').val());
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil mengaktifkan ${response.activated_count} data lorong`, 'success');
+
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(response.message || 'Gagal mengaktifkan data lorong', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            console.error('Bulk activate error:', xhr.responseText);
+            showAlert('Terjadi kesalahan saat mengaktifkan data lorong: ' + xhr.responseText, 'error');
+        }
+    });
+}
+
+function bulkDeactivateLorong(ids) {
+    $.ajax({
+        url: '{% url "admin_panel:references_lorong_bulk_deactivate" %}',
+        type: 'POST',
+        data: {
+            'lorong_ids[]': ids,
+            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', $('[name=csrfmiddlewaretoken]').val());
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil menonaktifkan ${response.deactivated_count} data lorong`, 'success');
+
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(response.message || 'Gagal menonaktifkan data lorong', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            console.error('Bulk deactivate error:', xhr.responseText);
+            showAlert('Terjadi kesalahan saat menonaktifkan data lorong: ' + xhr.responseText, 'error');
+        }
+    });
+}
+
+function showError(message) {
+    showAlert(message, 'error');
+}
+</script>
+
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="importModalLabel">
+                    <i class="fas fa-file-import mr-2"></i>
+                    Import Data Lorong
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Petunjuk Import:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Download template Excel terlebih dahulu</li>
+                        <li>Isi template dengan data yang akan diimport</li>
+                        <li>Upload file Excel yang sudah diisi</li>
+                        <li>Data duplikat akan dilewati</li>
+                    </ul>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" action="{% url 'admin_panel:references_quick_import' 'lorong' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="importFile" class="form-label">
+                            <i class="fas fa-file mr-1"></i>
+                            Pilih File <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" class="form-control" id="importFile" name="file" accept=".xlsx,.xls" required>
+                        <small class="form-text text-muted">
+                            Format yang didukung: Excel (.xlsx, .xls) - Maksimal 10MB
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-download mr-1"></i>
+                            Download Template
+                        </label>
+                        <div class="text-center">
+                            <a href="{% url 'admin_panel:references_get_template' 'lorong' %}?format=excel" class="btn btn-outline-success">
+                                <i class="fas fa-download mr-1"></i>
+                                Download Template Excel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>
+                    Batal
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitImport()">
+                    <i class="fas fa-upload mr-1"></i>
+                    Import Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bulkActionModal" tabindex="-1" role="dialog" aria-labelledby="bulkActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkActionModalLabel">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Konfirmasi Aksi Bulk
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning mr-2"></i>
+                    <strong>Peringatan:</strong> Aksi ini akan diterapkan pada <span id="bulkActionCount">0</span> item yang dipilih.
+                </div>
+                <p id="bulkActionMessage">Apakah Anda yakin ingin melanjutkan?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="confirmBulkAction">
+                    <i class="fas fa-check mr-1"></i>
+                    Ya, Lanjutkan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>window.currentModelName = 'lorong';
+
+function submitImport() {
+    const form = document.querySelector('#importModal form');
+    const formData = new FormData(form);
+
+    fetch('{% url "admin_panel:references_quick_import" "lorong" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showWarning('Import berhasil! ' + data.message);
+            $('#importModal').modal('hide');
+            location.reload();
+        } else {
+            showWarning('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Import error:', error);
+        showWarning('Error saat mengimport data');
+    });
+}
+
+let selectedItems = [];
+let currentBulkAction = '';
+
+$('#selectAll').change(function() {
+    const isChecked = $(this).is(':checked');
+    $('.item-checkbox').prop('checked', isChecked);
+    updateBulkActions();
+});
+
+$(document).on('change', '.item-checkbox', function() {
+    updateBulkActions();
+});
+
+function updateBulkActions() {
+    selectedItems = $('.item-checkbox:checked').map(function() {
+        return $(this).val();
+    }).get();
+
+    const count = selectedItems.length;
+    $('#selectedCount').text(count);
+    $('#bulkActionCount').text(count);
+
+    if (count > 0) {
+        $('#bulkActionsBar').show();
+        $('#bulkDeleteBtn, #bulkDeactivateBtn, #bulkActivateBtn').prop('disabled', false);
+    } else {
+        $('#bulkActionsBar').hide();
+        $('#bulkDeleteBtn, #bulkDeactivateBtn, #bulkActivateBtn').prop('disabled', true);
+    }
+
+    const totalItems = $('.item-checkbox').length;
+    const checkedItems = $('.item-checkbox:checked').length;
+
+    if (checkedItems === 0) {
+        $('#selectAll').prop('indeterminate', false).prop('checked', false);
+    } else if (checkedItems === totalItems) {
+        $('#selectAll').prop('indeterminate', false).prop('checked', true);
+    } else {
+        $('#selectAll').prop('indeterminate', true);
+    }
+}
+
+$('#bulkDeleteBtn').click(function() {
+    currentBulkAction = 'delete';
+    $('#bulkActionModalLabel').html('<i class="fas fa-trash mr-2"></i>Konfirmasi Hapus Bulk');
+    $('#bulkActionMessage').text('Apakah Anda yakin ingin menghapus item-item yang dipilih?');
+    $('#bulkActionModal').modal('show');
+});
+
+$('#bulkDeactivateBtn').click(function() {
+    currentBulkAction = 'deactivate';
+    $('#bulkActionModalLabel').html('<i class="fas fa-eye-slash mr-2"></i>Konfirmasi Nonaktifkan Bulk');
+    $('#bulkActionMessage').text('Apakah Anda yakin ingin menonaktifkan item-item yang dipilih?');
+    $('#bulkActionModal').modal('show');
+});
+
+$('#bulkActivateBtn').click(function() {
+    currentBulkAction = 'activate';
+    $('#bulkActionModalLabel').html('<i class="fas fa-eye mr-2"></i>Konfirmasi Aktifkan Bulk');
+    $('#bulkActionMessage').text('Apakah Anda yakin ingin mengaktifkan item-item yang dipilih?');
+    $('#bulkActionModal').modal('show');
+});
+
+$('#clearSelectionBtn').click(function() {
+    $('.item-checkbox').prop('checked', false);
+    $('#selectAll').prop('checked', false).prop('indeterminate', false);
+    updateBulkActions();
+});
+
+$('#confirmBulkAction').click(function() {
+    if (selectedItems.length === 0) {
+        showWarning('Tidak ada item yang dipilih.');
+        return;
+    }
+
+    $.ajax({
+        url: '{% url "admin_panel:references_bulk_action" %}',
+        type: 'POST',
+        data: {
+            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val(),
+            'model': 'lorong',
+            'action': currentBulkAction,
+            'items': selectedItems.join(',')
+        },
+        success: function(response) {
+            if (response.success) {
+                showWarning(response.message);
+                $('#bulkActionModal').modal('hide');
+                location.reload();
+            } else {
+                showWarning('Error: ' + response.message);
+            }
+        },
+        error: function() {
+            showWarning('Terjadi kesalahan saat memproses aksi bulk.');
+        }
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+{% endblock %}

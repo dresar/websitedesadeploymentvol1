@@ -1,0 +1,866 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load role_permissions %}
+
+{% block title %}Daftar Pelajar - Admin Panel{% endblock %}
+
+{% block page_title %}Daftar Pelajar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/references/references-general.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/references/references-pelajar-disabilitas.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<form id="csrfForm" style="display:none;">{% csrf_token %}</form>
+<div class="container-fluid">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <div class="mb-2 mb-md-0">
+                    <h1 class="h3 mb-1 text-dark font-weight-bold">
+                        <i class="fas fa-graduation-cap text-primary me-2"></i>
+                        Data Pelajar
+                    </h1>
+                    <p class="text-muted mb-0 small">Kelola data pelajar desa</p>
+                </div>
+                <div class="header-buttons-wrapper">
+                    {% if user|can_add:"references" %}
+                    <a href="{% url 'admin_panel:references_pelajar_add' %}" class="btn btn-primary btn-header-action">
+                        <i class="fas fa-plus"></i>
+                        <span class="d-none d-sm-inline ms-1">Tambah</span>
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'references:global_import' %}" class="btn btn-info btn-header-action">
+                        <i class="fas fa-file-import"></i>
+                        <span class="d-none d-sm-inline ms-1">Global Import</span>
+                    </a>
+                    
+                    <a href="{% url 'references:import_export_dashboard' %}" class="btn btn-success btn-header-action">
+                        <i class="fas fa-download"></i>
+                        <span class="d-none d-sm-inline ms-1">Export Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="filter-card mb-3">
+    <div class="card-body py-2">
+        <form method="get" id="filterForm" class="d-flex align-items-center">
+            <input type="text" class="form-control form-control-sm mr-2" id="search" name="search"
+                   value="{{ search_query }}" placeholder="Cari pelajar..." style="max-width: 250px;">
+            <select class="form-control form-control-sm mr-2" id="tingkat" name="tingkat" style="max-width: 120px;">
+                <option value="">Tingkat</option>
+                <option value="SD" {% if tingkat_filter == 'SD' %}selected{% endif %}>SD</option>
+                <option value="SMP" {% if tingkat_filter == 'SMP' %}selected{% endif %}>SMP</option>
+                <option value="SMA" {% if tingkat_filter == 'SMA' %}selected{% endif %}>SMA</option>
+                <option value="PT" {% if tingkat_filter == 'PT' %}selected{% endif %}>PT</option>
+            </select>
+            <button class="btn btn-info btn-sm" onclick="exportData()">
+                <i class="fas fa-download"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="data-table">
+    <div class="card-header d-flex justify-content-between align-items-center py-3">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-graduation-cap mr-2"></i>Daftar Pelajar
+        </h5>
+        <div class="export-buttons">
+            <button class="btn btn-sm btn-outline-primary" onclick="exportData()">
+                <i class="fas fa-file-excel mr-1"></i>Excel
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="pelajarTable">
+                <thead>
+                    <tr>
+                        <th class="th-checkbox">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="selectAll">
+                                <label class="custom-control-label" for="selectAll"></label>
+                            </div>
+                        </th>
+                        <th class="th-no d-none d-md-table-cell">No</th>
+                        <th class="th-name">Nama</th>
+                        <th class="th-nik d-none d-sm-table-cell">NIK</th>
+                        <th class="th-age d-none d-md-table-cell">Usia</th>
+                        <th class="th-level d-none d-md-table-cell">Tingkat</th>
+                        <th class="th-school d-none d-lg-table-cell">Sekolah</th>
+                        <th class="th-status d-none d-lg-table-cell">Status</th>
+                        <th class="th-action">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pelajar in page_obj %}
+                    <tr>
+                        <td class="td-checkbox">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input pelajar-checkbox"
+                                       id="pelajar_{{ pelajar.id }}" value="{{ pelajar.id }}">
+                                <label class="custom-control-label" for="pelajar_{{ pelajar.id }}"></label>
+                            </div>
+                        </td>
+                        <td class="td-no d-none d-md-table-cell">
+                            <span class="badge badge-light">{{ forloop.counter0|add:page_obj.start_index }}</span>
+                        </td>
+                        <td class="td-name">
+                            <div class="d-flex align-items-start">
+                                <div class="d-none d-md-flex mr-2">
+                                    {% if pelajar.penduduk.photo and pelajar.penduduk.photo.url %}
+                                        <img src="{{ pelajar.penduduk.photo.url }}" alt="{{ pelajar.penduduk.name }}"
+                                             class="avatar-sm rounded-circle">
+                                    {% else %}
+                                        <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-user text-secondary"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="fw-bold text-dark">{{ pelajar.penduduk.name }}</div>
+                                    <div class="d-sm-none text-muted small">
+                                        {{ pelajar.penduduk.nik }}
+                                    </div>
+                                    <div class="d-md-none text-muted small">
+                                        {{ pelajar.jenjang|default:"-" }} · {{ pelajar.penduduk.age }}th
+                                    </div>
+                                    <div class="d-lg-none text-muted small">
+                                        {{ pelajar.sekolah|truncatewords:3|default:"-" }}
+                                        {% if pelajar.status %}
+                                        <span class="badge badge-{% if pelajar.status == 'aktif' %}success{% else %}secondary{% endif %} badge-sm ms-1">{{ pelajar.status|title }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="td-nik d-none d-sm-table-cell">{{ pelajar.penduduk.nik }}</td>
+                        <td class="td-age d-none d-md-table-cell">
+                            <span class="badge badge-secondary">{{ pelajar.penduduk.age }} thn</span>
+                        </td>
+                        <td class="td-level d-none d-md-table-cell">
+                            <span class="badge badge-info">{{ pelajar.jenjang|default:"-" }}</span>
+                        </td>
+                        <td class="td-school d-none d-lg-table-cell">{{ pelajar.sekolah|default:"-" }}</td>
+                        <td class="td-status d-none d-lg-table-cell">
+                            {% if pelajar.status %}
+                                <span class="badge badge-{% if pelajar.status == 'aktif' %}success{% else %}secondary{% endif %}">{{ pelajar.status|title }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="td-action">
+
+                            <div class="d-none d-md-inline-block">
+                                <a href="{% url 'admin_panel:references_pelajar_detail' pelajar.id %}"
+                                   class="btn btn-sm btn-outline-primary" title="Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if user|can_change:"references" %}
+                                <a href="{% url 'admin_panel:references_pelajar_edit' pelajar.id %}"
+                                   class="btn btn-sm btn-outline-warning" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if user|can_delete:"references" %}
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="showDeleteModal({{ pelajar.id }}, '{{ pelajar.penduduk.nama|escapejs }}', '{{ pelajar.penduduk.nik|escapejs }}', '{{ pelajar.get_jenjang_display|escapejs }}', '{{ pelajar.sekolah|escapejs }}', '{{ pelajar.is_active|yesno:"Aktif,Tidak Aktif" }}', '{{ pelajar.penduduk.foto.url|default:"/static/images/default-avatar.png" }}')"
+                                        title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-md-none btn-group-mobile">
+                                <a href="{% url 'admin_panel:references_pelajar_detail' pelajar.id %}"
+                                   class="btn btn-sm btn-outline-primary btn-action-mobile" title="Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if user|can_change:"references" %}
+                                <a href="{% url 'admin_panel:references_pelajar_edit' pelajar.id %}"
+                                   class="btn btn-sm btn-outline-warning btn-action-mobile" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if user|can_delete:"references" %}
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-action-mobile"
+                                        onclick="showDeleteModal({{ pelajar.id }}, '{{ pelajar.penduduk.nama|escapejs }}', '{{ pelajar.penduduk.nik|escapejs }}', '{{ pelajar.get_jenjang_display|escapejs }}', '{{ pelajar.sekolah|escapejs }}', '{{ pelajar.is_active|yesno:"Aktif,Tidak Aktif" }}', '{{ pelajar.penduduk.foto.url|default:"/static/images/default-avatar.png" }}')"
+                                        title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-graduation-cap"></i>
+                            <p>Tidak ada data pelajar ditemukan</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+        <div class="bulk-actions-inline" id="bulkActionsContainer">
+            <span class="bulk-count-badge" id="bulkActionsCount">0 dipilih</span>
+            <button type="button" class="bulk-btn bulk-btn-activate" onclick="executeBulkAction('activate')" title="Aktifkan">
+                <i class="fas fa-check"></i>
+                <span class="bulk-btn-text">Aktifkan</span>
+            </button>
+            <button type="button" class="bulk-btn bulk-btn-deactivate" onclick="executeBulkAction('deactivate')" title="Nonaktifkan">
+                <i class="fas fa-pause"></i>
+                <span class="bulk-btn-text">Nonaktifkan</span>
+            </button>
+            <button type="button" class="bulk-btn bulk-btn-delete" onclick="executeBulkAction('delete')" title="Hapus">
+                <i class="fas fa-trash"></i>
+                <span class="bulk-btn-text">Hapus</span>
+            </button>
+        </div>
+        <div class="text-muted small mt-2 mt-md-0">
+            {{ page_obj.start_index|default:0 }} - {{ page_obj.end_index|default:0 }} dari {{ page_obj.paginator.count|default:0 }}
+        </div>
+    </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="mt-3">
+    <nav>
+        <ul class="pagination pagination-sm justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if tingkat_filter %}&tingkat={{ tingkat_filter }}{% endif %}">‹</a>
+            </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if tingkat_filter %}&tingkat={{ tingkat_filter }}{% endif %}">›</a>
+            </li>
+        {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Hapus Data
+                </h6>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-3">
+                <p class="mb-2">Yakin hapus data pelajar:</p>
+                <p class="font-weight-bold mb-2" id="deleteNama">-</p>
+                <p class="text-muted small mb-0">NIK: <span id="deleteNik">-</span></p>
+
+                <form id="deleteForm" method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="pelajar_id" id="deletePelajarId">
+                    <input type="hidden" name="reason" value="Dihapus melalui sistem">
+                </form>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-sm btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>$(document).ready(function() {
+
+    $('#search').on('input', function() {
+        clearTimeout(window.searchTimeout);
+        window.searchTimeout = setTimeout(function() {
+            $('#filterForm').submit();
+        }, 500);
+    });
+
+    $('#tingkat').change(function() {
+        $('#filterForm').submit();
+    });
+
+    $('#selectAll').change(function() {
+        $('.pelajar-checkbox').prop('checked', this.checked);
+        updateBulkActions();
+    });
+
+    $(document).on('change', '.pelajar-checkbox', function() {
+        updateBulkActions();
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+        submitDeleteForm();
+    });
+
+    $('#deleteModal .close, #deleteModal [data-dismiss="modal"]').on('click', function() {
+        $('#deleteModal').modal('hide');
+    });
+
+    $('#deleteModal').on('hidden.bs.modal', function() {
+        $('#deleteForm')[0].reset();
+        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fas fa-trash"></i> Hapus');
+    });
+});
+
+function showDeleteModal(id, nama, nik, jenjang, sekolah, status, photoUrl) {
+
+    $('#deleteForm').attr('action', `/admin-panel/references/pelajar/delete/${id}/`);
+    $('#deletePelajarId').val(id);
+
+    $('#deleteNama').text(nama);
+    $('#deleteNik').text(nik);
+
+    $('#deleteModal').modal('show');
+}
+
+function submitDeleteForm() {
+    const form = $('#deleteForm');
+    const btn = $('#confirmDeleteBtn');
+    const originalText = btn.html();
+
+    const csrfToken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    btn.html('<i class="fas fa-spinner fa-spin"></i> Menghapus...');
+    btn.prop('disabled', true);
+
+    const formData = new FormData(form[0]);
+
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        success: function(response) {
+            if (response.success) {
+
+                if (typeof window.showSuccess === 'function') {
+                    window.showSuccess(response.message || 'Data berhasil dihapus');
+                }
+
+                $('#deleteModal').modal('hide');
+
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                if (typeof window.showError === 'function') {
+                    window.showError(response.message || 'Gagal menghapus data');
+                }
+
+                btn.prop('disabled', false).html(originalText);
+            }
+        },
+        error: function(xhr, status, error) {
+            let message = 'Terjadi kesalahan saat menghapus data';
+
+            if (xhr.status === 403) {
+                message = 'Anda tidak memiliki izin untuk menghapus data ini';
+            } else if (xhr.status === 404) {
+                message = 'Data tidak ditemukan';
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            }
+
+            if (typeof window.showError === 'function') {
+                window.showError(message);
+            }
+
+            btn.prop('disabled', false).html(originalText);
+        }
+    });
+}
+
+function exportData() {
+    showLoading('Mengekspor data...');
+    const exportUrl = '{% url "admin_panel:references_pelajar_export_csv" %}';
+
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'data_pelajar_' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('Data CSV berhasil diekspor');
+    }, 1000);
+}
+
+function exportExcel() {
+    showLoading('Mengekspor ke Excel...');
+    const exportUrl = '{% url "admin_panel:references_pelajar_export_excel" %}';
+
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'data_pelajar_' + new Date().toISOString().split('T')[0] + '.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('File Excel berhasil dibuat');
+    }, 1000);
+}
+
+function exportPDF() {
+    showLoading('Mengekspor ke PDF...');
+    const exportUrl = '{% url "admin_panel:references_pelajar_export_pdf" %}';
+
+    window.open(exportUrl, '_blank');
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('File PDF berhasil dibuat');
+    }, 1000);
+}
+
+function importData() {
+    showInfo('Fitur import data akan segera tersedia');
+}
+
+function downloadTemplate() {
+    showInfo('Template import akan segera tersedia');
+}
+
+function showLoading(message) {
+
+    if (!document.getElementById('loadingOverlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        `;
+        overlay.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-2">${message}</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function showSuccess(message) {
+
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        z-index: 10000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    `;
+    notification.innerHTML = `
+        <i class="fas fa-check-circle mr-2"></i>${message}
+    `;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function showInfo(message) {
+
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #17a2b8;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 5px;
+        z-index: 10000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    `;
+    notification.innerHTML = `
+        <i class="fas fa-info-circle mr-2"></i>${message}
+    `;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function showAlert(message, type) {
+    showNotificationToast(message, type);
+}
+
+function showNotificationToast(message, type) {
+
+    $('.notification-toast').remove();
+
+    let bgColor, icon, title;
+    if (type === 'success') {
+        bgColor = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+        icon = 'fa-check-circle';
+        title = 'Berhasil';
+    } else if (type === 'error') {
+        bgColor = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+        icon = 'fa-times-circle';
+        title = 'Error';
+    } else if (type === 'warning') {
+        bgColor = 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)';
+        icon = 'fa-exclamation-triangle';
+        title = 'Peringatan';
+    } else {
+        bgColor = 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)';
+        icon = 'fa-info-circle';
+        title = 'Informasi';
+    }
+
+    const toast = $(`
+        <div class="notification-toast" style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${bgColor};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            min-width: 300px;
+            max-width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        ">
+            <div class="d-flex align-items-center">
+                <i class="fas ${icon} fa-lg mr-3"></i>
+                <div class="flex-grow-1">
+                    <div class="font-weight-bold mb-1">${title}</div>
+                    <div class="small">${message}</div>
+                </div>
+                <button type="button" class="btn-close text-white ml-2" style="
+                    background: none;
+                    border: none;
+                    font-size: 1.2rem;
+                    opacity: 0.8;
+                    cursor: pointer;
+                ">&times;</button>
+            </div>
+        </div>
+    `);
+
+    $('body').append(toast);
+
+    setTimeout(() => {
+        toast.css('transform', 'translateX(0)');
+    }, 100);
+
+    setTimeout(() => {
+        toast.css('transform', 'translateX(100%)');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 2000);
+
+    toast.find('.btn-close').on('click', function() {
+        toast.css('transform', 'translateX(100%)');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    });
+}
+
+$(document).ready(function() {
+    {% if messages %}
+        var messages = [];
+        {% for message in messages %}
+            messages.push({
+                text: '{{ message|escapejs }}',
+                type: '{{ message.tags }}'
+            });
+        {% endfor %}
+
+        var uniqueMessages = [];
+        messages.forEach(function(msg) {
+            if (!uniqueMessages.some(function(unique) {
+                return unique.text === msg.text && unique.type === msg.type;
+            })) {
+                uniqueMessages.push(msg);
+            }
+        });
+
+        if (uniqueMessages.length > 0) {
+            showNotificationToast(uniqueMessages[0].text, uniqueMessages[0].type);
+        }
+    {% endif %}
+});
+
+function updateBulkActions() {
+    const selected = $('.pelajar-checkbox:checked').length;
+    const count = $('#bulkActionsCount');
+
+    count.text(selected > 0 ? `${selected} dipilih` : '0 dipilih');
+
+    const totalCheckboxes = $('.pelajar-checkbox').length;
+    const selectAll = $('#selectAll');
+
+    if (selected === 0) {
+        selectAll.prop('indeterminate', false).prop('checked', false);
+    } else if (selected === totalCheckboxes) {
+        selectAll.prop('indeterminate', false).prop('checked', true);
+    } else {
+        selectAll.prop('indeterminate', true);
+    }
+}
+
+function executeBulkAction(action) {
+    const selected = $('.pelajar-checkbox:checked');
+
+    if (selected.length === 0) {
+        showError('Pilih minimal satu data');
+        return;
+    }
+
+    const selectedIds = [];
+    selected.each(function() {
+        selectedIds.push($(this).val());
+    });
+
+    const actionLabels = {
+        'activate': 'mengaktifkan',
+        'deactivate': 'menonaktifkan',
+        'delete': 'menghapus'
+    };
+
+    if (action === 'delete') {
+        if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} data pelajar?\n\nTindakan ini tidak dapat dibatalkan!`)) {
+            return;
+        }
+    } else {
+        if (!confirm(`Apakah Anda yakin ingin ${actionLabels[action]} ${selectedIds.length} data pelajar?`)) {
+            return;
+        }
+    }
+
+    showLoading(`Menjalankan aksi ${actionLabels[action]} pada ${selectedIds.length} data...`);
+
+    if (action === 'delete') {
+        bulkDeletePelajar(selectedIds);
+    } else if (action === 'activate') {
+        bulkActivatePelajar(selectedIds);
+    } else if (action === 'deactivate') {
+        bulkDeactivatePelajar(selectedIds);
+    }
+}
+
+function bulkDeletePelajar(ids) {
+    const csrfToken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    $.ajax({
+        url: '{% url "admin_panel:references_pelajar_bulk_delete" %}',
+        type: 'POST',
+        data: {
+            'pelajar_ids[]': ids,
+            'csrfmiddlewaretoken': csrfToken
+        },
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                if (typeof window.showSuccess === 'function') {
+                    window.showSuccess(`Berhasil menghapus ${response.deleted_count} data pelajar`);
+                }
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                let errorMessage = response.message || 'Gagal menghapus data pelajar';
+                if (typeof window.showError === 'function') {
+                    window.showError(errorMessage);
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            console.error('Bulk delete error:', xhr.responseText);
+            if (typeof window.showError === 'function') {
+                window.showError('Terjadi kesalahan saat menghapus data');
+            }
+        }
+    });
+}
+
+function bulkActivatePelajar(ids) {
+    const csrfToken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    $.ajax({
+        url: '{% url "admin_panel:references_pelajar_bulk_activate" %}',
+        type: 'POST',
+        data: {
+            'pelajar_ids[]': ids,
+            'csrfmiddlewaretoken': csrfToken
+        },
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                if (typeof window.showSuccess === 'function') {
+                    window.showSuccess(`Berhasil mengaktifkan ${response.activated_count} data pelajar`);
+                }
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                if (typeof window.showError === 'function') {
+                    window.showError(response.message || 'Gagal mengaktifkan data pelajar');
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            console.error('Bulk activate error:', xhr.responseText);
+            if (typeof window.showError === 'function') {
+                window.showError('Terjadi kesalahan saat mengaktifkan data');
+            }
+        }
+    });
+}
+
+function bulkDeactivatePelajar(ids) {
+    const csrfToken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    $.ajax({
+        url: '{% url "admin_panel:references_pelajar_bulk_deactivate" %}',
+        type: 'POST',
+        data: {
+            'pelajar_ids[]': ids,
+            'csrfmiddlewaretoken': csrfToken
+        },
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                if (typeof window.showSuccess === 'function') {
+                    window.showSuccess(`Berhasil menonaktifkan ${response.deactivated_count} data pelajar`);
+                }
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                if (typeof window.showError === 'function') {
+                    window.showError(response.message || 'Gagal menonaktifkan data pelajar');
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            console.error('Bulk deactivate error:', xhr.responseText);
+            if (typeof window.showError === 'function') {
+                window.showError('Terjadi kesalahan saat menonaktifkan data');
+            }
+        }
+    });
+}
+
+function showError(message) {
+    showAlert(message, 'error');
+}
+
+function showLoading(message) {
+
+    $('body').append(`
+        <div id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                <div class="spinner-border text-primary mb-2"></div>
+                <div>${message}</div>
+            </div>
+        </div>
+    `);
+}
+
+function hideLoading() {
+    $('#loadingOverlay').remove();
+}
+
+function showAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-warning';
+    const icon = type === 'success' ? 'fas fa-check-circle' : type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-exclamation-triangle';
+
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="${icon} mr-2"></i>
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+
+    $('body').append(alertHtml);
+
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 5000);
+}
+</script>
+
+{% endblock extra_js %}

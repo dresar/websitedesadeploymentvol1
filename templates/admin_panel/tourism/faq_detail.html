@@ -1,0 +1,175 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Detail FAQ - {{ faq.question }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="td-wrapper">
+
+    <a href="{% url 'admin_panel:tourism_faq_list' %}" class="td-back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Daftar FAQ
+    </a>
+
+    <div class="td-header">
+        <div class="td-header-content">
+            <div class="td-icon-wrapper">
+                <i class="fas fa-question-circle"></i>
+            </div>
+
+            <div class="td-header-info">
+                <h1>{{ faq.question|truncatewords:10 }}</h1>
+                <p class="td-header-subtitle">Frequently Asked Question</p>
+            </div>
+
+            <div class="td-actions">
+                <a href="{% url 'admin_panel:tourism_faq_edit' faq.id %}" class="td-btn td-btn-primary">
+                    <i class="fas fa-edit"></i>
+                    Edit
+                </a>
+                <button onclick="deleteFaq({{ faq.id }})" class="td-btn td-btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informasi FAQ
+                    </h3>
+                </div>
+
+                <div class="td-info-grid">
+                    <div class="td-info-row">
+                        <div class="td-info-label">Pertanyaan:</div>
+                        <div class="td-info-value">
+                            <strong>{{ faq.question }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Jawaban:</div>
+                        <div class="td-info-value">
+                            {{ faq.answer|linebreaks }}
+                        </div>
+                    </div>
+
+                    {% if faq.tourism_location %}
+                    <div class="td-info-row">
+                        <div class="td-info-label">Lokasi Terkait:</div>
+                        <div class="td-info-value">
+                            <a href="{% url 'admin_panel:tourism_location_detail' faq.tourism_location.id %}" class="td-btn td-btn-info td-btn-sm">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ faq.tourism_location.title }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Urutan:</div>
+                        <div class="td-info-value">{{ faq.order }}</div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Status:</div>
+                        <div class="td-info-value">
+                            {% if faq.is_active %}
+                                <span class="td-badge td-badge-success">Aktif</span>
+                            {% else %}
+                                <span class="td-badge td-badge-gray">Tidak Aktif</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="td-sidebar">
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-tools"></i>
+                        Aksi Cepat
+                    </h6>
+                    <div class="td-actions-list">
+                        <a href="{% url 'admin_panel:tourism_faq_edit' faq.id %}" class="td-btn td-btn-warning">
+                            <i class="fas fa-edit"></i>
+                            Edit FAQ
+                        </a>
+
+                        <button type="button" class="td-btn td-btn-danger" onclick="deleteFaq({{ faq.id }})">
+                            <i class="fas fa-trash"></i>
+                            Hapus FAQ
+                        </button>
+
+                        {% if faq.tourism_location %}
+                        <a href="{% url 'admin_panel:tourism_location_detail' faq.tourism_location.id %}" class="td-btn td-btn-info">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Lihat Lokasi
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-info-circle"></i>
+                        Detail
+                    </h6>
+                    <div class="td-info-grid">
+                        <div class="td-info-row">
+                            <div class="td-info-label">Dibuat:</div>
+                            <div class="td-info-value">{{ faq.created_at|date:"d M Y H:i" }}</div>
+                        </div>
+
+                        {% if faq.updated_at %}
+                        <div class="td-info-row">
+                            <div class="td-info-label">Diperbarui:</div>
+                            <div class="td-info-value">{{ faq.updated_at|date:"d M Y H:i" }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>function deleteFaq(faqId) {
+    if (confirm('Apakah Anda yakin ingin menghapus FAQ ini?\n\nTindakan ini tidak dapat dibatalkan.')) {
+        fetch(`{% url 'admin_panel:tourism_faq_delete' 0 %}`.replace('0', faqId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '{% url "admin_panel:tourism_faq_list" %}';
+            } else {
+                showError('Gagal menghapus FAQ: ' + (data.error || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Terjadi kesalahan saat menghapus FAQ');
+        });
+    }
+}
+</script>
+{% endblock %}

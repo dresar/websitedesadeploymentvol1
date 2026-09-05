@@ -1,0 +1,508 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load business_filters %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/business/business-list.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="business-list-container">
+
+    <div class="business-page-header">
+        <div>
+            <h1 class="business-page-title">
+                <i class="fas fa-tools"></i>Layanan Jasa
+            </h1>
+            <p class="business-page-subtitle">Kelola data layanan jasa di Desa Pulosari</p>
+        </div>
+        <div class="business-header-actions">
+            <a href="{% url 'admin_panel:layanan_jasa_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Tambah Layanan
+            </a>
+        </div>
+    </div>
+
+    <div class="business-search-filter">
+        <form method="GET" class="business-filter-form">
+            <div>
+                <label for="search" class="form-label">Pencarian</label>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="{{ search }}" placeholder="Cari nama layanan, penyedia, atau alamat...">
+            </div>
+            <div>
+                <label for="kategori" class="form-label">Kategori</label>
+                <select class="form-select" id="kategori" name="kategori">
+                    <option value="">Semua Kategori</option>
+                    {% for value, label in kategori_choices %}
+                        <option value="{{ value }}" {% if kategori_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Semua Status</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="business-filter-actions">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Cari
+                </button>
+                <a href="{% url 'admin_panel:layanan_jasa_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="business-table-card">
+        <div class="business-table-card-header">
+            <h2 class="business-table-card-title">
+                <i class="fas fa-list"></i>Daftar Layanan Jasa
+                <span class="business-table-count-badge">{{ page_obj.paginator.count }}</span>
+            </h2>
+        </div>
+        <div class="business-table-card-body">
+
+            <div class="business-table-desktop">
+                <table class="business-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th>Nama Layanan</th>
+                            <th>Penyedia</th>
+                            <th style="width: 150px;">Kategori</th>
+                            <th style="width: 100px;">Rating</th>
+                            <th style="width: 150px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for layanan in page_obj %}
+                        <tr>
+                            <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                            <td>
+                                <div class="business-table-cell-primary">{{ layanan.nama }}</div>
+                                {% if layanan.sertifikat %}
+                                    <div class="business-table-cell-secondary">
+                                        <i class="fas fa-certificate text-warning"></i> Bersertifikat
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="business-table-cell-primary">{{ layanan.penyedia }}</div>
+                                <div class="business-table-cell-secondary">
+                                    <i class="fas fa-phone"></i> {{ layanan.telepon }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="business-badge business-badge-info">
+                                    {{ layanan.kategori }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if layanan.rating %}
+                                    <div class="business-rating-stars">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= layanan.rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="business-rating-number">{{ layanan.rating }}</span>
+                                    </div>
+                                {% else %}
+                                    <span class="business-text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="business-action-buttons">
+                                    <a href="{% url 'admin_panel:layanan_jasa_detail' layanan.id %}" class="btn btn-outline-info" title="Detail">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'admin_panel:layanan_jasa_edit' layanan.id %}" class="btn btn-outline-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if layanan.foto_layanan or layanan.logo_layanan %}
+                                    <button type="button" class="btn btn-outline-primary" 
+                                            onclick="showBusinessImagesModal('{{ layanan.nama|escapejs }}', 
+                                                    {% if layanan.foto_layanan %}'{{ layanan.foto_layanan.url }}'{% else %}null{% endif %}, 
+                                                    {% if layanan.logo_layanan %}'{{ layanan.logo_layanan.url }}'{% else %}null{% endif %})"
+                                            title="Lihat Gambar">
+                                        <i class="fas fa-images"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-outline-danger"
+                                    onclick="showBusinessDeleteModal('{% url 'admin_panel:layanan_jasa_delete' layanan.id  %}', '{{ layanan.nama|escapejs }}', 'Layanan Jasa')"
+                                    title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="business-empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p class="business-empty-state-title">Tidak ada data layanan jasa</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="business-mobile-list">
+                {% for layanan in page_obj %}
+                <div class="business-mobile-card">
+                    <div class="business-mobile-card-header">
+                        <div>
+                            <h3 class="business-mobile-card-title">{{ layanan.nama }}</h3>
+                            <div class="business-mobile-card-subtitle">{{ layanan.penyedia }}</div>
+                        </div>
+                        <div class="business-mobile-card-number">{{ forloop.counter0|add:page_obj.start_index }}</div>
+                    </div>
+                    <div class="business-mobile-card-body">
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Telepon</span>
+                            <span class="business-mobile-info-value">{{ layanan.telepon }}</span>
+                        </div>
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Kategori</span>
+                            <span class="business-mobile-info-value">{{ layanan.kategori }}</span>
+                        </div>
+                        {% if layanan.rating %}
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Rating</span>
+                            <span class="business-mobile-info-value">
+                                <div class="business-rating-stars">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= layanan.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="business-rating-number">{{ layanan.rating }}</span>
+                                </div>
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="business-mobile-card-footer">
+                        <div class="business-mobile-card-badges">
+                            {% if layanan.sertifikat %}
+                            <span class="business-badge business-badge-warning">
+                                <i class="fas fa-certificate"></i> Bersertifikat
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="business-mobile-actions">
+                            <a href="{% url 'admin_panel:layanan_jasa_detail' layanan.id %}" class="btn btn-outline-info" title="Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_panel:layanan_jasa_edit' layanan.id %}" class="btn btn-outline-warning" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if layanan.foto_layanan or layanan.logo_layanan %}
+                            <button type="button" class="btn btn-outline-primary" 
+                                    onclick="showBusinessImagesModal('{{ layanan.nama|escapejs }}', 
+                                            {% if layanan.foto_layanan %}'{{ layanan.foto_layanan.url }}'{% else %}null{% endif %}, 
+                                            {% if layanan.logo_layanan %}'{{ layanan.logo_layanan.url }}'{% else %}null{% endif %})"
+                                    title="Lihat Gambar">
+                                <i class="fas fa-images"></i>
+                            </button>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-danger"
+                                    onclick="showBusinessDeleteModal('{% url 'admin_panel:layanan_jasa_delete' layanan.id  %}', '{{ layanan.nama|escapejs }}', 'Layanan Jasa')"
+                                    title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="business-empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p class="business-empty-state-title">Tidak ada data layanan jasa</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="business-pagination-wrapper">
+            <ul class="business-pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search %}&amp;search={{ search }}{% endif %}{% if kategori_filter %}&amp;kategori={{ kategori_filter }}{% endif %}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}">
+                            <span class="business-pagination-text">First</span><span class="d-md-none">«</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&amp;search={{ search }}{% endif %}{% if kategori_filter %}&amp;kategori={{ kategori_filter }}{% endif %}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}">‹</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&amp;search={{ search }}{% endif %}{% if kategori_filter %}&amp;kategori={{ kategori_filter }}{% endif %}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}">›</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&amp;search={{ search }}{% endif %}{% if kategori_filter %}&amp;kategori={{ kategori_filter }}{% endif %}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}">
+                            <span class="business-pagination-text">Last</span><span class="d-md-none">»</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Layanan Jasa Delete Confirmation Modal -->
+<div class="modal fade" id="layananJasaDeleteModal" tabindex="-1" role="dialog" aria-labelledby="layananJasaDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="layananJasaDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Konfirmasi Penghapusan Layanan Jasa
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Peringatan!</strong> Tindakan ini tidak dapat dibatalkan.
+                </div>
+                
+                <p>Apakah Anda yakin ingin menghapus Layanan Jasa <strong id="layananJasaDeleteName"></strong>?</p>
+                <p class="text-muted">Semua data terkait akan dihapus secara permanen.</p>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="layananJasaDeleteConfirm" required>
+                    <label class="form-check-label" for="layananJasaDeleteConfirm">
+                        Saya yakin ingin menghapus data Layanan Jasa ini
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <form id="layananJasaDeleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" id="layananJasaDeleteBtn" disabled>
+                        <i class="fas fa-trash"></i> Hapus Layanan Jasa
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// Layanan Jasa Delete Modal Functions
+function showBusinessDeleteModal(deleteUrl, businessName, businessType) {
+    // Set form action
+    $('#layananJasaDeleteForm').attr('action', deleteUrl);
+    
+    // Set business details
+    $('#layananJasaDeleteName').text(businessName);
+    
+    // Reset form
+    $('#layananJasaDeleteConfirm').prop('checked', false);
+    $('#layananJasaDeleteBtn').prop('disabled', true);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('layananJasaDeleteModal'));
+    modal.show();
+}
+
+// Handle delete confirmation checkbox
+$('#layananJasaDeleteConfirm').on('change', function() {
+    const confirmed = $(this).is(':checked');
+    $('#layananJasaDeleteBtn').prop('disabled', !confirmed);
+});
+
+// Handle delete form submission
+$('#layananJasaDeleteForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const form = $(this);
+    const btn = $('#layananJasaDeleteBtn');
+    const originalText = btn.html();
+    
+    // Show loading state
+    btn.html('<i class="fas fa-spinner fa-spin"></i> Menghapus...');
+    btn.prop('disabled', true);
+    
+    // Get CSRF token
+    const csrftoken = $('[name=csrfmiddlewaretoken]').val();
+    
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: form.serialize(),
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            if (response.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('layananJasaDeleteModal'));
+                modal.hide();
+                
+                // Show success message
+                if (typeof showAlert === 'function') {
+                    showAlert(response.message || 'Layanan Jasa berhasil dihapus', 'success');
+                } else {
+                    alert(response.message || 'Layanan Jasa berhasil dihapus');
+                }
+                
+                // Reload page
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Show error message
+                if (typeof showAlert === 'function') {
+                    showAlert(response.message || 'Gagal menghapus Layanan Jasa', 'error');
+                } else {
+                    alert(response.message || 'Gagal menghapus Layanan Jasa');
+                }
+                
+                // Reset button
+                btn.html(originalText);
+                btn.prop('disabled', false);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Delete error:', error);
+            
+            // Show error message
+            if (typeof showAlert === 'function') {
+                showAlert('Terjadi kesalahan saat menghapus Layanan Jasa', 'error');
+            } else {
+                alert('Terjadi kesalahan saat menghapus Layanan Jasa');
+            }
+            
+            // Reset button
+            btn.html(originalText);
+            btn.prop('disabled', false);
+        }
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('layananJasaDeleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        const modal = bootstrap.Modal.getInstance(this);
+        modal.hide();
+    }
+});
+
+// Reset modal when closed
+document.getElementById('layananJasaDeleteModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('layananJasaDeleteConfirm').checked = false;
+    document.getElementById('layananJasaDeleteBtn').disabled = true;
+    document.getElementById('layananJasaDeleteForm').reset();
+});
+
+// Function to show business images modal
+function showBusinessImagesModal(businessName, fotoUrl, logoUrl) {
+    // Remove existing modal if any
+    $('#businessImagesModal').remove();
+    
+    let modalContent = `
+        <div class="modal fade" id="businessImagesModal" tabindex="-1" role="dialog" aria-labelledby="businessImagesModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="businessImagesModalLabel">
+                            <i class="fas fa-images"></i> Gambar ${businessName}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+    `;
+    
+    if (fotoUrl) {
+        modalContent += `
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-camera"></i> Foto Layanan</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${fotoUrl}" alt="Foto Layanan" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (logoUrl) {
+        modalContent += `
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-image"></i> Logo Layanan</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${logoUrl}" alt="Logo Layanan" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    modalContent += `
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    $('body').append(modalContent);
+    
+    // Show modal using Bootstrap 5.3.0 syntax
+    const modalElement = document.getElementById('businessImagesModal');
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+    });
+    modal.show();
+    
+    // Add event listeners for proper cleanup
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        modal.dispose();
+        modalElement.remove();
+    });
+}
+
+console.log('Layanan Jasa list page initialized with delete modal');
+</script>
+{% endblock extra_js %}

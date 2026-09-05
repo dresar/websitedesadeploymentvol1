@@ -1,0 +1,176 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Pengaturan{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-cog"></i>
+                    Dashboard Pengaturan
+                </h1>
+                <p class="dashboard-subtitle">Kelola semua pengaturan dan konfigurasi website</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Cards -->
+    <div class="info-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-sliders-h"></i>
+                Kategori Pengaturan
+            </h2>
+            <p class="cart-subtitle">Pilih kategori yang ingin Anda kelola</p>
+        </div>
+
+        <div class="info-grid">
+            <!-- Website Settings -->
+            <a href="{% url 'core:website_settings' %}" class="info-cart info-cart-primary">
+                <div class="info-icon">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Website</div>
+                    <p class="info-description">Konfigurasi dasar dan informasi umum</p>
+                </div>
+            </a>
+
+            <!-- Cache Settings -->
+            <a href="{% url 'core:cache_settings' %}" class="info-cart info-cart-primary">
+                <div class="info-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Cache</div>
+                    <p class="info-description">Kelola cache dan performa</p>
+                </div>
+            </a>
+
+            <!-- Media Settings -->
+            <a href="{% url 'core:media_settings' %}" class="info-cart info-cart-success">
+                <div class="info-icon">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Media</div>
+                    <p class="info-description">Pengaturan file dan upload</p>
+                </div>
+            </a>
+
+            <!-- Security Settings -->
+            <a href="{% url 'core:security_settings' %}" class="info-cart info-cart-warning">
+                <div class="info-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Keamanan</div>
+                    <p class="info-description">Konfigurasi keamanan sistem</p>
+                </div>
+            </a>
+
+
+            <!-- SEO Settings -->
+            <a href="{% url 'core:seo_settings' %}" class="info-cart info-cart-primary">
+                <div class="info-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">SEO</div>
+                    <p class="info-description">Optimasi mesin pencari</p>
+                </div>
+            </a>
+
+            <!-- Maintenance Mode -->
+            <a href="{% url 'core:maintenance_mode' %}" class="info-cart info-cart-warning">
+                <div class="info-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Maintenance</div>
+                    <p class="info-description">Mode pemeliharaan website</p>
+                </div>
+            </a>
+
+            <!-- System Info -->
+            <a href="{% url 'core:system_info' %}" class="info-cart info-cart-primary">
+                <div class="info-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Sistem</div>
+                    <p class="info-description">Informasi dan status sistem</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="stats-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-bolt"></i>
+                Aksi Cepat
+            </h2>
+            <p class="cart-subtitle">Aksi yang sering digunakan</p>
+        </div>
+
+        <div class="stats-grid">
+            <!-- Clear Cache -->
+            <a href="{% url 'core:clear_cache' %}" class="stat-cart stat-cart-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-trash"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Clear Cache</div>
+                    <p class="stat-description">Bersihkan cache sistem</p>
+                </div>
+            </a>
+
+            <!-- Clear Static -->
+            <a href="{% url 'core:clear_static_files' %}" class="stat-cart stat-cart-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-file"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Clear Static</div>
+                    <p class="stat-description">Hapus file statis</p>
+                </div>
+            </a>
+
+            <!-- Clear Media -->
+            <a href="{% url 'core:clear_media_cache' %}" class="stat-cart stat-cart-info">
+                <div class="stat-icon">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Clear Media</div>
+                    <p class="stat-description">Bersihkan cache media</p>
+                </div>
+            </a>
+
+            <!-- System Health -->
+            <a href="{% url 'core:system_info' %}" class="stat-cart stat-cart-success">
+                <div class="stat-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">System Health</div>
+                    <p class="stat-description">Cek status sistem</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% include 'admin_panel/modals/development_modals.html' %}
+

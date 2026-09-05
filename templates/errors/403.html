@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Akses Ditolak - Website Desa Pulosarok</title>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .error-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            padding: 60px 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .error-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #f39c12, #e67e22);
+        }
+        
+        .error-code {
+            font-size: 8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            line-height: 1;
+        }
+        
+        .error-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .error-description {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            color: #f39c12;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        
+        .btn-custom {
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(243, 156, 18, 0.3);
+            color: white;
+        }
+        
+        .btn-secondary-custom {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e1e5e9;
+        }
+        
+        .btn-secondary-custom:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            color: #333;
+        }
+        
+        .access-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            color: #856404;
+        }
+        
+        .access-info h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .access-info p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        
+        .login-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e1e5e9;
+        }
+        
+        .login-section h4 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .login-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-login {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .security-notice {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 30px;
+            color: #0c5460;
+            font-size: 0.9rem;
+        }
+        
+        .security-notice i {
+            color: #17a2b8;
+            margin-right: 8px;
+        }
+        
+        .permission-list {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .permission-list h5 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .permission-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .permission-item i {
+            color: #f39c12;
+            margin-right: 10px;
+            width: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .error-container {
+                padding: 40px 20px;
+                margin: 20px;
+            }
+            
+            .error-code {
+                font-size: 6rem;
+            }
+            
+            .error-title {
+                font-size: 1.5rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn-custom {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .login-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        /* Security enhancements */
+        .error-container {
+            position: relative;
+        }
+        
+        .error-container::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(243, 156, 18, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-lock"></i>
+        </div>
+        
+        <div class="error-code">403</div>
+        
+        <h1 class="error-title">Akses Ditolak</h1>
+        
+        <p class="error-description">
+            Maaf, Anda tidak memiliki izin untuk mengakses halaman ini. 
+            Silakan login dengan akun yang memiliki akses atau hubungi administrator.
+        </p>
+        
+        <div class="action-buttons">
+            <a href="/admin-panel/login/" class="btn-custom btn-primary-custom">
+                <i class="fas fa-sign-in-alt"></i>
+                Login Admin
+            </a>
+            <a href="/" class="btn-custom btn-secondary-custom">
+                <i class="fas fa-home"></i>
+                Kembali ke Beranda
+            </a>
+        </div>
+        
+        <div class="access-info">
+            <h4><i class="fas fa-info-circle"></i> Informasi Akses</h4>
+            <p>
+                Halaman ini memerlukan autentikasi khusus atau izin administrator. 
+                Pastikan Anda telah login dengan akun yang tepat.
+            </p>
+        </div>
+        
+        <div class="login-section">
+            <h4><i class="fas fa-key"></i> Akses yang Diperlukan</h4>
+            <div class="login-buttons">
+                <a href="/admin-panel/login/" class="btn-login">
+                    <i class="fas fa-user-shield"></i> Admin Login
+                </a>
+                <a href="/admin-panel/" class="btn-login">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <div class="permission-list">
+            <h5><i class="fas fa-list"></i> Kemungkinan Penyebab:</h5>
+            <div class="permission-item">
+                <i class="fas fa-times"></i>
+                <span>Belum login ke sistem admin</span>
+            </div>
+            <div class="permission-item">
+                <i class="fas fa-times"></i>
+                <span>Session login telah expired</span>
+            </div>
+            <div class="permission-item">
+                <i class="fas fa-times"></i>
+                <span>Akun tidak memiliki izin akses</span>
+            </div>
+            <div class="permission-item">
+                <i class="fas fa-times"></i>
+                <span>IP address diblokir oleh sistem</span>
+            </div>
+        </div>
+        
+        <div class="security-notice">
+            <i class="fas fa-shield-alt"></i>
+            <strong>Keamanan:</strong> Akses ditolak untuk melindungi data sensitif sistem. 
+            Semua percobaan akses tidak sah telah dicatat.
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Security: Disable right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+        
+        // Security: Disable F12, Ctrl+Shift+I, Ctrl+U
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
+            }
+        });
+        
+        // Log 403 error for monitoring
+        console.log('403 Error - Access denied:', window.location.href);
+        
+        // Send error to analytics (if available)
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'access_denied', {
+                'page_location': window.location.href,
+                'page_title': document.title
+            });
+        }
+        
+        // Auto redirect to login after 10 seconds
+        setTimeout(function() {
+            if (confirm('Anda akan diarahkan ke halaman login...')) {
+                window.location.href = '/admin-panel/login/';
+            }
+        }, 10000);
+        
+        // Show redirect countdown
+        let redirectCountdown = 10;
+        const countdownElement = document.createElement('div');
+        countdownElement.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 1000;
+        `;
+        document.body.appendChild(countdownElement);
+        
+        const countdownInterval = setInterval(() => {
+            redirectCountdown--;
+            countdownElement.textContent = `Redirect ke login dalam ${redirectCountdown}s`;
+            
+            if (redirectCountdown <= 0) {
+                clearInterval(countdownInterval);
+                countdownElement.remove();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

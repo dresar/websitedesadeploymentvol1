@@ -1,0 +1,329 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/complaints/complaints.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/complaints/complaints-dashboard.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="complaints-container">
+
+    <div class="complaints-dashboard-header">
+        <h3 class="complaints-dashboard-title">
+            <i class="fas fa-chart-pie"></i>
+            Dashboard Keluhan
+        </h3>
+    </div>
+
+    <div class="row">
+
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="complaints-stat-card complaints-stat-card-danger h-100">
+                <div class="complaints-stat-card-body">
+                    <div>
+                        <div class="complaints-stat-number">{{ total_complaints|default:0 }}</div>
+                        <div class="complaints-stat-label">Total Keluhan</div>
+                    </div>
+                    <div class="complaints-icon complaints-icon-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="complaints-stat-card complaints-stat-card-warning h-100">
+                <div class="complaints-stat-card-body">
+                    <div>
+                        <div class="complaints-stat-number">{{ pending_complaints|default:0 }}</div>
+                        <div class="complaints-stat-label">Menunggu</div>
+                    </div>
+                    <div class="complaints-icon complaints-icon-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="complaints-stat-card complaints-stat-card-info h-100">
+                <div class="complaints-stat-card-body">
+                    <div>
+                        <div class="complaints-stat-number">{{ in_progress_complaints|default:0 }}</div>
+                        <div class="complaints-stat-label">Diproses</div>
+                    </div>
+                    <div class="complaints-icon complaints-icon-info">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3 mb-2">
+            <div class="complaints-stat-card complaints-stat-card-success h-100">
+                <div class="complaints-stat-card-body">
+                    <div>
+                        <div class="complaints-stat-number">{{ resolved_complaints|default:0 }}</div>
+                        <div class="complaints-stat-label">Selesai</div>
+                    </div>
+                    <div class="complaints-icon complaints-icon-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="complaints-card">
+                <div class="complaints-card-header">
+                    <h5 class="complaints-card-title">
+                        <i class="fas fa-list"></i>Keluhan per Kategori
+                    </h5>
+                </div>
+                <div class="complaints-card-body">
+                    <div class="row">
+                        {% for cat in category_stats %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="complaints-category-item">
+                                <span class="complaints-category-name">{{ cat.name }}</span>
+                                <span class="complaints-category-count">{{ cat.total_complaints }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="complaints-card">
+                <div class="complaints-card-header">
+                    <h5 class="complaints-card-title">
+                        <i class="fas fa-tasks"></i>Distribusi Status
+                    </h5>
+                </div>
+                <div class="complaints-card-body">
+                    <div class="row">
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <div class="complaints-status-box complaints-status-box-warning">
+                                <div class="complaints-status-number text-warning">{{ pending_complaints|default:0 }}</div>
+                                <div class="complaints-status-label">Pending</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <div class="complaints-status-box complaints-status-box-info">
+                                <div class="complaints-status-number text-info">{{ in_review_complaints|default:0 }}</div>
+                                <div class="complaints-status-label">In Review</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <div class="complaints-status-box complaints-status-box-primary">
+                                <div class="complaints-status-number text-primary">{{ in_progress_complaints|default:0 }}</div>
+                                <div class="complaints-status-label">In Progress</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <div class="complaints-status-box complaints-status-box-success">
+                                <div class="complaints-status-number text-success">{{ resolved_complaints|default:0 }}</div>
+                                <div class="complaints-status-label">Resolved</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4 col-lg-2">
+                            <div class="complaints-status-box complaints-status-box-danger">
+                                <div class="complaints-status-number text-danger">{{ rejected_complaints|default:0 }}</div>
+                                <div class="complaints-status-label">Rejected</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col-lg-6 mb-3">
+            <div class="complaints-card h-100">
+                <div class="complaints-card-header">
+                    <h5 class="complaints-card-title">
+                        <i class="fas fa-exclamation-triangle"></i>Keluhan Terbaru
+                    </h5>
+                </div>
+                <div class="complaints-card-body">
+                    {% if recent_complaints %}
+                        {% for complaint in recent_complaints %}
+                        <div class="complaints-activity-item">
+                            <div class="complaints-activity-icon"
+                                 style="background: {% if complaint.priority == 'high' %}var(--complaints-danger){% elif complaint.priority == 'medium' %}var(--complaints-warning){% else %}var(--complaints-info){% endif %};">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="complaints-activity-content">
+                                <div class="complaints-activity-title">{{ complaint.title|truncatechars:30 }}</div>
+                                <div class="complaints-activity-meta">
+                                    {{ complaint.complainant_name }} - {{ complaint.created_at|timesince }} lalu
+                                </div>
+                            </div>
+                            <span class="complaints-badge {% if complaint.status == 'resolved' %}complaints-badge-success{% elif complaint.status == 'in_progress' %}complaints-badge-info{% elif complaint.status == 'pending' %}complaints-badge-warning{% else %}complaints-badge-secondary{% endif %}">
+                                {{ complaint.get_status_display }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="complaints-empty">
+                            <i class="fas fa-exclamation-triangle complaints-empty-icon"></i>
+                            <p class="complaints-empty-text">Tidak ada keluhan terbaru</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-3">
+            <div class="complaints-card h-100">
+                <div class="complaints-card-header">
+                    <h5 class="complaints-card-title">
+                        <i class="fas fa-comment"></i>Update Terbaru
+                    </h5>
+                </div>
+                <div class="complaints-card-body">
+                    {% if recent_updates %}
+                        {% for update in recent_updates %}
+                        <div class="complaints-activity-item">
+                            <div class="complaints-activity-icon complaints-icon-info">
+                                <i class="fas fa-comment"></i>
+                            </div>
+                            <div class="complaints-activity-content">
+                                <div class="complaints-activity-title">{{ update.complaint.title|truncatechars:25 }}</div>
+                                <div class="complaints-activity-meta">
+                                    {{ update.notes|truncatechars:50 }} - {{ update.created_at|timesince }} lalu
+                                </div>
+                            </div>
+                            <span class="complaints-badge complaints-badge-info">
+                                {{ update.updated_by.username }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="complaints-empty">
+                            <i class="fas fa-comment complaints-empty-icon"></i>
+                            <p class="complaints-empty-text">Tidak ada update terbaru</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="complaints-card">
+                <div class="complaints-card-header">
+                    <h5 class="complaints-card-title">
+                        <i class="fas fa-bolt"></i>Aksi Cepat
+                    </h5>
+                </div>
+                <div class="complaints-card-body">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-3">
+                            <a href="{% url 'admin_panel:complaints_list' %}?status=pending" class="complaints-quick-action">
+                                <i class="fas fa-clock complaints-quick-action-icon"></i>
+                                <span class="complaints-quick-action-text">Keluhan Menunggu</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="{% url 'admin_panel:complaints_list' %}?priority=high" class="complaints-quick-action">
+                                <i class="fas fa-exclamation complaints-quick-action-icon"></i>
+                                <span class="complaints-quick-action-text">Prioritas Tinggi</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="{% url 'admin_panel:complaint_categories_list' %}" class="complaints-quick-action">
+                                <i class="fas fa-tags complaints-quick-action-icon"></i>
+                                <span class="complaints-quick-action-text">Kelola Kategori</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <a href="#" class="complaints-quick-action">
+                                <i class="fas fa-chart-bar complaints-quick-action-icon"></i>
+                                <span class="complaints-quick-action-text">Laporan Keluhan</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="complaints-card">
+                <div class="complaints-card-header">
+                    <h5 class="complaints-card-title">
+                        <i class="fas fa-table"></i>Ringkasan Data
+                    </h5>
+                </div>
+                <div class="complaints-card-body">
+                    <div class="complaints-table-wrapper">
+                        <table class="complaints-table">
+                            <thead>
+                                <tr>
+                                    <th>Kategori</th>
+                                    <th>Total</th>
+                                    <th>Pending</th>
+                                    <th>Diproses</th>
+                                    <th>Selesai</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in category_stats %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-tag text-danger"></i>
+                                            <span class="fw-semibold">{{ category.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="complaints-badge complaints-badge-danger">{{ category.total_complaints }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="complaints-badge complaints-badge-warning">{{ category.pending_complaints }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="complaints-badge complaints-badge-info">{{ category.in_progress_complaints }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="complaints-badge complaints-badge-success">{{ category.resolved_complaints }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'admin_panel:complaints_list' %}?category={{ category.id }}"
+                                           class="complaints-btn complaints-btn-outline-danger btn-sm">
+                                            Lihat
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="complaints-empty">
+                                            <i class="fas fa-table complaints-empty-icon"></i>
+                                            <p class="complaints-empty-text">Tidak ada data kategori</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

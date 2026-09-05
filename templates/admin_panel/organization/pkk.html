@@ -1,0 +1,759 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Penggerak PKK{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/organization/organization-list.css' %}">
+<style>
+    /* HILANGKAN horizontal scrollbar yang bikin kedip-kedip */
+    .table-responsive {
+        overflow-x: hidden !important; /* Force hide horizontal scroll */
+        overflow-y: visible;
+    }
+
+    /* Prevent table overflow */
+    .table {
+        width: 100%;
+        table-layout: fixed;
+    }
+    
+    /* HILANGKAN scrollbar horizontal di semua browser */
+    .table-responsive::-webkit-scrollbar-horizontal {
+        display: none !important;
+        height: 0 !important;
+    }
+    
+    .table-responsive {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+    
+    /* Prevent body horizontal scroll */
+    body {
+        overflow-x: hidden !important;
+    }
+    
+    .container-fluid {
+        overflow-x: hidden !important;
+        max-width: 100%;
+    }
+    
+    /* Prevent table container from expanding */
+    .table-container {
+        overflow: visible;
+        max-width: 100%;
+    }
+    
+    /* Ensure table cells don't overflow */
+    .table td, .table th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* Allow text wrapping for name column */
+    .table td:nth-child(3) {
+        white-space: normal;
+        word-break: break-word;
+    }
+    
+    /* Mobile Card Layout */
+    .mobile-cards {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .table-responsive {
+            display: none !important;
+        }
+        
+        .mobile-cards {
+            display: block !important;
+        }
+        
+        .mobile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #e74a3b;
+        }
+        
+        .mobile-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .mobile-card-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .mobile-card-title {
+            flex: 1;
+        }
+        
+        .mobile-card-title h6 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .mobile-card-title small {
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .mobile-card-body {
+            margin-bottom: 12px;
+        }
+        
+        .mobile-card-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fc;
+        }
+        
+        .mobile-card-item:last-child {
+            border-bottom: none;
+        }
+        
+        .mobile-card-label {
+            font-weight: 600;
+            color: #5a6c7d;
+            font-size: 13px;
+        }
+        
+        .mobile-card-value {
+            color: #2c3e50;
+            font-size: 13px;
+            text-align: right;
+        }
+        
+        .mobile-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .mobile-card-actions .btn {
+            flex: 1;
+            font-size: 13px;
+            padding: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Penggerak PKK</h1>
+            <p class="text-muted mb-0">Kelola data penggerak PKK</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <a href="{% url 'admin_panel:organization:admin_pkk_create' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Tambah Penggerak
+            </a>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="filter-compact">
+            <div class="form-group">
+                <label for="search" class="form-label">Cari</label>
+                <input type="text" id="search" class="form-control search-input" placeholder="Nama, NIK, atau jabatan...">
+            </div>
+            <div class="form-group">
+                <label for="jabatan" class="form-label">Jabatan</label>
+                <select id="jabatan" class="form-select">
+                    <option value="">Semua Jabatan</option>
+                    <option value="KETUA">Ketua</option>
+                    <option value="WAKIL_KETUA">Wakil Ketua</option>
+                    <option value="SEKRETARIS">Sekretaris</option>
+                    <option value="BENDAHARA">Bendahara</option>
+                    <option value="SEKSI_1">Seksi 1 - Keagamaan</option>
+                    <option value="SEKSI_2">Seksi 2 - Pendidikan</option>
+                    <option value="SEKSI_3">Seksi 3 - Kesehatan</option>
+                    <option value="SEKSI_4">Seksi 4 - Kesejahteraan</option>
+                    <option value="SEKSI_5">Seksi 5 - Lingkungan</option>
+                    <option value="SEKSI_6">Seksi 6 - Keuangan</option>
+                    <option value="SEKSI_7">Seksi 7 - Hukum</option>
+                    <option value="SEKSI_8">Seksi 8 - Pangan</option>
+                    <option value="SEKSI_9">Seksi 9 - Sandang</option>
+                    <option value="SEKSI_10">Seksi 10 - Perumahan</option>
+                    <option value="ANGGOTA">Anggota</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="status" class="form-label">Status</label>
+                <select id="status" class="form-select">
+                    <option value="aktif">Aktif</option>
+                    <option value="non_aktif">Non Aktif</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header pkk">
+            <div class="header-content">
+                <h5 class="mb-0">Data Penggerak PKK</h5>
+                <div class="header-actions">
+                    <button class="btn btn-light btn-sm" onclick="exportData()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-light btn-sm" onclick="printData()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="5%">No</th>
+                        <th width="10%">Foto</th>
+                        <th width="25%">Nama</th>
+                        <th width="15%">Jabatan</th>
+                        <th width="10%">NIK</th>
+                        <th width="10%">Mulai Tugas</th>
+                        <th width="10%">Status</th>
+                        <th width="15%">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="pkkTableBody">
+                    <tr>
+                        <td colspan="8" class="loading-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <div>Memuat data...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Mobile Cards (Hidden on Desktop) -->
+        <div class="mobile-cards" id="mobileCardsContainer">
+            <!-- Mobile cards will be inserted here by JavaScript -->
+        </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted" id="paginationInfo">
+                Menampilkan <span id="showingFrom">0</span> - <span id="showingTo">0</span> dari <span id="totalItems">0</span> data
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                    <!-- Pagination buttons will be inserted here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus data penggerak PKK <strong id="pkkToDelete"></strong>?</p>
+                <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'js/organization.js' %}"></script>
+<script>
+// PKK Handler
+class PKKHandler {
+    constructor() {
+        this.apiUrl = '/admin-panel/organization/api/pkk/';
+        this.currentPage = 1;
+        this.perPage = 10;
+        this.totalItems = 0;
+        this.totalPages = 0;
+        this.isLoading = false; // Prevent multiple simultaneous requests
+        this.lastSearchTerm = '';
+        this.lastJabatan = '';
+        this.lastStatus = '';
+    }
+
+    // Get jabatan label
+    getJabatanLabel(jabatan) {
+        const labels = {
+            'ketua_tim_penggerak': 'Ketua Tim Penggerak PKK',
+            'wakil_ketua': 'Wakil Ketua',
+            'sekretaris': 'Sekretaris',
+            'bendahara': 'Bendahara',
+            'pokja_1': 'Pokja I (Pancasila)',
+            'pokja_2': 'Pokja II (Gotong Royong)',
+            'pokja_3': 'Pokja III (Pangan, Sandang, Papan)',
+            'pokja_4': 'Pokja IV (Pendidikan)',
+            'anggota': 'Anggota'
+        };
+        return labels[jabatan] || jabatan;
+    }
+
+    // Load PKK data
+    async loadPKK(page = 1) {
+        // Prevent multiple simultaneous requests
+        if (this.isLoading) {
+            console.log('[PKK] ⏸️ Already loading, skipping...');
+            return;
+        }
+        
+        this.isLoading = true;
+        this.currentPage = page;
+        
+        const search = $('#search').val();
+        const jabatan = $('#jabatan').val();
+        const status = $('#status').val();
+
+        // Check if filters changed
+        const filtersChanged = (search !== this.lastSearchTerm || 
+                               jabatan !== this.lastJabatan || 
+                               status !== this.lastStatus);
+        
+        if (filtersChanged && page === 1) {
+            // Reset pagination when filters change
+            console.log('[PKK] 🔄 Filters changed, resetting pagination');
+        }
+        
+        this.lastSearchTerm = search;
+        this.lastJabatan = jabatan;
+        this.lastStatus = status;
+
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (jabatan) params.append('jabatan', jabatan);
+        if (status) params.append('status', status);
+        params.append('page', page);
+        params.append('per_page', this.perPage);
+
+        // Show loading only if table is empty
+        if ($('#pkkTableBody tr').length === 1) {
+            $('#pkkTableBody').html(
+                '<tr>' +
+                    '<td colspan="8" class="loading-state">' +
+                        '<i class="fas fa-spinner fa-spin"></i>' +
+                        '<div>Memuat data...</div>' +
+                    '</td>' +
+                '</tr>'
+            );
+        }
+
+        try {
+            console.log('[PKK] Loading from API:', this.apiUrl + '?' + params.toString());
+            
+            const response = await $.ajax({
+                url: this.apiUrl + '?' + params.toString(),
+                method: 'GET',
+                dataType: 'json',
+                timeout: 10000
+            });
+
+            console.log('[PKK] API Response:', response);
+
+            if (response.success) {
+                this.totalItems = response.total || response.data.length;
+                this.totalPages = Math.ceil(this.totalItems / this.perPage);
+                this.renderPKK(response.data || []);
+                this.renderPagination();
+            } else {
+                this.showError(response.message || 'Gagal memuat data');
+            }
+        } catch (error) {
+            console.error('[PKK] Load Error:', error);
+            
+            let errorMsg = 'Gagal memuat data penggerak PKK';
+            if (error.status === 404) {
+                errorMsg = 'Endpoint API tidak ditemukan (404)';
+            } else if (error.status === 401 || error.status === 403) {
+                errorMsg = 'Anda tidak memiliki akses ('+error.status+')';
+            } else if (error.status === 500) {
+                errorMsg = 'Server error (500): ' + (error.responseJSON?.message || error.statusText);
+            } else if (error.statusText === 'timeout') {
+                errorMsg = 'Request timeout - server terlalu lama merespon';
+            } else if (error.status === 0) {
+                errorMsg = 'Tidak dapat terhubung ke server';
+            }
+            
+            this.showError(errorMsg + '<br><small class="text-muted">Debug: Check console (F12) for details</small>');
+        } finally {
+            // Always reset loading flag
+            this.isLoading = false;
+        }
+    }
+
+    // Render PKK table
+    renderPKK(data) {
+        const tbody = $('#pkkTableBody');
+        
+        if (!data || data.length === 0) {
+            tbody.html(
+                '<tr>' +
+                    '<td colspan="8" class="empty-state">' +
+                        '<i class="fas fa-info-circle"></i>' +
+                        '<h5>Belum ada data</h5>' +
+                        '<p>Data penggerak PKK akan muncul di sini</p>' +
+                    '</td>' +
+                '</tr>'
+            );
+            return;
+        }
+
+        console.log('[PKK] Rendering', data.length, 'items');
+
+        const rows = data.map((pkk, index) => {
+            const rowNumber = ((this.currentPage - 1) * this.perPage) + index + 1;
+            const statusBadge = pkk.status === 'aktif' 
+                ? '<span class="badge badge-success">Aktif</span>'
+                : '<span class="badge badge-secondary">Non Aktif</span>';
+            
+            // Photo with FontAwesome default
+            let photoHtml = '';
+            if (pkk.foto_profil) {
+                photoHtml = '<img src="' + pkk.foto_profil + '" alt="' + pkk.nama + '" class="official-photo" ' +
+                           'style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #e3e6f0;" ' +
+                           'onerror="this.onerror=null; this.style.display=' + "'none'" + '; this.nextElementSibling.style.display=' + "'flex'" + ';">' +
+                           '<div class="avatar-placeholder" style="display: none; width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold; border: 2px solid #e3e6f0;">' +
+                               '<i class="fas fa-user"></i>' +
+                           '</div>';
+            } else {
+                photoHtml = '<div class="avatar-placeholder" style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold; border: 2px solid #e3e6f0;">' +
+                               '<i class="fas fa-user"></i>' +
+                           '</div>';
+            }
+            
+            return '<tr>' +
+                '<td>' + rowNumber + '</td>' +
+                '<td>' + photoHtml + '</td>' +
+                '<td>' +
+                    '<strong>' + pkk.nama + '</strong><br>' +
+                    '<small class="text-muted">NIK: ' + (pkk.nik || '-') + '</small>' +
+                '</td>' +
+                '<td>' + this.getJabatanLabel(pkk.jabatan) + '</td>' +
+                '<td>' + (pkk.nik || '-') + '</td>' +
+                '<td>' + (pkk.tanggal_mulai_tugas || '-') + '</td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td>' +
+                    '<div class="btn-group btn-group-sm">' +
+                        '<a href="/admin-panel/organization/pkk/' + pkk.id + '/detail/" ' +
+                           'class="btn btn-info btn-sm" title="Detail">' +
+                            '<i class="fas fa-eye"></i>' +
+                        '</a>' +
+                        '<a href="/admin-panel/organization/pkk/' + pkk.id + '/edit/" ' +
+                           'class="btn btn-warning btn-sm" title="Edit">' +
+                            '<i class="fas fa-edit"></i>' +
+                        '</a>' +
+                        '<button onclick="confirmDelete(' + pkk.id + ', ' + "'" + pkk.nama.replace(/'/g, "\\'") + "'" + ')" ' +
+                                'class="btn btn-danger btn-sm" title="Hapus">' +
+                            '<i class="fas fa-trash"></i>' +
+                        '</button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+        }).join('');
+
+        tbody.html(rows);
+        
+        // Render mobile cards
+        this.renderMobileCards(data);
+        
+        console.log('[PKK] ✅ Render complete');
+    }
+    
+    // Render mobile cards
+    renderMobileCards(data) {
+        const container = $('#mobileCardsContainer');
+        
+        if (!data || data.length === 0) {
+            container.html(
+                '<div class="text-center py-5">' +
+                    '<i class="fas fa-info-circle fa-3x text-muted mb-3"></i>' +
+                    '<h5 class="text-muted">Belum ada data</h5>' +
+                    '<p class="text-muted">Data penggerak PKK akan muncul di sini</p>' +
+                '</div>'
+            );
+            return;
+        }
+        
+        const cards = data.map((pkk, index) => {
+            const rowNumber = ((this.currentPage - 1) * this.perPage) + index + 1;
+            const statusBadge = pkk.status === 'aktif' 
+                ? '<span class="badge badge-success">Aktif</span>'
+                : '<span class="badge badge-secondary">Non Aktif</span>';
+            
+            let photoHtml = '';
+            if (pkk.foto_profil) {
+                photoHtml = '<img src="' + pkk.foto_profil + '" alt="' + pkk.nama + '" class="mobile-card-avatar" ' +
+                           'onerror="this.onerror=null; this.style.display=' + "'none'" + '; this.nextElementSibling.style.display=' + "'flex'" + ';">' +
+                           '<div class="avatar-placeholder mobile-card-avatar" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">' +
+                               '<i class="fas fa-user"></i>' +
+                           '</div>';
+            } else {
+                photoHtml = '<div class="avatar-placeholder mobile-card-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">' +
+                               '<i class="fas fa-user"></i>' +
+                           '</div>';
+            }
+            
+            return '<div class="mobile-card">' +
+                '<div class="mobile-card-header">' +
+                    photoHtml +
+                    '<div class="mobile-card-title">' +
+                        '<h6>' + pkk.nama + '</h6>' +
+                        '<small>NIK: ' + (pkk.nik || '-') + '</small>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="mobile-card-body">' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">No.</span>' +
+                        '<span class="mobile-card-value">' + rowNumber + '</span>' +
+                    '</div>' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">Jabatan</span>' +
+                        '<span class="mobile-card-value">' + this.getJabatanLabel(pkk.jabatan) + '</span>' +
+                    '</div>' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">Mulai Tugas</span>' +
+                        '<span class="mobile-card-value">' + (pkk.tanggal_mulai_tugas || '-') + '</span>' +
+                    '</div>' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">Status</span>' +
+                        '<span class="mobile-card-value">' + statusBadge + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="mobile-card-actions">' +
+                    '<a href="/admin-panel/organization/pkk/' + pkk.id + '/detail/" class="btn btn-info btn-sm">' +
+                        '<i class="fas fa-eye"></i> Detail' +
+                    '</a>' +
+                    '<a href="/admin-panel/organization/pkk/' + pkk.id + '/edit/" class="btn btn-warning btn-sm">' +
+                        '<i class="fas fa-edit"></i> Edit' +
+                    '</a>' +
+                    '<button onclick="confirmDelete(' + pkk.id + ', ' + "'" + pkk.nama.replace(/'/g, "\\'") + "'" + ')" class="btn btn-danger btn-sm">' +
+                        '<i class="fas fa-trash"></i> Hapus' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+        
+        container.html(cards);
+    }
+
+    // Render pagination
+    renderPagination() {
+        const showingFrom = ((this.currentPage - 1) * this.perPage) + 1;
+        const showingTo = Math.min(this.currentPage * this.perPage, this.totalItems);
+        
+        $('#showingFrom').text(showingFrom);
+        $('#showingTo').text(showingTo);
+        $('#totalItems').text(this.totalItems);
+        
+        // Build pagination buttons
+        let paginationHtml = '';
+        
+        // Previous button
+        if (this.currentPage > 1) {
+            paginationHtml += '<li class="page-item">' +
+                '<a class="page-link" href="#" onclick="handler.loadPKK(' + (this.currentPage - 1) + '); return false;">' +
+                    '<i class="fas fa-chevron-left"></i>' +
+                '</a>' +
+            '</li>';
+        } else {
+            paginationHtml += '<li class="page-item disabled">' +
+                '<span class="page-link"><i class="fas fa-chevron-left"></i></span>' +
+            '</li>';
+        }
+        
+        // Page numbers
+        const maxButtons = 5;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(this.totalPages, startPage + maxButtons - 1);
+        
+        if (endPage - startPage < maxButtons - 1) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+        
+        if (startPage > 1) {
+            paginationHtml += '<li class="page-item">' +
+                '<a class="page-link" href="#" onclick="handler.loadPKK(1); return false;">1</a>' +
+            '</li>';
+            if (startPage > 2) {
+                paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === this.currentPage) {
+                paginationHtml += '<li class="page-item active">' +
+                    '<span class="page-link">' + i + '</span>' +
+                '</li>';
+            } else {
+                paginationHtml += '<li class="page-item">' +
+                    '<a class="page-link" href="#" onclick="handler.loadPKK(' + i + '); return false;">' + i + '</a>' +
+                '</li>';
+            }
+        }
+        
+        if (endPage < this.totalPages) {
+            if (endPage < this.totalPages - 1) {
+                paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            paginationHtml += '<li class="page-item">' +
+                '<a class="page-link" href="#" onclick="handler.loadPKK(' + this.totalPages + '); return false;">' + this.totalPages + '</a>' +
+            '</li>';
+        }
+        
+        // Next button
+        if (this.currentPage < this.totalPages) {
+            paginationHtml += '<li class="page-item">' +
+                '<a class="page-link" href="#" onclick="handler.loadPKK(' + (this.currentPage + 1) + '); return false;">' +
+                    '<i class="fas fa-chevron-right"></i>' +
+                '</a>' +
+            '</li>';
+        } else {
+            paginationHtml += '<li class="page-item disabled">' +
+                '<span class="page-link"><i class="fas fa-chevron-right"></i></span>' +
+            '</li>';
+        }
+        
+        $('#paginationControls').html(paginationHtml);
+    }
+
+    // Show error
+    showError(message) {
+        console.error('[PKK] ❌ Error:', message);
+        $('#pkkTableBody').html(
+            '<tr>' +
+                '<td colspan="8" class="error-state">' +
+                    '<i class="fas fa-exclamation-triangle"></i>' +
+                    '<div class="text-danger">' +
+                        '<strong>ERROR:</strong><br>' +
+                        message +
+                    '</div>' +
+                    '<button class="btn btn-primary btn-sm mt-3" onclick="handler.loadPKK()">' +
+                        '<i class="fas fa-sync-alt"></i> Coba Lagi' +
+                    '</button>' +
+                '</td>' +
+            '</tr>'
+        );
+    }
+}
+
+// Initialize handler
+const handler = new PKKHandler();
+
+// Global functions
+function refreshData() {
+    handler.loadPKK();
+}
+
+function exportData() {
+    alert('Fitur export dalam pengembangan');
+}
+
+function printData() {
+    window.print();
+}
+
+let pkkToDelete = null;
+function confirmDelete(id, name) {
+    pkkToDelete = id;
+    $('#pkkToDelete').text(name);
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// Document ready
+$(document).ready(function() {
+    console.log('[PKK] 🚀 Page Initializing...');
+    
+    // Load initial data
+    handler.loadPKK(1);
+    
+    // Search on input (with better debounce)
+    let searchTimeout = null;
+    let lastSearchValue = '';
+    
+    $('#search').on('input', function() {
+        const currentValue = $(this).val();
+        
+        // Skip if value hasn't changed
+        if (currentValue === lastSearchValue) {
+            return;
+        }
+        
+        lastSearchValue = currentValue;
+        
+        // Clear previous timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        // Set new timeout with longer delay
+        searchTimeout = setTimeout(() => {
+            console.log('[PKK] 🔍 Search triggered:', currentValue);
+            handler.currentPage = 1;
+            handler.loadPKK(1);
+            searchTimeout = null;
+        }, 800); // Increased to 800ms
+    });
+    
+    // Filter on change (with small delay to prevent double trigger)
+    let filterTimeout = null;
+    $('#jabatan, #status').on('change', function() {
+        if (filterTimeout) {
+            clearTimeout(filterTimeout);
+        }
+        
+        filterTimeout = setTimeout(() => {
+            console.log('[PKK] 🎯 Filter changed');
+            handler.currentPage = 1;
+            handler.loadPKK(1);
+            filterTimeout = null;
+        }, 300);
+    });
+    
+    // Delete confirmation
+    $('#confirmDeleteBtn').on('click', function() {
+        if (pkkToDelete) {
+            alert('Fitur hapus dalam pengembangan');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            modal.hide();
+            pkkToDelete = null;
+        }
+    });
+    
+    console.log('[PKK] ✅ Page Initialized!');
+});
+</script>
+{% endblock %}
+

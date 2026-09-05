@@ -1,0 +1,394 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load beneficiary_filters %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/beneficiaries/beneficiaries-form.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="beneficiaries-form-wrapper">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10 col-lg-11">
+
+                <div class="mb-3">
+                    <a href="{% url 'admin_panel:aid_distributions_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar
+                    </a>
+                </div>
+
+                <div class="beneficiaries-form-header">
+                    <div>
+                        <h4>Tambah Distribusi Bantuan</h4>
+                        <p class="text-muted mb-0">Tambah distribusi bantuan baru</p>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-form-card">
+                    <div class="card-body">
+                        <form id="distributionCreateForm">
+                            {% csrf_token %}
+                            <div class="beneficiaries-form-section">
+                                <h6 class="beneficiaries-form-section-title">
+                                    <i class="fas fa-hand-holding-heart"></i>Data Program & Penerima
+                                </h6>
+                                <div class="beneficiaries-form-group">
+                                    <label for="aidSelect" class="beneficiaries-form-label">Program Bantuan <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="aidSelect" required>
+                                        <option value="">Pilih Program Bantuan</option>
+                                        {% for aid in aids %}
+                                        <option value="{{ aid.id }}" data-amount="{{ aid.value_per_beneficiary }}">{{ aid.name }} - {{ aid.value_per_beneficiary|rupiah }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Pilih program bantuan yang akan didistribusikan. Jumlah bantuan akan otomatis terisi sesuai program yang dipilih.
+                                    </small>
+                                </div>
+                                <div class="beneficiaries-form-group">
+                                    <label for="beneficiarySelect" class="beneficiaries-form-label">Penerima Bantuan <span class="text-danger">*</span></label>
+                                    <div class="beneficiaries-input-group mb-3">
+                                        <input type="text" class="form-control" id="beneficiarySearch" placeholder="Cari berdasarkan nama atau NIK...">
+                                        <div class="beneficiaries-input-group-append">
+                                            <button type="button" class="btn btn-outline-primary" id="searchBeneficiaryBtn">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small class="beneficiaries-form-text"><span id="beneficiarySearchStatus"></span></small>
+                                    <select class="form-control mt-2" id="beneficiarySelect" required>
+                                        <option value="">Pilih Penerima</option>
+                                        {% for b in beneficiaries %}
+                                        <option value="{{ b.id }}">{{ b.person.name }} - {{ b.person.nik }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Pilih penerima bantuan yang sudah terdaftar. Gunakan pencarian untuk memudahkan menemukan penerima.
+                                    </small>
+                                    <div class="beneficiaries-selected-card mt-2" id="selectedBeneficiary" style="display: none;">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="fas fa-check-circle text-success"></i> Penerima Terpilih</h6>
+                                            <div class="row align-items-center">
+                                                <div class="col">
+                                                    <h6 class="mb-1" id="beneficiaryName"></h6>
+                                                    <p class="text-muted mb-1">NIK: <span id="beneficiaryNik"></span></p>
+                                                    <p class="text-muted mb-0">Alamat: <span id="beneficiaryAddress"></span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="beneficiaries-form-section">
+                                <h6 class="beneficiaries-form-section-title">
+                                    <i class="fas fa-receipt"></i>Detail Distribusi
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="beneficiaries-form-group">
+                                            <label for="amountReceived" class="beneficiaries-form-label">Jumlah Diterima (Rp)</label>
+                                            <input type="text" class="form-control" id="amountReceived" required inputmode="numeric" placeholder="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="distributionDate" class="form-label">Tanggal Distribusi</label>
+                                            <input type="date" class="form-control" id="distributionDate">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="distributionStatus" class="form-label">Status</label>
+                                            <select class="form-control" id="distributionStatus">
+                                                <option value="pending">Menunggu</option>
+                                                <option value="approved">Disetujui</option>
+                                                <option value="distributed">Sudah Disalurkan</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="receiptNumber" class="form-label">No. Kwitansi</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="receiptNumber" placeholder="Otomatis / isi manual">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-outline-primary" type="button" id="generateReceipt">
+                                                        <i class="fas fa-magic"></i> Generate
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <small class="form-text">Klik Generate untuk mengisi nomor otomatis</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="distributionNotes" class="form-label">Catatan Distribusi</label>
+                                    {{ form.notes }}
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Catatan tambahan tentang proses distribusi, kondisi penerima, atau hal penting lainnya yang perlu dicatat.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="beneficiaries-action-buttons">
+                                <button type="button" class="btn btn-primary" id="saveBtn">
+                                    <i class="fas fa-save me-1"></i>Simpan Data
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+{% csrf_token %}
+
+<script>
+(function(){
+  const amountInput=document.getElementById('amountReceived');
+  const aidSelect=document.getElementById('aidSelect');
+  const dateInput=document.getElementById('distributionDate');
+  const beneficiarySelect=document.getElementById('beneficiarySelect');
+  const beneficiarySearch=document.getElementById('beneficiarySearch');
+  const searchBtn=document.getElementById('searchBeneficiaryBtn');
+  const searchStatus=document.getElementById('beneficiarySearchStatus');
+  const urlParams=new URLSearchParams(window.location.search);
+  const editId=urlParams.get('edit');
+  dateInput.value=new Date().toISOString().split('T')[0];
+  function parseNum(x){
+    const cleaned = String(x||'').replace(/\./g,'').replace(/[^0-9]/g,'');
+
+    const maxValue = 999999999.99;
+    const numValue = parseFloat(cleaned) || 0;
+    return Math.min(numValue, maxValue);
+  }
+  function formatRupiah(x){ 
+    if(!x) return ''; 
+    let s = parseNum(x); 
+    if(!s) return ''; 
+    // Convert to integer if it's a whole number
+    if(s == Math.floor(s)) {
+      return String(Math.floor(s)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    } else {
+      return String(s).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    }
+  }
+  aidSelect.addEventListener('change',function(){
+    const opt=this.options[this.selectedIndex];
+    const amt=opt && opt.getAttribute('data-amount');
+    if(amt){ amountInput.value=formatRupiah(amt); }
+  });
+  amountInput.addEventListener('input',function(){ this.value = formatRupiah(this.value); });
+
+  let searchTimeout;
+  function loadBeneficiaries(q){
+    searchStatus.innerHTML='<i class="fas fa-spinner fa-spin"></i> Memuat penerima bantuan yang sudah terdaftar...';
+    beneficiarySelect.disabled=true;
+
+    fetch('{% url "admin_panel:api_beneficiaries_search" %}?q='+(encodeURIComponent(q||'')))
+      .then(r=>r.json()).then(function(data){
+        const list=data.data||data;
+        beneficiarySelect.innerHTML='';
+        const ph=document.createElement('option'); ph.value=''; ph.textContent='Pilih Penerima Bantuan (yang sudah terdaftar)'; beneficiarySelect.appendChild(ph);
+        if(list && list.length){
+          list.forEach(function(p){
+            const opt=document.createElement('option');
+            opt.value=p.id;
+            opt.textContent=p.name+' - '+p.nik;
+            opt.dataset.name=p.name;
+            opt.dataset.nik=p.nik;
+            opt.dataset.address=p.address||'';
+            beneficiarySelect.appendChild(opt);
+          });
+          searchStatus.innerHTML='<span class="text-success">Ditemukan '+list.length+' penerima bantuan yang sudah terdaftar</span>';
+        } else {
+          const opt=document.createElement('option'); opt.value=''; opt.textContent='Belum ada penerima bantuan yang terdaftar'; beneficiarySelect.appendChild(opt);
+          searchStatus.innerHTML='<span class="text-warning">0 penerima terdaftar - daftarkan dulu di form beneficiaries</span>';
+        }
+      }).catch(function(err){
+        console.error('Search error:', err);
+        searchStatus.innerHTML='<span class="text-danger">Gagal memuat data penerima</span>';
+      })
+      .finally(function(){ beneficiarySelect.disabled=false; });
+  }
+
+  function filterBeneficiaryDropdown(searchTerm) {
+    const options = beneficiarySelect.options;
+    let visibleCount = 0;
+
+    for (let i = 0; i < options.length; i++) {
+      const option = options[i];
+      const text = option.textContent.toLowerCase();
+      const search = searchTerm.toLowerCase();
+
+      if (option.value === '' || text.includes(search)) {
+        option.style.display = 'block';
+        if (option.value !== '') visibleCount++;
+      } else {
+        option.style.display = 'none';
+      }
+    }
+
+    searchStatus.innerHTML = `<span class="text-info">${visibleCount} penerima tersedia</span>`;
+  }
+  if(beneficiarySearch){
+    beneficiarySearch.addEventListener('input',function(){
+      clearTimeout(searchTimeout);
+      const q=beneficiarySearch.value;
+      if(q.length>=1){
+        searchTimeout=setTimeout(function(){ loadBeneficiaries(q); },300);
+      } else {
+        loadBeneficiaries('');
+      }
+
+      filterBeneficiaryDropdown(q);
+    });
+  }
+  if(searchBtn){ searchBtn.addEventListener('click',function(){ loadBeneficiaries(beneficiarySearch.value||''); }); }
+
+  beneficiarySelect.addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const selectedBeneficiary = document.getElementById('selectedBeneficiary');
+
+    if (selectedOption && selectedOption.value) {
+
+      document.getElementById('beneficiaryName').textContent = selectedOption.dataset.name || selectedOption.textContent.split(' - ')[0];
+      document.getElementById('beneficiaryNik').textContent = selectedOption.dataset.nik || selectedOption.textContent.split(' - ')[1] || '';
+      document.getElementById('beneficiaryAddress').textContent = selectedOption.dataset.address || '-';
+      selectedBeneficiary.style.display = 'block';
+    } else {
+      selectedBeneficiary.style.display = 'none';
+    }
+  });
+
+  loadBeneficiaries('');
+  function prefillForm(data){
+    if(!data||!data.success){return;}
+    const d=data.data||{};
+    aidSelect.value=d.aid_id; const evt=new Event('change'); aidSelect.dispatchEvent(evt);
+
+    beneficiarySelect.innerHTML='';
+    const opt=document.createElement('option');
+    opt.value=d.beneficiary_id;
+    opt.textContent=((d.beneficiary_name||'')+(d.beneficiary_nik?' - '+d.beneficiary_nik:''))||('ID '+d.beneficiary_id);
+    beneficiarySelect.appendChild(opt);
+    beneficiarySelect.value=d.beneficiary_id;
+    amountInput.value=d.amount_received||'';
+    dateInput.value=d.distribution_date||'';
+    document.getElementById('distributionStatus').value=d.status||'pending';
+    document.getElementById('receiptNumber').value=d.receipt_number||'';
+    // Notes field is now handled by SummernoteWidget, no need to set value manually
+  }
+  if(editId){
+    fetch('{% url "admin_panel:aid_distribution_update" 0 %}'.replace('0', editId))
+      .then(r=>r.json()).then(prefillForm).catch(function(){});
+  }
+
+  function validateDuplicate(){
+    const aidId=aidSelect.value; const benId=beneficiarySelect.value; if(!aidId||!benId){ return; }
+    const q='?aid_id='+encodeURIComponent(aidId)+'&beneficiary_id='+encodeURIComponent(benId)+(editId?'&exclude_id='+encodeURIComponent(editId):'');
+    fetch('{% url "admin_panel:aid_distribution_check" %}'+q)
+      .then(r=>r.json()).then(function(res){ if(res && res.exists){ showWarning('Penerima ini sudah menerima bantuan pada program tersebut.'); } });
+  }
+  aidSelect.addEventListener('change',validateDuplicate);
+  beneficiarySelect.addEventListener('change',validateDuplicate);
+  document.getElementById('saveBtn').addEventListener('click',function(){
+    const btn=this; const original=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin mr-1"></i>Menyimpan...';
+    const aidIdValue = document.getElementById('aidSelect').value;
+    const beneficiaryIdValue = document.getElementById('beneficiarySelect').value;
+
+    console.log('Aid ID value:', aidIdValue);
+    console.log('Beneficiary ID value:', beneficiaryIdValue);
+
+    if(!aidIdValue || aidIdValue === ''){
+      showWarning('Silakan pilih program bantuan terlebih dahulu');
+      btn.disabled=false; btn.innerHTML=original;
+      return;
+    }
+
+    if(!beneficiaryIdValue || beneficiaryIdValue === ''){
+      showWarning('Silakan pilih penerima bantuan terlebih dahulu');
+      btn.disabled=false; btn.innerHTML=original;
+      return;
+    }
+
+    const amountValue = parseNum(document.getElementById('amountReceived').value);
+    if(amountValue > 999999999.99){
+      showWarning('Jumlah bantuan terlalu besar. Maksimal Rp 999.999.999,99');
+      btn.disabled=false; btn.innerHTML=original;
+      return;
+    }
+    if(amountValue < 0){
+      showWarning('Jumlah bantuan tidak boleh negatif');
+      btn.disabled=false; btn.innerHTML=original;
+      return;
+    }
+
+    const payload={
+      aid_id: aidIdValue,
+      beneficiary_id: beneficiaryIdValue,
+      amount_received: parseNum(document.getElementById('amountReceived').value),
+      distribution_date: document.getElementById('distributionDate').value,
+      status: document.getElementById('distributionStatus').value,
+      receipt_number: document.getElementById('receiptNumber').value,
+      notes: document.getElementById('id_notes').value
+    };
+
+    console.log('Payload being sent:', payload);
+    const q='?receipt_number='+encodeURIComponent(payload.receipt_number)+(editId?'&exclude_id='+encodeURIComponent(editId):'');
+    if(payload.receipt_number){
+      fetch('{% url "admin_panel:aid_distribution_check" %}'+q)
+        .then(r=>r.json()).then(function(res){
+          if(res && res.exists){ showWarning('Nomor kwitansi sudah digunakan. Silakan generate lagi.'); btn.disabled=false; btn.innerHTML=original; }
+          else { submitNow(); }
+        }).catch(function(){ submitNow(); });
+    } else { submitNow(); }
+
+    function submitNow(){
+      const submitUrl = editId ? '{% url "admin_panel:aid_distribution_update" 0 %}'.replace('0', editId) : '{% url "admin_panel:aid_distribution_create" %}';
+      fetch(submitUrl,{ method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value}, body: JSON.stringify(payload) })
+        .then(r=>r.json()).then(function(res){ if(res && res.success){ window.location.href='{% url "admin_panel:aid_distributions_list" %}'; } else { showError(res.message||'Gagal menyimpan'); } })
+        .catch(function(){ showError('Terjadi kesalahan'); })
+        .finally(function(){ btn.disabled=false; btn.innerHTML=original; });
+    }
+  });
+
+  const genBtn=document.getElementById('generateReceipt');
+  function genReceipt(){
+    const d=new Date();
+    const pad=(n)=> String(n).padStart(2,'0');
+    const y=d.getFullYear();
+    const ym=String(y)+pad(d.getMonth()+1)+pad(d.getDate());
+    const hms=pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+    const rnd=Math.random().toString(36).substring(2,5).toUpperCase();
+    return 'KW-'+ym+'-'+hms+'-'+rnd;
+  }
+  if(genBtn){ genBtn.addEventListener('click',function(){ document.getElementById('receiptNumber').value=genReceipt(); }); }
+
+  const receiptInput=document.getElementById('receiptNumber');
+  receiptInput.addEventListener('focus',function(){ if(!this.value){ this.value=genReceipt(); } });
+
+  receiptInput.addEventListener('blur',function(){ const val=this.value.trim(); if(!val){ return; } const q='?receipt_number='+encodeURIComponent(val)+(editId?'&exclude_id='+encodeURIComponent(editId):''); fetch('{% url "admin_panel:aid_distribution_check" %}'+q).then(r=>r.json()).then(function(res){ if(res && res.exists){ showWarning('Nomor kwitansi sudah digunakan. Silakan generate lagi.'); } }); });
+
+  $(document).ready(function() {
+    $('[data-toggle="tooltip"]').tooltip();
+    $('[title]').tooltip({
+        placement: 'top',
+        trigger: 'hover'
+    });
+    
+  });
+})();
+</script>
+{% endblock extra_js %}
+

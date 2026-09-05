@@ -1,0 +1,370 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .status-card {
+        transition: all 0.3s ease;
+    }
+    
+    .status-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-badge {
+        transition: all 0.2s ease;
+    }
+    
+    .status-badge:hover {
+        transform: scale(1.05);
+    }
+    
+    .search-form {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .request-item {
+        transition: all 0.3s ease;
+    }
+    
+    .request-item:hover {
+        background-color: #f8fafc;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Cek Status Dokumen</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Pantau status pengajuan dokumen Anda dengan mudah. Masukkan nomor pengajuan atau NIK untuk melihat status terkini.
+            </p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="search-form p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Cari Status Pengajuan</h2>
+            <form id="statusSearchForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="request_number" class="block text-sm font-medium text-gray-700 mb-2">Nomor Pengajuan</label>
+                        <input type="text" id="request_number" name="request_number" placeholder="Masukkan nomor pengajuan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="nik" class="block text-sm font-medium text-gray-700 mb-2">NIK</label>
+                        <input type="text" id="nik" name="nik" placeholder="Masukkan NIK" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" id="searchBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="searchText">Cari Status</span>
+                        <i id="searchSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search Results -->
+        <div id="searchResults" class="hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Hasil Pencarian</h2>
+                <div id="resultsContent">
+                    <!-- Results will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Requests -->
+        {% if recent_requests %}
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Pengajuan Terbaru</h2>
+            <div class="space-y-4">
+                {% for request in recent_requests %}
+                <div class="request-item p-4 border border-gray-200 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-900">{{ request.subject }}</h3>
+                            <p class="text-sm text-gray-500 mt-1">{{ request.letter_type.name }}</p>
+                            <p class="text-xs text-gray-400 mt-1">
+                                Diajukan: {{ request.created_at|date:"d M Y H:i" }}
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="status-badge px-3 py-1 rounded-full text-xs font-medium 
+                                {% if request.status == 'submitted' %}bg-yellow-100 text-yellow-800
+                                {% elif request.status == 'processing' %}bg-blue-100 text-blue-800
+                                {% elif request.status == 'approved' %}bg-green-100 text-green-800
+                                {% elif request.status == 'rejected' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if request.status == 'submitted' %}Diajukan
+                                {% elif request.status == 'processing' %}Diproses
+                                {% elif request.status == 'approved' %}Disetujui
+                                {% elif request.status == 'rejected' %}Ditolak
+                                {% else %}{{ request.status|title }}{% endif %}
+                            </span>
+                            <button onclick="viewRequestDetails('{{ request.id }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                Lihat Detail
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Help Section -->
+        <div class="bg-blue-50 rounded-lg p-6 mt-8">
+            <h3 class="text-lg font-semibold text-blue-900 mb-2">Butuh Bantuan?</h3>
+            <p class="text-blue-800 mb-4">
+                Jika Anda mengalami kesulitan atau memiliki pertanyaan tentang status pengajuan dokumen, silakan hubungi kami melalui:
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-center">
+                    <i class="fas fa-phone text-blue-600 mr-3"></i>
+                    <span class="text-blue-800">(021) 1234-5678</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-envelope text-blue-600 mr-3"></i>
+                    <span class="text-blue-800">layanan@desapulosarok.id</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-clock text-blue-600 mr-3"></i>
+                    <span class="text-blue-800">Senin - Jumat, 08:00 - 16:00</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-map-marker-alt text-blue-600 mr-3"></i>
+                    <span class="text-blue-800">Kantor Desa Pulosarok</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Request Details Modal -->
+<div id="requestModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Detail Pengajuan</h3>
+                    <button onclick="closeRequestModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="modalContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Search form submission
+document.getElementById('statusSearchForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const searchBtn = document.getElementById('searchBtn');
+    const searchText = document.getElementById('searchText');
+    const searchSpinner = document.getElementById('searchSpinner');
+    const requestNumber = document.getElementById('request_number').value.trim();
+    const nik = document.getElementById('nik').value.trim();
+    
+    if (!requestNumber && !nik) {
+        alert('Masukkan nomor pengajuan atau NIK');
+        return;
+    }
+    
+    // Disable search button
+    searchBtn.disabled = true;
+    searchText.textContent = 'Mencari...';
+    searchSpinner.classList.remove('hidden');
+    
+    try {
+        const params = new URLSearchParams();
+        if (requestNumber) params.append('q', requestNumber);
+        if (nik) params.append('nik', nik);
+        
+        const response = await fetch(`/letters/api/request-status/?${params}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displaySearchResults(data.data);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error searching:', error);
+        alert('Terjadi kesalahan saat mencari. Silakan coba lagi.');
+    } finally {
+        // Re-enable search button
+        searchBtn.disabled = false;
+        searchText.textContent = 'Cari Status';
+        searchSpinner.classList.add('hidden');
+    }
+});
+
+// Display search results
+function displaySearchResults(requests) {
+    const resultsDiv = document.getElementById('searchResults');
+    const contentDiv = document.getElementById('resultsContent');
+    
+    if (requests.length === 0) {
+        contentDiv.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-500">Tidak ada pengajuan yang ditemukan</p>
+            </div>
+        `;
+    } else {
+        let html = '<div class="space-y-4">';
+        requests.forEach(request => {
+            html += `
+                <div class="request-item p-4 border border-gray-200 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h3 class="font-medium text-gray-900">${request.subject}</h3>
+                            <p class="text-sm text-gray-500 mt-1">${request.document_type}</p>
+                            <p class="text-xs text-gray-400 mt-1">
+                                Nomor: ${request.letter_number} | Diajukan: ${new Date(request.submission_date).toLocaleDateString('id-ID')}
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="status-badge px-3 py-1 rounded-full text-xs font-medium ${getStatusClass(request.status)}">
+                                ${getStatusText(request.status)}
+                            </span>
+                            <button onclick="viewRequestDetails('${request.id}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                Lihat Detail
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        contentDiv.innerHTML = html;
+    }
+    
+    resultsDiv.classList.remove('hidden');
+}
+
+// Get status class
+function getStatusClass(status) {
+    switch(status) {
+        case 'submitted': return 'bg-yellow-100 text-yellow-800';
+        case 'in_review': return 'bg-blue-100 text-blue-800';
+        case 'approved': return 'bg-green-100 text-green-800';
+        case 'rejected': return 'bg-red-100 text-red-800';
+        case 'completed': return 'bg-green-100 text-green-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+// Get status text
+function getStatusText(status) {
+    switch(status) {
+        case 'submitted': return 'Diajukan';
+        case 'in_review': return 'Sedang Ditinjau';
+        case 'approved': return 'Disetujui';
+        case 'rejected': return 'Ditolak';
+        case 'completed': return 'Selesai';
+        default: return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+}
+
+// View request details
+async function viewRequestDetails(requestId) {
+    try {
+        const response = await fetch(`/letters/api/request-status/${requestId}/`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayRequestModal(data.data);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error fetching request details:', error);
+        alert('Terjadi kesalahan saat mengambil detail pengajuan.');
+    }
+}
+
+// Display request modal
+function displayRequestModal(request) {
+    const modal = document.getElementById('requestModal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Nomor Pengajuan</label>
+                    <p class="text-gray-900">${request.letter_number}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <span class="status-badge px-3 py-1 rounded-full text-xs font-medium ${getStatusClass(request.status)}">
+                        ${getStatusText(request.status)}
+                    </span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Jenis Dokumen</label>
+                <p class="text-gray-900">${request.document_type}</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Subjek</label>
+                <p class="text-gray-900">${request.subject}</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Tanggal Pengajuan</label>
+                <p class="text-gray-900">${new Date(request.submission_date).toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}</p>
+            </div>
+            ${request.notes ? `
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Catatan</label>
+                    <p class="text-gray-900">${request.notes}</p>
+                </div>
+            ` : ''}
+            ${request.status === 'completed' ? `
+                <div class="pt-4 border-t">
+                    <a href="/letters/print/${request.id}/pdf/" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>Download Dokumen
+                    </a>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+}
+
+// Close request modal
+function closeRequestModal() {
+    document.getElementById('requestModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('requestModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+        closeRequestModal();
+    }
+});
+</script>
+{% endblock %}

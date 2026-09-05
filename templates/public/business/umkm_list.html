@@ -1,0 +1,381 @@
+{% extends 'public/base.html' %}
+{% load static %}
+{% load business_filters %}
+{% load hero_tags %}
+
+{% block title %}UMKM Desa Pulosarok - {{ website_settings.site_name|default:'Desa Pulosarok' }}{% endblock %}
+{% block meta_description %}Daftar UMKM di Desa Pulosarok. Temukan usaha mikro, kecil, dan menengah terbaik dengan produk berkualitas.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    .animation-delay-100 {
+        animation-delay: 0.1s;
+    }
+
+    .animation-delay-200 {
+        animation-delay: 0.2s;
+    }
+
+    /* Grid Pattern (Light Mode Friendly) */
+    /* Removed dark mode grid patterns for light theme */
+
+    /* Cards */
+    .umkm-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb; /* Added explicit border for light mode */
+    }
+
+    /* Hapus gaya mode gelap */
+
+    .umkm-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Hapus gaya mode gelap */
+
+    .filter-chip {
+        transition: all 0.2s ease-in-out;
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+
+    .filter-chip:hover {
+        transform: scale(1.05);
+    }
+
+    .search-input {
+        font-size: 0.875rem;
+    }
+
+    /* FORCE MOBILE 2 GRID - OVERRIDE ALL CSS */
+    .grid {
+        display: grid !important;
+    }
+
+    /* FORCE 2 COLUMNS ON MOBILE */
+    @media (max-width: 768px) {
+        .grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.5rem !important;
+        }
+    }
+
+    /* FORCE 2 COLUMNS ON SMALL MOBILE */
+    @media (max-width: 480px) {
+        .grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.25rem !important;
+        }
+    }
+
+    /* OVERRIDE business-mobile.css */
+    .business-grid-mobile {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* OVERRIDE business-grid.css */
+    .business-col-sm-6 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    /* FORCE CARD SIZE */
+    .umkm-card {
+        width: 100% !important;
+        max-width: none !important;
+        flex: 0 0 50% !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section
+    class="relative overflow-hidden min-h-[35vh] sm:min-h-[45vh] md:min-h-[50vh] flex items-center bg-gradient-to-br from-emerald-600 via-green-700 to-teal-800 {% get_hero_image 'umkm' as hero_image %}">
+    {% if hero_image %}
+    <div class="absolute inset-0 z-0">
+        <img src="{{ hero_image.image.url }}" alt="{{ hero_image.name }}"
+            class="w-full h-full object-cover object-center transform scale-105 transition-transform duration-700 hover:scale-110">
+        <div
+            class="absolute inset-0 bg-gradient-to-br from-emerald-600/85 via-green-700/80 to-teal-800/85 backdrop-blur-[0.5px]">
+        </div>
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.15),transparent_50%)]"></div>
+    </div>
+    {% else %}
+    <div class="absolute inset-0 bg-gradient-to-br from-emerald-600 via-green-700 to-teal-800">
+        <!-- Hapus div dark mode grid -->
+    </div>
+    {% endif %}
+    <!-- Hapus div dark mode grid -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 w-full">
+        <div class="text-center space-y-4 sm:space-y-6">
+            <div
+                class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-lg">
+                <i class="fas fa-shopping-bag text-white/90 mr-2"></i>
+                <span class="text-white/90 text-sm font-medium">UMKM Unggulan</span>
+            </div>
+            <h1
+                class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight animate-fade-in-up">
+                UMKM Desa Pulosarok
+            </h1>
+            <p
+                class="text-base sm:text-lg md:text-xl text-white/90 max-w-3xl mx-auto leading-relaxed animate-fade-in-up animation-delay-100">
+                Temukan usaha mikro, kecil, dan menengah terbaik dengan produk berkualitas
+            </p>
+            <div class="max-w-lg mx-auto mb-4">
+                <form method="GET" class="relative">
+                    <div class="relative">
+                        <input type="text" name="search" value="{{ search_query|default:'' }}"
+                            placeholder="Cari UMKM..."
+                            class="w-full px-3 py-2 pl-10 pr-3 text-gray-900 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <button type="submit"
+                            class="absolute right-1 top-1/2 transform -translate-y-1/2 bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded text-sm">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="bg-gray-50 py-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-wrap gap-2 justify-center">
+            <a href="{% url 'business:umkm_list' %}"
+                class="filter-chip px-3 py-2 bg-white text-gray-700 rounded-full border border-gray-300 hover:bg-primary-50 hover:border-primary-300 transition-all duration-200">
+                <i class="fas fa-building mr-1"></i>Semua
+            </a>
+            <a href="{% url 'business:umkm_list' %}?skala=mikro"
+                class="filter-chip px-3 py-2 bg-white text-gray-700 rounded-full border border-gray-300 hover:bg-primary-50 hover:border-primary-300 transition-all duration-200">
+                <i class="fas fa-home mr-1"></i>Mikro
+            </a>
+            <a href="{% url 'business:umkm_list' %}?skala=kecil"
+                class="filter-chip px-3 py-2 bg-white text-gray-700 rounded-full border border-gray-300 hover:bg-primary-50 hover:border-primary-300 transition-all duration-200">
+                <i class="fas fa-store mr-1"></i>Kecil
+            </a>
+            <a href="{% url 'business:umkm_list' %}?skala=menengah"
+                class="filter-chip px-3 py-2 bg-white text-gray-700 rounded-full border border-gray-300 hover:bg-primary-50 hover:border-primary-300 transition-all duration-200">
+                <i class="fas fa-industry mr-1"></i>Menengah
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="py-6 lg:py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% if umkm_list %}
+        <div class="mb-4">
+            <p class="text-sm text-gray-600 text-center">
+                Menampilkan {{ umkm_list.start_index }}-{{ umkm_list.end_index }} dari {{ umkm_list.paginator.count }} UMKM
+                {% if search_query %} untuk "<span class="font-semibold text-primary-600">{{ search_query }}</span>" {% endif %}
+            </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for umkm in umkm_list %}
+            <div class="umkm-card bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:border-primary-400 hover:shadow-2xl transition-all duration-300">
+                <!-- Header dengan gambar -->
+                {% if umkm.foto_usaha %}
+                <div class="h-32 bg-cover bg-center relative" style="background-image: url('{{ umkm.foto_usaha.url }}');">
+                    <div class="absolute inset-0 bg-black bg-opacity-30"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        {% if umkm.logo_usaha %}
+                        <img src="{{ umkm.logo_usaha.url }}" alt="{{ umkm.nama_usaha }}" class="h-16 w-16 object-contain rounded-full bg-white p-2 shadow-lg">
+                        {% else %}
+                        <div class="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fas fa-building text-2xl text-primary-600"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="h-32 bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center relative">
+                    <div class="absolute inset-0 bg-black bg-opacity-20"></div>
+                    <div class="relative z-10">
+                        {% if umkm.logo_usaha %}
+                        <img src="{{ umkm.logo_usaha.url }}" alt="{{ umkm.nama_usaha }}" class="h-16 w-16 object-contain rounded-full bg-white p-2 shadow-lg">
+                        {% else %}
+                        <div class="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fas fa-building text-2xl text-primary-600"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Content -->
+                <div class="p-4">
+                    <!-- Header dengan nama dan status -->
+                    <div class="flex items-start justify-between mb-3">
+                        <h3 class="text-lg font-bold text-gray-900 line-clamp-2 leading-tight flex-1 pr-2">
+                            {{ umkm.nama_usaha }}
+                        </h3>
+                        <span class="px-3 py-1 {% if umkm.status == 'aktif' %}bg-green-100 text-green-800 border border-green-300{% else %}bg-yellow-100 text-yellow-800 border border-yellow-300{% endif %} text-xs font-bold rounded-full flex-shrink-0">
+                            {{ umkm.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <!-- Info UMKM -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-sm text-gray-700">
+                            <i class="fas fa-user w-4 h-4 mr-3 text-primary-600"></i>
+                            <span class="font-medium">{{ umkm.pemilik }}</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-700">
+                            <i class="fas fa-tag w-4 h-4 mr-3 text-primary-600"></i>
+                            <span class="font-medium">{{ umkm.get_skala_usaha_display }}</span>
+                        </div>
+                        {% if umkm.telepon %}
+                        <div class="flex items-center text-sm text-gray-700">
+                            <i class="fas fa-phone w-4 h-4 mr-3 text-primary-600"></i>
+                            <span class="font-medium">{{ umkm.telepon }}</span>
+                        </div>
+                        {% endif %}
+                        {% if umkm.omzet_bulanan > 0 %}
+                        <div class="flex items-center text-sm text-gray-700">
+                            <i class="fas fa-coins w-4 h-4 mr-3 text-primary-600"></i>
+                            <span class="font-medium">{{ umkm.omzet_bulanan|rupiah_short }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Button Detail -->
+                    <a href="{% url 'business:umkm_detail' umkm.id %}"
+                        class="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center text-sm min-h-[44px] touch-manipulation shadow-lg hover:shadow-xl border-2 border-primary-500 hover:border-primary-600 transform hover:scale-105 hover:-translate-y-1">
+                        <i class="fas fa-eye mr-3 text-base"></i> 
+                        <span>Lihat Detail</span>
+                    </a>
+                    
+                    <!-- Contact Buttons -->
+                    <div class="mt-2 space-y-2">
+                        {% if umkm.whatsapp %}
+                        <a href="https://wa.me/{{ umkm.whatsapp|slice:'1:' }}?text=Halo, saya tertarik dengan {{ umkm.nama_usaha }}"
+                            target="_blank"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center text-sm min-h-[36px] touch-manipulation">
+                            <i class="fab fa-whatsapp mr-2"></i> WhatsApp
+                        </a>
+                        {% elif umkm.telepon %}
+                        <a href="tel:{{ umkm.telepon }}"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center text-sm min-h-[36px] touch-manipulation">
+                            <i class="fas fa-phone mr-2"></i> Telepon
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if umkm_list.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+            <nav class="flex items-center space-x-2">
+                {% if umkm_list.has_previous %}
+                <a href="?page={{ umkm_list.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 text-sm">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+
+                {% for num in umkm_list.paginator.page_range %}
+                {% if umkm_list.number == num %}
+                <span class="px-3 py-2 bg-primary-600 text-white rounded-lg font-medium text-sm">{{ num }}</span>
+                {% elif num > umkm_list.number|add:'-3' and num < umkm_list.number|add:'3' %}
+                <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 text-sm">
+                    {{ num }}
+                </a>
+                {% endif %}
+                {% endfor %}
+
+                {% if umkm_list.has_next %}
+                <a href="?page={{ umkm_list.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                    class="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 text-sm">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <div class="max-w-md mx-auto">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-building text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                    Belum Ada UMKM
+                </h3>
+                <p class="text-gray-600 mb-6 text-sm">
+                    {% if search_query %}
+                    Tidak ditemukan UMKM untuk pencarian "<span class="font-semibold">{{ search_query }}</span>"
+                    {% else %}
+                    Belum ada UMKM yang terdaftar di Desa Pulosarok.
+                    {% endif %}
+                </p>
+                {% if search_query %}
+                <a href="{% url 'business:umkm_list' %}"
+                    class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200 text-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> Lihat Semua UMKM
+                </a>
+                {% else %}
+                <a href="{% url 'business:business_register' %}"
+                    class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200 text-sm">
+                    <i class="fas fa-plus mr-2"></i> Daftarkan UMKM
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="bg-primary-600 text-white py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-xl sm:text-2xl font-bold mb-3">
+            Punya UMKM?
+        </h2>
+        <p class="text-sm text-primary-100 mb-6 max-w-xl mx-auto">
+            Daftarkan UMKM Anda untuk menjangkau lebih banyak pelanggan di Desa Pulosarok.
+        </p>
+        <a href="{% url 'business:business_register' %}"
+            class="inline-flex items-center px-4 py-2 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-200 text-sm">
+            <i class="fas fa-plus mr-2"></i> Daftarkan UMKM Sekarang
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add smooth scrolling for anchor links
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add loading animation to umkm cards
+        const umkmCards = document.querySelectorAll('.umkm-card');
+        umkmCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('animate-fade-in');
+        });
+    });
+</script>
+{% endblock %}

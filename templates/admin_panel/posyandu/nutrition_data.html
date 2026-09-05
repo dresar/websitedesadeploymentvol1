@@ -1,0 +1,572 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Data Gizi{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-apple-alt text-primary mr-2"></i>
+                        Data Gizi
+                    </h2>
+                    <p class="text-muted mb-0">Kelola data status gizi balita dan anak</p>
+                </div>
+                <div>
+                    <a href="{% url 'admin_panel:posyandu:nutrition_data_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus mr-1"></i>
+                        Tambah Data
+                    </a>
+                    <a href="{% url 'admin_panel:dashboard' %}" class="btn btn-outline-secondary ml-2">
+                        <i class="fas fa-arrow-left mr-1"></i>
+                        Kembali
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number" id="totalNutritionData">0</div>
+                <div class="stats-label">Total Data</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="stats-number" id="undernourished">0</div>
+                <div class="stats-label">Kurang Gizi</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="stats-number" id="overweight">0</div>
+                <div class="stats-label">Kelebihan Berat</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="stats-number" id="normalNutrition">0</div>
+                <div class="stats-label">Gizi Normal</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="filter-header">
+            <h5 class="filter-title">
+                <i class="fas fa-filter mr-2"></i>
+                Filter & Pencarian
+            </h5>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cari nama anak...">
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <select class="form-control" id="statusFilter">
+                    <option value="">Semua Status</option>
+                    <option value="normal">Normal</option>
+                    <option value="kurang">Kurang Gizi</option>
+                    <option value="buruk">Gizi Buruk</option>
+                    <option value="lebih">Gizi Lebih</option>
+                    <option value="stunting">Stunting</option>
+                    <option value="wasting">Wasting</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <select class="form-control" id="ageFilter">
+                    <option value="">Semua Usia</option>
+                    <option value="0-12">0-12 bulan</option>
+                    <option value="12-24">12-24 bulan</option>
+                    <option value="24-36">24-36 bulan</option>
+                    <option value="36-60">36-60 bulan</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <select class="form-control" id="posyanduFilter">
+                    <option value="">Semua Posyandu</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-3">
+                <button class="btn btn-outline-danger btn-block" id="clearFilters">
+                    <i class="fas fa-times mr-1"></i>
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <div class="quick-filters">
+            <div class="filter-group">
+                <label class="filter-group-label">Usia:</label>
+                <div class="filter-buttons">
+                    <button class="btn btn-outline-primary active" data-age="all">Semua</button>
+                    <button class="btn btn-outline-primary" data-age="0-12">0-12 bulan</button>
+                    <button class="btn btn-outline-primary" data-age="12-24">12-24 bulan</button>
+                    <button class="btn btn-outline-primary" data-age="24-36">24-36 bulan</button>
+                    <button class="btn btn-outline-primary" data-age="36-60">36-60 bulan</button>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-group-label">Status Gizi:</label>
+                <div class="filter-buttons">
+                    <button class="btn btn-outline-success active" data-status="all">Semua</button>
+                    <button class="btn btn-outline-success" data-status="normal">Normal</button>
+                    <button class="btn btn-outline-warning" data-status="kurang">Kurang Gizi</button>
+                    <button class="btn btn-outline-danger" data-status="buruk">Gizi Buruk</button>
+                    <button class="btn btn-outline-info" data-status="lebih">Gizi Lebih</button>
+                    <button class="btn btn-outline-purple" data-status="stunting">Stunting</button>
+                    <button class="btn btn-outline-pink" data-status="wasting">Wasting</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nutrition-list-container">
+        <div class="table-responsive">
+            <table class="table table-hover nutrition-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Anak</th>
+                        <th>Tanggal Pengukuran</th>
+                        <th>Usia</th>
+                        <th>Berat Badan</th>
+                        <th>Tinggi Badan</th>
+                        <th>BMI</th>
+                        <th>Status Gizi</th>
+                        <th>Posyandu</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="nutritionDataList">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="pagination-wrapper">
+        <nav aria-label="Nutrition data pagination">
+            <ul class="pagination" id="pagination">
+
+            </ul>
+        </nav>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+    let currentPage = 1;
+    let pageSize = 10; // Jumlah data per halaman
+    let currentFilters = {
+        search: '',
+        status: '',
+        age: '',
+        posyandu: ''
+    };
+
+    loadNutritionData();
+    loadPosyanduOptions();
+
+    $('#searchInput').on('input', function() {
+        currentFilters.search = $(this).val();
+        currentPage = 1;
+        loadNutritionData();
+    });
+
+    $('#statusFilter').on('change', function() {
+        currentFilters.status = $(this).val();
+        currentPage = 1;
+        loadNutritionData();
+    });
+
+    $('#ageFilter').on('change', function() {
+        currentFilters.age = $(this).val();
+        currentPage = 1;
+        loadNutritionData();
+    });
+
+    $('#posyanduFilter').on('change', function() {
+        currentFilters.posyandu = $(this).val();
+        currentPage = 1;
+        loadNutritionData();
+    });
+
+    $('.filter-buttons .btn[data-age]').on('click', function() {
+        $('.filter-buttons .btn[data-age]').removeClass('active');
+        $(this).addClass('active');
+        const ageValue = $(this).data('age');
+        currentFilters.age = ageValue === 'all' ? '' : ageValue;
+        $('#ageFilter').val(currentFilters.age);
+        currentPage = 1;
+        loadNutritionData();
+    });
+
+    $('.filter-buttons .btn[data-status]').on('click', function() {
+        $('.filter-buttons .btn[data-status]').removeClass('active');
+        $(this).addClass('active');
+        const statusValue = $(this).data('status');
+        currentFilters.status = statusValue === 'all' ? '' : statusValue;
+        $('#statusFilter').val(currentFilters.status);
+        currentPage = 1;
+        loadNutritionData();
+    });
+
+    $('#clearFilters').on('click', function() {
+        $('#searchInput').val('');
+        $('#statusFilter').val('');
+        $('#ageFilter').val('');
+        $('#posyanduFilter').val('');
+
+        $('.filter-buttons .btn').removeClass('active');
+        $('.filter-buttons .btn[data-age="all"]').addClass('active');
+        $('.filter-buttons .btn[data-status="all"]').addClass('active');
+
+        currentFilters = {
+            search: '',
+            status: '',
+            age: '',
+            posyandu: ''
+        };
+        currentPage = 1;
+        loadNutritionData();
+    });
+
+    function loadNutritionData() {
+        const requestData = {
+            page: currentPage,
+            page_size: pageSize,
+            search: currentFilters.search,
+            status: currentFilters.status,
+            age: currentFilters.age,
+            posyandu: currentFilters.posyandu
+        };
+
+        console.log('Loading nutrition data with filters:', requestData);
+
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_nutrition_data_list" %}',
+            method: 'GET',
+            data: requestData,
+            success: function(response) {
+                console.log('Nutrition data loaded:', response);
+                
+                // Check if response exists and has the expected structure (API uses 'results' not 'data')
+                if (response) {
+                    const nutritionData = response.results || response.data || [];
+                    displayNutritionData(nutritionData);
+                    updatePagination(response.pagination);
+                    updateStatistics(response.statistics);
+                } else {
+                    console.warn('Nutrition data API response is invalid:', response);
+                    displayNutritionData([]);
+                    updateStatistics({});
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading nutrition data:', error);
+                console.error('Response:', xhr.responseText);
+                showAlert('Error loading data', 'error');
+            }
+        });
+    }
+
+    function displayNutritionData(nutritionData) {
+        const container = $('#nutritionDataList');
+
+        // Check if nutritionData is valid and is an array
+        if (!nutritionData || !Array.isArray(nutritionData) || nutritionData.length === 0) {
+            container.html(`
+                <tr>
+                    <td colspan="10" class="text-center py-5">
+                        <div class="empty-state">
+                            <i class="fas fa-apple-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Tidak ada data gizi</h5>
+                            <p class="text-muted">Belum ada data gizi yang tersedia.</p>
+                        </div>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let html = '';
+        nutritionData.forEach(function(data, index) {
+            const statusLabels = {
+                'normal': 'Normal',
+                'kurang': 'Kurang Gizi',
+                'buruk': 'Gizi Buruk',
+                'lebih': 'Gizi Lebih',
+                'stunting': 'Stunting',
+                'wasting': 'Wasting'
+            };
+
+            const statusClasses = {
+                'normal': 'normal',
+                'kurang': 'undernourished',
+                'buruk': 'severely-undernourished',
+                'lebih': 'overweight',
+                'stunting': 'stunting',
+                'wasting': 'wasting'
+            };
+
+            html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-circle me-2">
+                                <i class="fas fa-child"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">${data.child_name}</div>
+                                <small class="text-muted">${data.child_nik || ''}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${data.measurement_date}</td>
+                    <td>${data.age_months} bulan</td>
+                    <td>${data.weight} kg</td>
+                    <td>${data.height} cm</td>
+                    <td>${data.bmi || '-'}</td>
+                    <td>
+                        <span class="nutrition-status ${statusClasses[data.nutrition_status]}">
+                            ${statusLabels[data.nutrition_status]}
+                        </span>
+                    </td>
+                    <td>${data.posyandu_name || '-'}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="/admin-panel/posyandu/nutrition-data/${data.id}/" class="btn btn-sm btn-outline-primary" title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="/admin-panel/posyandu/nutrition-data/${data.id}/edit/" class="btn btn-sm btn-outline-warning" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteNutritionData(${data.id})" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        container.html(html);
+    }
+
+    function getBMICategory(bmi) {
+        if (bmi < 18.5) return 'Kurang berat badan';
+        if (bmi < 25) return 'Normal';
+        if (bmi < 30) return 'Kelebihan berat badan';
+        return 'Obesitas';
+    }
+
+    window.viewNutritionData = function(id) {
+        window.location.href = `/admin-panel/posyandu/nutrition-data/${id}/`;
+    };
+
+    window.deleteNutritionData = function(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus data gizi ini?')) {
+            $.ajax({
+                url: `/admin-panel/posyandu/api/nutrition-data-delete/${id}/`,
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+                },
+                success: function(response) {
+                    showAlert('Data gizi berhasil dihapus', 'success');
+                    loadNutritionData();
+                },
+                error: function(xhr, status, error) {
+                    showAlert('Error deleting nutrition data', 'error');
+                }
+            });
+        }
+    };
+
+    function updateStatistics(stats) {
+        $('#totalNutritionData').text(stats.total || 0);
+        $('#undernourished').text(stats.undernourished || 0);
+        $('#overweight').text(stats.overweight || 0);
+        $('#normalNutrition').text(stats.normal || 0);
+    }
+
+    function loadPosyanduOptions() {
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_location_list" %}',
+            method: 'GET',
+            success: function(response) {
+                let options = '<option value="">Semua Posyandu</option>';
+                
+                // Check if response and data exist (API might use 'results' or 'data')
+                if (response && response.data && Array.isArray(response.data)) {
+                    response.data.forEach(function(location) {
+                        options += `<option value="${location.id}">${location.name}</option>`;
+                    });
+                } else if (response && response.results && Array.isArray(response.results)) {
+                    response.results.forEach(function(location) {
+                        options += `<option value="${location.id}">${location.name}</option>`;
+                    });
+                } else {
+                    console.warn('Location API response is invalid:', response);
+                }
+                
+                $('#posyanduFilter').html(options);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading posyandu options:', error);
+                // Keep default options on error
+                $('#posyanduFilter').html('<option value="">Semua Posyandu</option>');
+            }
+        });
+    }
+
+    function updatePagination(pagination) {
+        const container = $('#pagination');
+
+        if (!pagination || pagination.total_pages <= 1) {
+            container.html('');
+            return;
+        }
+
+        let html = '';
+        const isMobile = window.innerWidth < 768;
+        const isExtraSmall = window.innerWidth < 576;
+        const maxVisiblePages = isExtraSmall ? 2 : (isMobile ? 3 : 5);
+
+        // Previous button
+        html += `
+            <li class="page-item ${!pagination.has_previous ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="goToPage(${pagination.has_previous ? pagination.previous_page_number : pagination.current_page}); return false;">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+        if (isMobile) {
+            // Mobile: Simplified pagination - hanya current page number
+            html += `
+                <li class="page-item active">
+                    <span class="page-link">${pagination.current_page} / ${pagination.total_pages}</span>
+                </li>
+            `;
+        } else {
+            // Desktop: Full pagination
+            let startPage = Math.max(1, pagination.current_page - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(pagination.total_pages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // First page
+            if (startPage > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(1); return false;">1</a></li>`;
+                if (startPage > 2) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            // Visible pages
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === pagination.current_page) {
+                    html += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+                } else {
+                    html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a></li>`;
+                }
+            }
+
+            // Last page
+            if (endPage < pagination.total_pages) {
+                if (endPage < pagination.total_pages - 1) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${pagination.total_pages}); return false;">${pagination.total_pages}</a></li>`;
+            }
+        }
+
+        // Next button
+        if (pagination.has_next) {
+            html += `<li class="page-item">
+                        <a class="page-link" href="#" onclick="goToPage(${pagination.next_page_number}); return false;">
+                            <span class="d-none d-md-inline">Next</span>
+                            <i class="fas fa-chevron-right d-md-none"></i>
+                        </a>
+                    </li>`;
+        } else {
+            html += `<li class="page-item disabled">
+                        <span class="page-link">
+                            <span class="d-none d-md-inline">Next</span>
+                            <i class="fas fa-chevron-right d-md-none"></i>
+                        </span>
+                    </li>`;
+        }
+
+        container.html(html);
+    }
+
+    window.goToPage = function(page) {
+        currentPage = page;
+        loadNutritionData();
+    };
+
+    function showAlert(message, type = 'info') {
+        const alertTypes = {
+            'success': 'alert-success',
+            'error': 'alert-danger',
+            'warning': 'alert-warning',
+            'info': 'alert-info'
+        };
+
+        const alertClass = alertTypes[type] || alertTypes['info'];
+        const icons = {
+            'success': 'fa-check-circle',
+            'error': 'fa-exclamation-circle',
+            'warning': 'fa-exclamation-triangle',
+            'info': 'fa-info-circle'
+        };
+        const icon = icons[type] || icons['info'];
+
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                <i class="fas ${icon} me-2"></i>
+                <strong>${message}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+        // Remove existing alerts
+        $('.alert').remove();
+
+        // Add new alert
+        $('body').append(alertHtml);
+
+        // Auto dismiss after 3 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
+
+});
+</script>
+{% endblock %}

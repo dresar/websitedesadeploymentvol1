@@ -1,0 +1,902 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load role_permissions %}
+
+{% block page_title %}Dashboard Referensi{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/references/dashboard.css' %}">
+<style>
+    /* Card Button Styles */
+    .card-button-container {
+        margin: 2rem 0;
+    }
+    
+    .card-button {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        border-left: 5px solid;
+    }
+    
+    .card-button:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+    
+    .card-button-import {
+        border-left-color: #f093fb;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    
+    .card-button-export {
+        border-left-color: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .card-button-icon {
+        font-size: 3rem;
+        opacity: 0.9;
+        flex-shrink: 0;
+    }
+    
+    .card-button-content {
+        flex: 1;
+    }
+    
+    .card-button-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-button-desc {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+    
+    .card-button-link {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-block;
+        border: 2px solid rgba(255,255,255,0.3);
+    }
+    
+    .card-button-link:hover {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        text-decoration: none;
+        transform: translateX(5px);
+    }
+    
+    @media (max-width: 768px) {
+        .card-button {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+        
+        .card-button-icon {
+            font-size: 2.5rem;
+        }
+        
+        .card-button-title {
+            font-size: 1.3rem;
+        }
+        
+        .card-button-desc {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+<div class="dashboard-header">
+    <div class="header-content">
+        <div class="header-info">
+            <h1 class="dashboard-title">
+                <i class="fas fa-database"></i>
+                Dashboard Referensi Desa
+                    </h1>
+            <p class="dashboard-subtitle">Kelola data referensi desa secara terpusat</p>
+                </div>
+        <div class="header-meta">
+                <div class="d-flex">
+                    {% if user|can_add:"references" %}
+                <a href="{% url 'admin_panel:references_penduduk_list' %}" class="btn btn-light mr-2">
+                        <i class="fas fa-plus mr-1"></i>
+                        Tambah Data
+                    </a>
+                    {% endif %}
+                    {% if user|can_export:"references" %}
+                <a href="{% url 'references:global_import' %}" class="btn btn-light mr-2">
+                        <i class="fas fa-file-import mr-1"></i>
+                        Global Import
+                    </a>
+                <a href="{% url 'references:import_export_dashboard' %}" class="btn btn-light mr-2">
+                        <i class="fas fa-download mr-1"></i>
+                        Export Data
+                    </a>
+                <a href="{% url 'admin_panel:reports_dashboard' %}" class="btn btn-light">
+                        <i class="fas fa-chart-bar mr-1"></i>
+                        Laporan
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="stats-cart-container">
+    <div class="cart-header">
+        <h3 class="cart-title">
+            <i class="fas fa-chart-bar"></i>
+            Statistik Referensi Desa
+        </h3>
+        <div class="cart-subtitle">Data Real-time Penduduk dan Referensi Desa</div>
+                            </div>
+
+    <div class="stats-grid">
+
+        <div class="stat-cart stat-cart-primary">
+            <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalPenduduk">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                <div class="stat-label">Total Penduduk</div>
+                <div class="stat-description">Warga terdaftar di desa</div>
+                </div>
+            <div class="stat-trend">
+                <i class="fas fa-users"></i>
+                <span id="pendudukTrend">0</span>
+            </div>
+        </div>
+
+        <div class="stat-cart stat-cart-success">
+            <div class="stat-icon">
+                <i class="fas fa-home"></i>
+                            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalKeluarga">
+                    <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                <div class="stat-label">Total Keluarga</div>
+                <div class="stat-description">Kepala keluarga terdaftar</div>
+                        </div>
+            <div class="stat-trend">
+                <i class="fas fa-home"></i>
+                <span id="keluargaTrend">0</span>
+                        </div>
+                    </div>
+
+        <div class="stat-cart stat-cart-info">
+            <div class="stat-icon">
+                <i class="fas fa-map-marker-alt"></i>
+                </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalDusun">
+                    <i class="fas fa-spinner fa-spin"></i>
+            </div>
+                <div class="stat-label">Total Dusun</div>
+                <div class="stat-description">Wilayah dusun desa</div>
+        </div>
+            <div class="stat-trend">
+                <i class="fas fa-map-marker-alt"></i>
+                <span id="dusunTrend">0</span>
+                            </div>
+                            </div>
+
+        <div class="stat-cart stat-cart-warning">
+            <div class="stat-icon">
+                <i class="fas fa-road"></i>
+                        </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalLorong">
+                    <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                <div class="stat-label">Total Lorong</div>
+                <div class="stat-description">Jalan-jalan di desa</div>
+                    </div>
+            <div class="stat-trend">
+                <i class="fas fa-road"></i>
+                <span id="lorongTrend">0</span>
+                </div>
+        </div>
+
+        <div class="stat-cart stat-cart-secondary">
+            <div class="stat-icon">
+                <i class="fas fa-users-cog"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalRW">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <div class="stat-label">Total RW</div>
+                <div class="stat-description">Rukun Warga</div>
+            </div>
+            <div class="stat-trend">
+                <i class="fas fa-users-cog"></i>
+                <span id="rwTrend">0</span>
+            </div>
+        </div>
+
+        <div class="stat-cart stat-cart-dark">
+            <div class="stat-icon">
+                <i class="fas fa-home"></i>
+                            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalRT">
+                    <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                <div class="stat-label">Total RT</div>
+                <div class="stat-description">Rukun Tetangga</div>
+                        </div>
+            <div class="stat-trend">
+                <i class="fas fa-home"></i>
+                <span id="rtTrend">0</span>
+                        </div>
+                    </div>
+
+        <div class="stat-cart stat-cart-primary">
+            <div class="stat-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalPelajar">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <div class="stat-label">Total Pelajar</div>
+                <div class="stat-description">Siswa dan mahasiswa</div>
+            </div>
+            <div class="stat-trend">
+                <i class="fas fa-graduation-cap"></i>
+                <span id="pelajarTrend">0</span>
+            </div>
+        </div>
+
+        <div class="stat-cart stat-cart-danger">
+            <div class="stat-icon">
+                <i class="fas fa-wheelchair"></i>
+                </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalDisabilitas">
+                    <i class="fas fa-spinner fa-spin"></i>
+            </div>
+                <div class="stat-label">Data Disabilitas</div>
+                <div class="stat-description">Warga berkebutuhan khusus</div>
+            </div>
+            <div class="stat-trend">
+                <i class="fas fa-wheelchair"></i>
+                <span id="disabilitasTrend">0</span>
+            </div>
+        </div>
+
+        <div class="stat-cart stat-cart-success">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="totalKeluargaModel">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <div class="stat-label">Keluarga Model</div>
+                <div class="stat-description">Data keluarga terpisah</div>
+            </div>
+            <div class="stat-trend">
+                <i class="fas fa-users"></i>
+                <span id="keluargaModelTrend">0</span>
+            </div>
+        </div>
+    </div>
+
+<!-- Card Button untuk Global Import & Export -->
+<div class="card-button-container">
+    <div class="row">
+        <div class="col-lg-6 col-md-6 mb-3">
+            <div class="card-button card-button-import">
+                <div class="card-button-icon">
+                    <i class="fas fa-file-upload"></i>
+                </div>
+                <div class="card-button-content">
+                    <h4 class="card-button-title">Global Import</h4>
+                    <p class="card-button-desc">Import semua jenis data dalam satu file</p>
+                    <a href="{% url 'references:global_import' %}" class="card-button-link">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        Mulai Import
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 col-md-6 mb-3">
+            <div class="card-button card-button-export">
+                <div class="card-button-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <div class="card-button-content">
+                    <h4 class="card-button-title">Export Dashboard</h4>
+                    <p class="card-button-desc">Export data dalam berbagai format</p>
+                    <a href="{% url 'references:import_export_dashboard' %}" class="card-button-link">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        Kelola Export
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="floating-fab-container">
+    <div class="fab-main" id="fabMain">
+        <i class="fas fa-plus"></i>
+                </div>
+
+    <div class="fab-menu" id="fabMenu">
+                        {% if user|can_view:"references" %}
+        <div class="fab-item" data-tooltip="Data Penduduk">
+                            <a href="{% url 'admin_panel:references_penduduk_list' %}">
+                <i class="fas fa-users"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if user|can_view:"references" %}
+        <div class="fab-item" data-tooltip="Data Keluarga">
+                            <a href="{% url 'admin_panel:references_keluarga_list' %}">
+                <i class="fas fa-home"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if user|can_view:"references" %}
+        <div class="fab-item" data-tooltip="Data Dusun">
+                            <a href="{% url 'admin_panel:references_dusun_list' %}">
+                <i class="fas fa-map-marker-alt"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if user|can_view:"references" %}
+        <div class="fab-item" data-tooltip="Data Pelajar">
+                            <a href="{% url 'admin_panel:references_pelajar_list' %}">
+                <i class="fas fa-graduation-cap"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if user|can_view:"references" %}
+        <div class="fab-item" data-tooltip="Data Lorong">
+                            <a href="{% url 'admin_panel:references_lorong_list' %}">
+                <i class="fas fa-road"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if user|can_view:"references" %}
+        <div class="fab-item" data-tooltip="Data RW">
+                            <a href="{% url 'admin_panel:references_rw_list' %}">
+                <i class="fas fa-users-cog"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if user|can_view:"references" %}
+        <div class="fab-item" data-tooltip="Data RT">
+                            <a href="{% url 'admin_panel:references_rt_list' %}">
+                <i class="fas fa-home"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        {% if user|can_view:"references" %}
+        <div class="fab-item" data-tooltip="Data Disabilitas">
+                            <a href="{% url 'admin_panel:references_disabilitas_list' %}">
+                <i class="fas fa-wheelchair"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+<div class="analytics-cart-container">
+    <div class="cart-header">
+        <h3 class="cart-title">
+            <i class="fas fa-info-circle"></i>
+            Ringkasan Data Real-time
+        </h3>
+        <div class="cart-subtitle">Informasi Lengkap Data Referensi Desa</div>
+            </div>
+
+    <div class="analytics-grid">
+
+        <div class="chart-cart">
+            <div class="chart-header">
+                <h4 class="chart-title">
+                    <i class="fas fa-database"></i>
+                    Total Data Referensi
+                </h4>
+                <div class="chart-subtitle">Semua Data yang Tersimpan</div>
+            </div>
+            <div class="chart-body">
+                <div class="data-summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-label">Total Data Aktif</div>
+                        <div class="summary-value" id="totalActiveData">0</div>
+                </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Data Terbaru</div>
+                        <div class="summary-value" id="latestData">-</div>
+            </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Integritas Data</div>
+                        <div class="summary-value" id="dataIntegrity">100%</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Status Sistem</div>
+                        <div class="summary-value status-online">Online</div>
+                    </div>
+                </div>
+        </div>
+    </div>
+
+        <div class="chart-cart">
+            <div class="chart-header">
+                <h4 class="chart-title">
+                    <i class="fas fa-users"></i>
+                    Distribusi Gender
+                </h4>
+                <div class="chart-subtitle">Jumlah Penduduk Berdasarkan Gender</div>
+                    </div>
+            <div class="chart-body">
+                <div class="gender-distribution">
+                    <div class="gender-item">
+                        <div class="gender-icon male">
+                            <i class="fas fa-male"></i>
+                </div>
+                        <div class="gender-info">
+                            <div class="gender-label">Laki-laki</div>
+                            <div class="gender-count" id="totalLakiLaki">0</div>
+                        </div>
+                    </div>
+                    <div class="gender-item">
+                        <div class="gender-icon female">
+                            <i class="fas fa-female"></i>
+                        </div>
+                        <div class="gender-info">
+                            <div class="gender-label">Perempuan</div>
+                            <div class="gender-count" id="totalPerempuan">0</div>
+                        </div>
+                    </div>
+                    </div>
+                            </div>
+                        </div>
+
+        <div class="chart-cart">
+            <div class="chart-header">
+                <h4 class="chart-title">
+                    <i class="fas fa-birthday-cake"></i>
+                    Distribusi Usia
+                </h4>
+                <div class="chart-subtitle">Kategori Usia Penduduk</div>
+                            </div>
+            <div class="chart-body">
+                <div class="age-distribution">
+                    <div class="age-item">
+                        <div class="age-label">Balita (0-5 tahun)</div>
+                        <div class="age-count" id="ageBalita">0</div>
+                        </div>
+                    <div class="age-item">
+                        <div class="age-label">Anak (6-17 tahun)</div>
+                        <div class="age-count" id="ageAnak">0</div>
+                </div>
+                    <div class="age-item">
+                        <div class="age-label">Dewasa (18-59 tahun)</div>
+                        <div class="age-count" id="ageDewasa">0</div>
+                    </div>
+                    <div class="age-item">
+                        <div class="age-label">Lansia (60+ tahun)</div>
+                        <div class="age-count" id="ageLansia">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-cart">
+            <div class="chart-header">
+                <h4 class="chart-title">
+                    <i class="fas fa-graduation-cap"></i>
+                    Tingkat Pendidikan
+                </h4>
+                <div class="chart-subtitle">Distribusi Pendidikan Warga</div>
+            </div>
+            <div class="chart-body">
+                <div class="education-distribution" id="educationStats">
+                    <div class="education-item">
+                        <div class="education-label">Tidak/Belum Sekolah</div>
+                        <div class="education-count">0</div>
+                    </div>
+                    <div class="education-item">
+                        <div class="education-label">SD/Sederajat</div>
+                        <div class="education-count">0</div>
+                </div>
+                    <div class="education-item">
+                        <div class="education-label">SMP/Sederajat</div>
+                        <div class="education-count">0</div>
+                    </div>
+                    <div class="education-item">
+                        <div class="education-label">SMA/Sederajat</div>
+                        <div class="education-count">0</div>
+                    </div>
+                    <div class="education-item">
+                        <div class="education-label">Diploma/S1</div>
+                        <div class="education-count">0</div>
+                    </div>
+                    <div class="education-item">
+                        <div class="education-label">S2/S3</div>
+                        <div class="education-count">0</div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+
+    initializeFAB();
+
+    loadDashboardData();
+
+    setInterval(loadDashboardData, 30000);
+});
+
+function initializeFAB() {
+    const fabMain = document.getElementById('fabMain');
+    const fabMenu = document.getElementById('fabMenu');
+
+    if (fabMain && fabMenu) {
+        fabMain.addEventListener('click', function() {
+            fabMain.classList.toggle('active');
+            fabMenu.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!fabMain.contains(e.target) && !fabMenu.contains(e.target)) {
+                fabMain.classList.remove('active');
+                fabMenu.classList.remove('active');
+            }
+        });
+
+        window.addEventListener('scroll', function() {
+            fabMain.classList.remove('active');
+            fabMenu.classList.remove('active');
+        });
+    }
+}
+
+function loadDashboardData() {
+
+    showLoadingState();
+
+    fetch('{% url "admin_panel:api_references_dashboard_data" %}', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            throw new Error('API request failed');
+        }
+    })
+    .then(dashboardData => {
+        console.log('=== DASHBOARD DATA LOADED ===');
+        console.log('Full response:', dashboardData);
+        console.log('Success:', dashboardData.success);
+        console.log('Age Groups:', dashboardData.age_groups);
+        console.log('Education Stats:', dashboardData.education_stats);
+        console.log('=================================');
+
+        if (!dashboardData.success) {
+            console.error('API returned success=false');
+            throw new Error('API response success is false');
+        }
+
+        updateDashboardCards(dashboardData);
+        updateDetailedStats(dashboardData);
+    })
+    .catch(error => {
+        console.error('Error loading dashboard data:', error);
+        showErrorState();
+        useSampleData();
+    });
+}
+
+function useSampleData() {
+
+    const sampleData = {
+        success: true,
+        total_penduduk: 0,
+        total_keluarga: 0,
+        total_dusun: 0,
+        total_pelajar: 0,
+        total_lorong: 0,
+        total_disabilitas: 0,
+        total_rw: 0,
+        total_rt: 0,
+        total_families: 0,
+        total_laki_laki: 0,
+        total_perempuan: 0,
+        age_groups: {
+            balita: 0,
+            anak: 0,
+            dewasa: 0,
+            lansia: 0
+        },
+        education_stats: [],
+        last_update: new Date().toISOString()
+    };
+
+    updateDashboardCards(sampleData);
+    updateDetailedStats(sampleData);
+}
+
+function showLoadingState() {
+
+    $('.stat-cart').addClass('loading');
+
+    $('#totalPenduduk, #totalKeluarga, #totalDusun, #totalPelajar, #totalLorong, #totalDisabilitas, #totalRW, #totalRT, #totalKeluargaModel').html('<i class="fas fa-spinner fa-spin"></i>');
+
+    console.log('Loading state activated');
+}
+
+function showErrorState() {
+
+    $('.stat-cart').removeClass('loading').addClass('error');
+
+    $('#totalPenduduk, #totalKeluarga, #totalDusun, #totalPelajar, #totalLorong, #totalDisabilitas, #totalRW, #totalRT, #totalKeluargaModel').html('<i class="fas fa-exclamation-triangle text-danger"></i>');
+
+    console.log('Error state activated');
+}
+
+function updateDashboardCards(data) {
+    if (data && data.success) {
+        console.log('Updating dashboard cards with data:', data);
+
+        $('.stat-cart').removeClass('loading error');
+
+        $('#totalPenduduk').text(formatNumber(data.total_penduduk || 0));
+        $('#totalKeluarga').text(formatNumber(data.total_keluarga || 0));
+        $('#totalDusun').text(formatNumber(data.total_dusun || 0));
+        $('#totalPelajar').text(formatNumber(data.total_pelajar || 0));
+        $('#totalLorong').text(formatNumber(data.total_lorong || 0));
+        $('#totalDisabilitas').text(formatNumber(data.total_disabilitas || 0));
+        $('#totalRW').text(formatNumber(data.total_rw || 0));
+        $('#totalRT').text(formatNumber(data.total_rt || 0));
+        $('#totalKeluargaModel').text(formatNumber(data.total_families || 0));
+
+        $('#pendudukTrend').text(formatNumber(data.total_penduduk || 0));
+        $('#keluargaTrend').text(formatNumber(data.total_keluarga || 0));
+        $('#dusunTrend').text(formatNumber(data.total_dusun || 0));
+        $('#lorongTrend').text(formatNumber(data.total_lorong || 0));
+        $('#rwTrend').text(formatNumber(data.total_rw || 0));
+        $('#rtTrend').text(formatNumber(data.total_rt || 0));
+        $('#pelajarTrend').text(formatNumber(data.total_pelajar || 0));
+        $('#disabilitasTrend').text(formatNumber(data.total_disabilitas || 0));
+        $('#keluargaModelTrend').text(formatNumber(data.total_families || 0));
+
+        $('.stat-cart').addClass('animate__animated animate__fadeInUp');
+
+        console.log('Dashboard cards updated successfully');
+    } else {
+        console.error('Invalid data received:', data);
+        showErrorState();
+    }
+}
+
+function updateDetailedStats(data) {
+    console.log('=== UPDATE DETAILED STATS ===');
+    console.log('Data received:', data);
+
+    if (!data) {
+        console.error('No data received!');
+        return;
+    }
+
+    if (!data.success) {
+        console.error('Data success is false!');
+        return;
+    }
+
+    try {
+
+        const totalLakiLaki = data.total_laki_laki || 0;
+        const totalPerempuan = data.total_perempuan || 0;
+        console.log('→ Gender data - Laki-laki:', totalLakiLaki, 'Perempuan:', totalPerempuan);
+        $('#totalLakiLaki').text(formatNumber(totalLakiLaki));
+        $('#totalPerempuan').text(formatNumber(totalPerempuan));
+
+        const ageGroups = data.age_groups || data.age_distribution || {};
+        console.log('Age groups data:', ageGroups);
+        console.log('Age data keys:', Object.keys(ageGroups));
+
+        const balita = ageGroups.balita || ageGroups.Balita || ageGroups['0-5'] || 0;
+        const anak = ageGroups.anak || ageGroups.Anak || ageGroups['6-17'] || 0;
+        const dewasa = ageGroups.dewasa || ageGroups.Dewasa || ageGroups['18-59'] || 0;
+        const lansia = ageGroups.lansia || ageGroups.Lansia || ageGroups['60+'] || ageGroups['60'] || 0;
+
+        console.log('Parsed age data:', { balita, anak, dewasa, lansia });
+
+        $('#ageBalita').text(formatNumber(balita));
+        $('#ageAnak').text(formatNumber(anak));
+        $('#ageDewasa').text(formatNumber(dewasa));
+        $('#ageLansia').text(formatNumber(lansia));
+
+        const totalAge = balita + anak + dewasa + lansia;
+        if (totalAge === 0) {
+            console.warn('All age group data is 0 - data tanggal lahir mungkin tidak ada di database');
+        }
+
+        console.log('→ Education stats from API:', data.education_stats);
+        console.log('→ Education stats type:', typeof data.education_stats);
+        console.log('→ Education stats is array:', Array.isArray(data.education_stats));
+
+        if (data.education_stats && Array.isArray(data.education_stats)) {
+            console.log('→ Education stats length:', data.education_stats.length);
+            console.log('→ Education stats items:', data.education_stats);
+
+            const educationItems = $('.education-item');
+            console.log('→ Found', educationItems.length, 'education items in HTML');
+
+            const labelMapping = {
+                'Tidak/Belum Sekolah': ['TIDAK_BELUM_SEKOLAH', 'Tidak/Belum Sekolah', 'TIDAK', 'BELUM'],
+                'SD/Sederajat': ['TAMAT_SD', 'BELUM_TAMAT_SD', 'SD', 'Tamat SD'],
+                'SMP/Sederajat': ['SLTP', 'SMP', 'Sederajat'],
+                'SMA/Sederajat': ['SLTA', 'SMA', 'Sederajat'],
+                'Diploma/S1': ['D1', 'D2', 'D3', 'D4_S1', 'D4', 'S1', 'Diploma'],
+                'S2/S3': ['S2', 'S3', 'Magister', 'Doktor']
+            };
+
+            educationItems.each(function(index) {
+                const $item = $(this);
+                const label = $item.find('.education-label').text().trim();
+                console.log(`→ Processing education label: "${label}"`);
+
+                const possibleKeys = labelMapping[label] || [label];
+                console.log(`  → Possible keys:`, possibleKeys);
+
+                let totalCount = 0;
+                possibleKeys.forEach(key => {
+                    const matchingStats = data.education_stats.filter(stat => {
+                        const statEdu = (stat.education || '').toUpperCase();
+                        const keyUpper = key.toUpperCase();
+                        return statEdu.includes(keyUpper) || keyUpper.includes(statEdu);
+                    });
+
+                    matchingStats.forEach(stat => {
+                        totalCount += stat.count || stat.total || 0;
+                    });
+                });
+
+                console.log(`  → Total count for "${label}": ${totalCount}`);
+                $item.find('.education-count').text(formatNumber(totalCount));
+            });
+
+            console.log('→ Education stats updated successfully');
+        } else {
+            console.warn('→ No education stats available or not an array');
+            $('.education-count').text('0');
+        }
+
+        const totalActive = (data.total_penduduk || 0) + (data.total_keluarga || 0) +
+                           (data.total_dusun || 0) + (data.total_lorong || 0) +
+                           (data.total_rw || 0) + (data.total_rt || 0) +
+                           (data.total_pelajar || 0) + (data.total_disabilitas || 0) +
+                           (data.total_families || 0);
+        $('#totalActiveData').text(formatNumber(totalActive));
+
+        if (data.last_update) {
+            $('#latestData').text(formatDateTime(data.last_update));
+        } else {
+            $('#latestData').text('Baru saja');
+        }
+
+        console.log('=== DETAILED STATS UPDATED SUCCESSFULLY ===');
+    } catch (error) {
+        console.error('=== ERROR IN UPDATE DETAILED STATS ===');
+        console.error('Error:', error);
+        console.error('Stack:', error.stack);
+        console.error('Data:', data);
+    }
+}
+
+function formatNumber(num) {
+    return new Intl.NumberFormat('id-ID').format(num);
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Baru saja';
+    if (diffMins < 60) return `${diffMins} menit lalu`;
+    if (diffHours < 24) return `${diffHours} jam lalu`;
+    if (diffDays < 7) return `${diffDays} hari lalu`;
+
+    return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+window.testReferencesDashboardAPI = function() {
+    console.log('=== TESTING REFERENCES DASHBOARD API ===');
+    fetch('{% url "admin_panel:api_references_dashboard_data" %}', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response OK:', response.ok);
+        return response.json();
+    })
+    .then(data => {
+        console.log('=== API TEST RESULTS ===');
+        console.log('Success:', data.success);
+        console.log('Total Penduduk:', data.total_penduduk);
+        console.log('Age Groups:', data.age_groups);
+        console.log('Education Stats:', data.education_stats);
+        console.log('Full Data:', data);
+        console.log('======================');
+        return data;
+    })
+    .catch(error => {
+        console.error('=== API TEST ERROR ===');
+        console.error(error);
+    });
+};
+
+console.log('💡 Test API with: testReferencesDashboardAPI()');
+</script>
+{% endblock %}

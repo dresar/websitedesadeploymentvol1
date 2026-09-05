@@ -1,0 +1,485 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/beneficiaries/beneficiaries.css' %}">
+<style>
+.verification-status {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+.status-pending { background-color: #fff3cd; color: #856404; }
+.status-verified { background-color: #d1edff; color: #0c5460; }
+.status-rejected { background-color: #f8d7da; color: #721c24; }
+.status-need-update { background-color: #ffeaa7; color: #6c5ce7; }
+
+.verification-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.verification-details {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.filter-section {
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+</style>
+{% endblock extra_css %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="beneficiaries-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <h4 class="mb-1">{{ title }}</h4>
+                    <p class="text-muted mb-0">Kelola verifikasi penerima bantuan</p>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-number text-warning">{{ pending_count|default:0 }}</div>
+                        <div class="stat-label">Menunggu Verifikasi</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number text-success">{{ verified_count|default:0 }}</div>
+                        <div class="stat-label">Terverifikasi</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number text-danger">{{ rejected_count|default:0 }}</div>
+                        <div class="stat-label">Ditolak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number text-info">{{ total_count|default:0 }}</div>
+                        <div class="stat-label">Total Verifikasi</div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status Verifikasi</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">Semua Status</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Menunggu</option>
+                                <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>Terverifikasi</option>
+                                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Ditolak</option>
+                                <option value="need_update" {% if status_filter == 'need_update' %}selected{% endif %}>Perlu Update</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Cari Penerima</label>
+                            <input type="text" name="search" id="search" class="form-control" 
+                                   placeholder="Nama atau NIK penerima..." value="{{ search|default:'' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary d-block w-100">
+                                <i class="fas fa-search me-1"></i> Filter
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <a href="{% url 'admin_panel:beneficiaries_verifications' %}" class="btn btn-outline-secondary d-block w-100">
+                                <i class="fas fa-times me-1"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="beneficiaries-table">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-check-circle me-2"></i>Daftar Verifikasi
+                        </h6>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-success" onclick="bulkApprove()">
+                                <i class="fas fa-check me-1"></i> Approve Selected
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" onclick="bulkReject()">
+                                <i class="fas fa-times me-1"></i> Reject Selected
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                    </th>
+                                    <th>ID</th>
+                                    <th>Penerima</th>
+                                    <th>Kategori</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Verifikasi</th>
+                                    <th>Verifikator</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for verification in verifications %}
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="verification-checkbox" value="{{ verification.id }}">
+                                    </td>
+                                    <td>{{ verification.id }}</td>
+                                    <td>
+                                        <div>
+                                            <strong>{{ verification.beneficiary.person.name }}</strong>
+                                            <div class="verification-details">{{ verification.beneficiary.person.nik }}</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ verification.beneficiary.category.name }}</td>
+                                    <td>
+                                        <span class="verification-status status-{{ verification.verification_status }}">
+                                            {{ verification.get_verification_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ verification.verification_date|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {% if verification.verifier %}
+                                            {{ verification.verifier.get_full_name|default:verification.verifier.username }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="verification-actions">
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="viewVerification({{ verification.id }})" 
+                                                    title="Detail">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if verification.verification_status == 'pending' %}
+                                            <button class="btn btn-sm btn-outline-success" 
+                                                    onclick="approveVerification({{ verification.id }})" 
+                                                    title="Approve">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="rejectVerification({{ verification.id }})" 
+                                                    title="Reject">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button class="btn btn-sm btn-outline-warning" 
+                                                    onclick="editVerification({{ verification.id }})" 
+                                                    title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-5">
+                                        <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Belum ada data verifikasi</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if verifications.has_other_pages %}
+                    <div class="card-footer">
+                        <nav aria-label="Verification pagination">
+                            <ul class="pagination pagination-sm justify-content-center mb-0">
+                                {% if verifications.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ verifications.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Previous</a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in verifications.paginator.page_range %}
+                                    {% if verifications.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                    {% elif num > verifications.number|add:'-3' and num < verifications.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if verifications.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ verifications.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Detail Modal -->
+<div class="modal fade" id="verificationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Verifikasi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="verificationModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Action Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalTitle">Aksi Verifikasi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="verificationActionForm">
+                    <input type="hidden" id="verificationId" name="verification_id">
+                    <input type="hidden" id="actionType" name="action_type">
+                    
+                    <div class="mb-3">
+                        <label for="verificationNotes" class="form-label">Catatan Verifikasi</label>
+                        <textarea class="form-control" id="verificationNotes" name="notes" rows="4" 
+                                  placeholder="Masukkan catatan verifikasi..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="documentsChecked" class="form-label">Dokumen yang Diperiksa</label>
+                        <textarea class="form-control" id="documentsChecked" name="documents_checked" rows="3" 
+                                  placeholder="Daftar dokumen yang telah diperiksa..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="fieldVisit" name="field_visit">
+                        <label class="form-check-label" for="fieldVisit">
+                            Kunjungan Lapangan Dilakukan
+                        </label>
+                    </div>
+                    
+                    <div class="mb-3" id="fieldVisitNotesDiv" style="display: none;">
+                        <label for="fieldVisitNotes" class="form-label">Catatan Kunjungan Lapangan</label>
+                        <textarea class="form-control" id="fieldVisitNotes" name="field_visit_notes" rows="3" 
+                                  placeholder="Catatan hasil kunjungan lapangan..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="submitVerificationAction()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+let currentVerificationId = null;
+
+// Toggle select all checkboxes
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.verification-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+}
+
+// View verification details
+function viewVerification(id) {
+    fetch(`/admin-panel/beneficiaries/verifications/${id}/detail/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('verificationModalBody').innerHTML = data.html;
+                new bootstrap.Modal(document.getElementById('verificationModal')).show();
+            } else {
+                showError(data.message || 'Gagal memuat detail verifikasi');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Terjadi kesalahan saat memuat data');
+        });
+}
+
+// Approve verification
+function approveVerification(id) {
+    currentVerificationId = id;
+    document.getElementById('verificationId').value = id;
+    document.getElementById('actionType').value = 'approve';
+    document.getElementById('actionModalTitle').textContent = 'Approve Verifikasi';
+    new bootstrap.Modal(document.getElementById('actionModal')).show();
+}
+
+// Reject verification
+function rejectVerification(id) {
+    currentVerificationId = id;
+    document.getElementById('verificationId').value = id;
+    document.getElementById('actionType').value = 'reject';
+    document.getElementById('actionModalTitle').textContent = 'Reject Verifikasi';
+    new bootstrap.Modal(document.getElementById('actionModal')).show();
+}
+
+// Edit verification
+function editVerification(id) {
+    currentVerificationId = id;
+    document.getElementById('verificationId').value = id;
+    document.getElementById('actionType').value = 'edit';
+    document.getElementById('actionModalTitle').textContent = 'Edit Verifikasi';
+    new bootstrap.Modal(document.getElementById('actionModal')).show();
+}
+
+// Submit verification action
+function submitVerificationAction() {
+    const formData = new FormData(document.getElementById('verificationActionForm'));
+    const actionType = formData.get('action_type');
+    
+    fetch(`/admin-panel/beneficiaries/verifications/${currentVerificationId}/update/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: actionType,
+            notes: formData.get('notes'),
+            documents_checked: formData.get('documents_checked'),
+            field_visit_conducted: formData.get('field_visit') === 'on',
+            field_visit_notes: formData.get('field_visit_notes')
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            location.reload();
+        } else {
+            showError(data.message || 'Gagal menyimpan verifikasi');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Terjadi kesalahan saat menyimpan data');
+    });
+}
+
+// Bulk approve
+function bulkApprove() {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+        showWarning('Pilih verifikasi yang akan di-approve');
+        return;
+    }
+    
+    if (confirm(`Apakah Anda yakin ingin approve ${selectedIds.length} verifikasi?`)) {
+        bulkAction('approve', selectedIds);
+    }
+}
+
+// Bulk reject
+function bulkReject() {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+        showWarning('Pilih verifikasi yang akan di-reject');
+        return;
+    }
+    
+    if (confirm(`Apakah Anda yakin ingin reject ${selectedIds.length} verifikasi?`)) {
+        bulkAction('reject', selectedIds);
+    }
+}
+
+// Get selected verification IDs
+function getSelectedIds() {
+    const checkboxes = document.querySelectorAll('.verification-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Bulk action
+function bulkAction(action, ids) {
+    fetch('/admin-panel/beneficiaries/verifications/bulk-action/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: action,
+            ids: ids
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess(data.message);
+            location.reload();
+        } else {
+            showError(data.message || 'Gagal melakukan aksi bulk');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Terjadi kesalahan saat melakukan aksi bulk');
+    });
+}
+
+// Show/hide field visit notes
+document.getElementById('fieldVisit').addEventListener('change', function() {
+    const notesDiv = document.getElementById('fieldVisitNotesDiv');
+    notesDiv.style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock extra_js %}

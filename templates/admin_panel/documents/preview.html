@@ -1,0 +1,457 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Preview Dokumen - {{ document.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-mobile.css' %}">
+<style>
+
+.pdf-preview-container {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.pdf-header {
+    background: linear-gradient(135deg, #4A90E2 0%, #6BA3F0 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pdf-controls {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.pdf-viewer-wrapper {
+    background: #525659;
+    padding: 2rem;
+    min-height: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow: auto;
+}
+
+#pdf-canvas {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background: white;
+    max-width: 100%;
+    height: auto;
+}
+
+.page-info {
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.zoom-controls button,
+.nav-controls button {
+    min-width: 40px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.loading-overlay .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+.error-message {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 2rem;
+}
+
+@media (max-width: 768px) {
+    .pdf-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pdf-controls {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .pdf-viewer-wrapper {
+        padding: 1rem;
+        min-height: 400px;
+    }
+
+    .zoom-controls,
+    .nav-controls {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .zoom-controls button,
+    .nav-controls button {
+        min-width: 35px;
+        height: 35px;
+        font-size: 0.875rem;
+    }
+
+    .page-info {
+        font-size: 0.875rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+
+@media print {
+    .pdf-header,
+    .pdf-controls,
+    .sidebar,
+    .topbar {
+        display: none !important;
+    }
+
+    .pdf-viewer-wrapper {
+        background: white;
+        padding: 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="mb-3">
+        <a href="{% url 'admin_panel:document_detail' document.pk %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Kembali ke Detail
+        </a>
+    </div>
+
+    <div class="pdf-preview-container">
+
+        <div class="pdf-header">
+            <div>
+                <h4 class="mb-1">
+                    <i class="fas fa-file-pdf me-2"></i>
+                    {{ document.title }}
+                </h4>
+                <p class="mb-0 opacity-75">
+                    {% if document.document_number %}{{ document.document_number }} • {% endif %}
+                    {{ document.category.name }} • {{ document.document_year }}
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                {% if document.file %}
+                    <a href="{{ document.file.url }}" target="_blank" class="btn btn-light">
+                        <i class="fas fa-external-link-alt me-1"></i> Buka Tab Baru
+                    </a>
+                    <a href="{{ document.file.url }}" download class="btn btn-success">
+                        <i class="fas fa-download me-1"></i> Download
+                    </a>
+                {% else %}
+                    <span class="text-muted">
+                        <i class="fas fa-exclamation-triangle me-1"></i> File tidak tersedia
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="pdf-controls">
+
+            <div class="nav-controls btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" id="prev-page" title="Halaman Sebelumnya">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="next-page" title="Halaman Selanjutnya">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <div class="page-info">
+                <span>Halaman: </span>
+                <input type="number" id="page-num-input" class="border-0 text-center" style="width: 50px; background: transparent;" value="1" min="1">
+                <span> / <span id="page-count">-</span></span>
+            </div>
+
+            <div class="zoom-controls btn-group" role="group">
+                <button type="button" class="btn btn-outline-secondary" id="zoom-out" title="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="zoom-reset" title="Reset Zoom">
+                    <span id="zoom-level">100%</span>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="zoom-in" title="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+            </div>
+
+            <button type="button" class="btn btn-outline-secondary" id="rotate" title="Putar 90°">
+                <i class="fas fa-redo"></i>
+            </button>
+
+            <button type="button" class="btn btn-outline-secondary" id="fullscreen" title="Full Screen">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+
+        <div class="pdf-viewer-wrapper position-relative" id="pdf-viewer-wrapper">
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="text-center">
+                    <div class="spinner-border mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div>Memuat dokumen...</div>
+                </div>
+            </div>
+            <canvas id="pdf-canvas"></canvas>
+        </div>
+
+        <div class="error-message d-none" id="error-message">
+            <strong>Error:</strong> <span id="error-text"></span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let pdfDoc = null;
+let pageNum = 1;
+let pageRendering = false;
+let pageNumPending = null;
+let scale = 1.2;
+let rotation = 0;
+
+const canvas = document.getElementById('pdf-canvas');
+const ctx = canvas.getContext('2d');
+const loadingOverlay = document.getElementById('loading-overlay');
+const errorMessage = document.getElementById('error-message');
+const errorText = document.getElementById('error-text');
+
+const pdfUrl = '{% if document.file %}{{ document.file.url }}{% else %}null{% endif %}';
+
+function renderPage(num) {
+    pageRendering = true;
+
+    pdfDoc.getPage(num).then(function(page) {
+        const viewport = page.getViewport({ scale: scale, rotation: rotation });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+        };
+
+        const renderTask = page.render(renderContext);
+
+        renderTask.promise.then(function() {
+            pageRendering = false;
+            if (pageNumPending !== null) {
+
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+            loadingOverlay.classList.add('d-none');
+        });
+    }).catch(function(error) {
+        console.error('Error rendering page:', error);
+        showError('Gagal merender halaman: ' + error.message);
+    });
+
+    document.getElementById('page-num-input').value = num;
+}
+
+function queueRenderPage(num) {
+    if (pageRendering) {
+        pageNumPending = num;
+    } else {
+        renderPage(num);
+    }
+}
+
+function onPrevPage() {
+    if (pageNum <= 1) {
+        return;
+    }
+    pageNum--;
+    queueRenderPage(pageNum);
+}
+document.getElementById('prev-page').addEventListener('click', onPrevPage);
+
+function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) {
+        return;
+    }
+    pageNum++;
+    queueRenderPage(pageNum);
+}
+document.getElementById('next-page').addEventListener('click', onNextPage);
+
+document.getElementById('page-num-input').addEventListener('change', function() {
+    let num = parseInt(this.value);
+    if (num >= 1 && num <= pdfDoc.numPages) {
+        pageNum = num;
+        queueRenderPage(pageNum);
+    } else {
+        this.value = pageNum;
+    }
+});
+
+document.getElementById('zoom-in').addEventListener('click', function() {
+    if (scale < 3) {
+        scale += 0.2;
+        updateZoomLevel();
+        queueRenderPage(pageNum);
+    }
+});
+
+document.getElementById('zoom-out').addEventListener('click', function() {
+    if (scale > 0.5) {
+        scale -= 0.2;
+        updateZoomLevel();
+        queueRenderPage(pageNum);
+    }
+});
+
+document.getElementById('zoom-reset').addEventListener('click', function() {
+    scale = 1.2;
+    updateZoomLevel();
+    queueRenderPage(pageNum);
+});
+
+function updateZoomLevel() {
+    document.getElementById('zoom-level').textContent = Math.round(scale * 100) + '%';
+}
+
+document.getElementById('rotate').addEventListener('click', function() {
+    rotation = (rotation + 90) % 360;
+    queueRenderPage(pageNum);
+});
+
+document.getElementById('fullscreen').addEventListener('click', function() {
+    const wrapper = document.getElementById('pdf-viewer-wrapper');
+    if (!document.fullscreenElement) {
+        wrapper.requestFullscreen().catch(err => {
+            console.error('Error attempting to enable full-screen:', err);
+        });
+        this.querySelector('i').classList.replace('fa-expand', 'fa-compress');
+    } else {
+        document.exitFullscreen();
+        this.querySelector('i').classList.replace('fa-compress', 'fa-expand');
+    }
+});
+
+document.addEventListener('fullscreenchange', function() {
+    const btn = document.getElementById('fullscreen');
+    if (document.fullscreenElement) {
+        btn.querySelector('i').classList.replace('fa-expand', 'fa-compress');
+    } else {
+        btn.querySelector('i').classList.replace('fa-compress', 'fa-expand');
+    }
+});
+
+function showError(message) {
+    loadingOverlay.classList.add('d-none');
+    errorMessage.classList.remove('d-none');
+    errorText.textContent = message;
+}
+
+document.addEventListener('keydown', function(e) {
+
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        onPrevPage();
+    }
+
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault();
+        onNextPage();
+    }
+
+    if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        document.getElementById('zoom-in').click();
+    }
+
+    if (e.key === '-') {
+        e.preventDefault();
+        document.getElementById('zoom-out').click();
+    }
+
+    if (e.key === '0') {
+        e.preventDefault();
+        document.getElementById('zoom-reset').click();
+    }
+
+    if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        document.getElementById('rotate').click();
+    }
+
+    if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        document.getElementById('fullscreen').click();
+    }
+});
+
+console.log('Loading PDF from:', pdfUrl);
+const loadingTask = pdfjsLib.getDocument(pdfUrl);
+
+loadingTask.promise.then(function(pdf) {
+    console.log('PDF loaded successfully. Pages:', pdf.numPages);
+    pdfDoc = pdf;
+    document.getElementById('page-count').textContent = pdf.numPages;
+
+    renderPage(pageNum);
+    updateZoomLevel();
+}).catch(function(error) {
+    console.error('Error loading PDF:', error);
+    showError('Gagal memuat dokumen PDF. Pastikan file adalah PDF yang valid dan dapat diakses.');
+});
+
+setTimeout(function() {
+    if (pdfDoc) {
+        console.log('%cKeyboard Shortcuts:', 'font-weight: bold; font-size: 14px;');
+        console.log('← / → : Previous/Next page');
+        console.log('+ / - : Zoom in/out');
+        console.log('0     : Reset zoom');
+        console.log('R     : Rotate');
+        console.log('F     : Fullscreen');
+    }
+}, 2000);
+</script>
+{% endblock %}
+

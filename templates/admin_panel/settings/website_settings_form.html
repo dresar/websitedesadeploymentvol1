@@ -1,0 +1,116 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Pengaturan Website{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-globe"></i>
+                    Pengaturan Website
+                </h1>
+                <p class="dashboard-subtitle">Konfigurasi dasar website, logo, dan informasi umum</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="stats-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-edit"></i>
+                Form Pengaturan Website
+            </h2>
+            <p class="cart-subtitle">Kelola informasi dasar website Anda</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row">
+                <!-- Informasi Dasar -->
+                <div class="col-md-6 mb-3">
+                    <label for="site_name" class="form-label">Nama Website</label>
+                    <input type="text" class="form-control" id="site_name" name="site_name" value="{{ settings.site_name|default:'' }}" placeholder="Contoh: Website Desa Pulosarok" required>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="site_tagline" class="form-label">Tagline Website</label>
+                    <input type="text" class="form-control" id="site_tagline" name="site_tagline" value="{{ settings.site_tagline|default:'' }}" placeholder="Contoh: Desa Maju, Sejahtera, dan Mandiri">
+                </div>
+                
+                <div class="col-12 mb-3">
+                    <label for="site_description" class="form-label">Deskripsi Website</label>
+                    <textarea class="form-control" id="site_description" name="site_description" rows="3" placeholder="Deskripsi singkat tentang website desa Anda">{{ settings.site_description|default:'' }}</textarea>
+                </div>
+                
+                <!-- Kontak -->
+                <div class="col-md-6 mb-3">
+                    <label for="contact_phone" class="form-label">Telepon</label>
+                    <input type="text" class="form-control" id="contact_phone" name="contact_phone" value="{{ settings.contact_phone|default:'' }}" placeholder="Contoh: (0264) 123456">
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="contact_email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ settings.contact_email|default:'' }}" placeholder="Contoh: info@pulosarok.desa.id">
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="contact_whatsapp" class="form-label">WhatsApp</label>
+                    <input type="text" class="form-control" id="contact_whatsapp" name="contact_whatsapp" value="{{ settings.contact_whatsapp|default:'' }}" placeholder="Contoh: 628123456789">
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="contact_address" class="form-label">Alamat</label>
+                    <textarea class="form-control" id="contact_address" name="contact_address" rows="2" placeholder="Alamat lengkap kantor desa">{{ settings.contact_address|default:'' }}</textarea>
+                </div>
+                
+                <!-- Social Media -->
+                <div class="col-12 mb-3">
+                    <h5>Media Sosial</h5>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="facebook_url" class="form-label">Facebook URL</label>
+                    <input type="url" class="form-control" id="facebook_url" name="facebook_url" value="{{ settings.facebook_url|default:'' }}" placeholder="https://facebook.com/pulosarok">
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="instagram_url" class="form-label">Instagram URL</label>
+                    <input type="url" class="form-control" id="instagram_url" name="instagram_url" value="{{ settings.instagram_url|default:'' }}" placeholder="https://instagram.com/pulosarok">
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="youtube_url" class="form-label">YouTube URL</label>
+                    <input type="url" class="form-control" id="youtube_url" name="youtube_url" value="{{ settings.youtube_url|default:'' }}" placeholder="https://youtube.com/@pulosarok">
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label for="twitter_url" class="form-label">Twitter URL</label>
+                    <input type="url" class="form-control" id="twitter_url" name="twitter_url" value="{{ settings.twitter_url|default:'' }}" placeholder="https://twitter.com/pulosarok">
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>
+                    Simpan Pengaturan
+                </button>
+                <a href="{% url 'core:settings' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Kembali
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,723 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/forms.css' %}">
+<style>
+/* Custom form styling */
+.facility-form-container {
+    width: 100%;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+.form-section {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+}
+
+.form-section-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+    position: relative;
+}
+
+.form-section-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+}
+
+.form-section-title {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.form-section-body {
+    padding: 2.5rem;
+    background: #fafbfc;
+}
+
+.form-label {
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    position: relative;
+}
+
+.form-label::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-radius: 1px;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    font-weight: 500;
+}
+
+.form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.3rem rgba(40, 167, 69, 0.25), 0 8px 20px rgba(0,0,0,0.1);
+    background: #fff;
+    transform: translateY(-1px);
+}
+
+.form-control:hover {
+    border-color: #adb5bd;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.form-control::placeholder {
+    color: #adb5bd;
+    font-style: italic;
+    font-weight: 400;
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    padding: 1rem 2rem;
+    font-weight: 700;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+.btn-outline-secondary {
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    padding: 1rem 2rem;
+    font-weight: 700;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+}
+
+.btn-outline-warning {
+    border: 2px solid #ffc107;
+    color: #ffc107;
+    padding: 1rem 2rem;
+    font-weight: 700;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-outline-warning:hover {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+}
+
+.form-actions {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 1rem;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* Image Upload Area */
+.image-upload-area {
+    border: 2px dashed #28a745;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8fff9;
+    margin-bottom: 1rem;
+}
+
+.image-upload-area:hover {
+    border-color: #20c997;
+    background: #e8f5e8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+}
+
+.image-upload-area.dragover {
+    border-color: #20c997;
+    background: #d4edda;
+    transform: scale(1.02);
+}
+
+.image-upload-area i {
+    color: #28a745;
+    transition: all 0.3s ease;
+}
+
+.image-upload-area:hover i {
+    color: #20c997;
+    transform: scale(1.1);
+}
+
+.image-upload-area p {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.image-upload-area small {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .facility-form-container {
+        padding: 0.5rem 1rem;
+    }
+    
+    .form-section-body {
+        padding: 1rem;
+    }
+    
+    .form-section-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-section-title {
+        font-size: 1rem;
+    }
+    
+    .btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .facility-form-container {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .form-section-body {
+        padding: 0.75rem;
+    }
+    
+    .form-section-header {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .form-control {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+    
+    .d-flex.gap-2 .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <div class="col-12">
+            <div class="facility-form-container">
+                <!-- Header Section -->
+                <div class="text-center mb-4">
+                    <h1 class="h2 mb-2 text-success">
+                        <i class="fas fa-building me-2"></i>
+                        {% if facility_id %}Edit Fasilitas Desa{% else %}Tambah Fasilitas Desa{% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">Kelola informasi fasilitas dan infrastruktur desa</p>
+                </div>
+
+                <form id="facilityForm" method="post" enctype="multipart/form-data" action="{% if facility_id %}{% url 'village_profile:admin_facility_form_edit' facility_id %}{% else %}{% url 'village_profile:admin_facility_form' %}{% endif %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="facilityId" name="facility_id" value="{{ facility_id|default:'' }}">
+                    
+                    <!-- Informasi Dasar Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-info-circle me-2 text-success"></i>
+                                Informasi Dasar
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <!-- Village Selection -->
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="{{ form.village.id_for_label }}" class="form-label">{{ form.village.label }} <span class="text-danger">*</span></label>
+                                        {{ form.village }}
+                                        {% if form.village.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.village.errors.0 }}</div>
+                                        {% endif %}
+                                        {% if form.village.help_text %}
+                                            <div class="form-text">{{ form.village.help_text }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-12 col-lg-8">
+                                    <div class="mb-3">
+                                        <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} <span class="text-danger">*</span></label>
+                                        {{ form.name }}
+                                        {% if form.name.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.type.id_for_label }}" class="form-label">{{ form.type.label }} <span class="text-danger">*</span></label>
+                                        {{ form.type }}
+                                        {% if form.type.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.type.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.location.id_for_label }}" class="form-label">{{ form.location.label }} <span class="text-danger">*</span></label>
+                                        {{ form.location }}
+                                        {% if form.location.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.location.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.condition.id_for_label }}" class="form-label">{{ form.condition.label }}</label>
+                                        {{ form.condition }}
+                                        {% if form.condition.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.condition.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deskripsi Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-file-alt me-2 text-success"></i>
+                                Deskripsi Fasilitas
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }} <span class="text-danger">*</span></label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detail Fasilitas Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-cogs me-2 text-success"></i>
+                                Detail Fasilitas
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.capacity.id_for_label }}" class="form-label">{{ form.capacity.label }}</label>
+                                        {{ form.capacity }}
+                                        {% if form.capacity.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.capacity.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.built_year.id_for_label }}" class="form-label">{{ form.built_year.label }}</label>
+                                        {{ form.built_year }}
+                                        {% if form.built_year.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.built_year.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.manager.id_for_label }}" class="form-label">{{ form.manager.label }}</label>
+                                        {{ form.manager }}
+                                        {% if form.manager.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.manager.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.contact_phone.id_for_label }}" class="form-label">{{ form.contact_phone.label }}</label>
+                                        {{ form.contact_phone }}
+                                        {% if form.contact_phone.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.contact_phone.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.operational_hours.id_for_label }}" class="form-label">{{ form.operational_hours.label }}</label>
+                                {{ form.operational_hours }}
+                                {% if form.operational_hours.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.operational_hours.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gambar Fasilitas Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-image me-2 text-success"></i>
+                                Gambar Fasilitas
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                                        
+                                        <!-- Image Upload Area -->
+                                        <div class="image-upload-area" onclick="document.getElementById('id_image').click()">
+                                            <i class="fas fa-camera fa-3x text-muted mb-3"></i>
+                                            <p class="mb-2">Klik untuk memilih gambar atau drag & drop</p>
+                                            <small class="text-muted">Format: JPG, PNG, WEBP. Maksimal 5MB</small>
+                                        </div>
+                                        
+                                        <!-- Hidden file input -->
+                                        <div style="display: none;">
+                                            {{ form.image }}
+                                        </div>
+                                        
+                                        <!-- Image Preview -->
+                                        <div id="imagePreviewContainer" class="mt-3" style="display: none;">
+                                            <img id="imagePreview" class="img-thumbnail" style="max-width: 300px; max-height: 200px; object-fit: cover;" alt="Preview">
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeImage()">
+                                                    <i class="fas fa-trash me-1"></i>Hapus Gambar
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if form.image.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.image.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <div class="row align-items-center">
+                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                            <a href="{% url 'village_profile:admin_facilities' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali
+                            </a>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="d-flex gap-2 justify-content-md-end">
+                                <button type="button" class="btn btn-outline-warning" onclick="resetForm()">
+                                    <i class="fas fa-undo me-2"></i>Reset
+                                </button>
+                                <button type="submit" form="facilityForm" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>Simpan Fasilitas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+let isSubmitting = false;
+let isInitialized = false;
+
+$(document).ready(function() {
+    if (isInitialized) return;
+    isInitialized = true;
+
+    // Simple form validation without interfering with Django form submission
+    setupFormValidation();
+    
+    // Setup image upload functionality
+    setupImageUpload();
+});
+
+function setupFormValidation() {
+    if ($('#id_name').data('validation-initialized')) return;
+    $('#id_name, #id_type, #id_location, #id_description').data('validation-initialized', true);
+
+    let validationTimeout;
+    $('#id_name, #id_type, #id_location, #id_description').on('blur', function() {
+        clearTimeout(validationTimeout);
+        validationTimeout = setTimeout(function() {
+            validateField($(this));
+        }.bind(this), 100);
+    });
+}
+
+function validateField(field) {
+    const value = field.val().trim();
+    const fieldName = field.attr('name');
+    let isValid = true;
+    let errorMessage = '';
+
+    switch(fieldName) {
+        case 'name':
+            if (!value) {
+                isValid = false;
+                errorMessage = 'Nama fasilitas harus diisi';
+            } else if (value.length < 3) {
+                isValid = false;
+                errorMessage = 'Nama fasilitas minimal 3 karakter';
+            }
+            break;
+        case 'type':
+            if (!value) {
+                isValid = false;
+                errorMessage = 'Jenis fasilitas harus dipilih';
+            }
+            break;
+        case 'location':
+            if (!value) {
+                isValid = false;
+                errorMessage = 'Lokasi harus diisi';
+            } else if (value.length < 5) {
+                isValid = false;
+                errorMessage = 'Lokasi minimal 5 karakter';
+            }
+            break;
+        case 'description':
+            if (!value) {
+                isValid = false;
+                errorMessage = 'Deskripsi harus diisi';
+            } else if (value.length < 20) {
+                isValid = false;
+                errorMessage = 'Deskripsi minimal 20 karakter';
+            }
+            break;
+    }
+
+    if (isValid) {
+        field.removeClass('is-invalid').addClass('is-valid');
+        field.siblings('.invalid-feedback').text('');
+    } else {
+        field.removeClass('is-valid').addClass('is-invalid');
+        field.siblings('.invalid-feedback').text(errorMessage);
+    }
+
+    return isValid;
+}
+
+function validateForm() {
+    let isValid = true;
+
+    const requiredFields = ['#id_name', '#id_type', '#id_location', '#id_description'];
+    requiredFields.forEach(function(selector) {
+        if (!validateField($(selector))) {
+            isValid = false;
+        }
+    });
+
+    return isValid;
+}
+
+function resetForm() {
+    if (confirm('Apakah Anda yakin ingin mereset form? Semua data yang belum disimpan akan hilang.')) {
+        $('#facilityForm')[0].reset();
+        $('.form-control').removeClass('is-invalid is-valid');
+        $('.invalid-feedback').text('');
+    }
+}
+
+function showToast(type, message) {
+    const toastClass = type === 'success' ? 'bg-success' : 'bg-danger';
+    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+    const toast = $(`
+        <div class="toast align-items-center text-white ${toastClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas ${iconClass} mr-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `);
+
+    $('#toast-container').append(toast);
+    toast.toast('show');
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// Image Upload Functions
+function setupImageUpload() {
+    const fileInput = document.getElementById('id_image');
+    const uploadArea = document.querySelector('.image-upload-area');
+    
+    if (!fileInput || !uploadArea) return;
+    
+    // Handle file input change
+    fileInput.addEventListener('change', function(e) {
+        handleFileSelect(e.target.files[0]);
+    });
+    
+    // Handle drag and drop
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+}
+
+function handleFileSelect(file) {
+    if (!file) return;
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        showToast('error', 'Format file tidak didukung. Gunakan JPG, PNG, atau WEBP.');
+        return;
+    }
+    
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showToast('error', 'Ukuran file terlalu besar. Maksimal 5MB.');
+        return;
+    }
+    
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('imagePreview').src = e.target.result;
+        document.getElementById('imagePreviewContainer').style.display = 'block';
+        document.querySelector('.image-upload-area').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeImage() {
+    document.getElementById('id_image').value = '';
+    document.getElementById('imagePreviewContainer').style.display = 'none';
+    document.querySelector('.image-upload-area').style.display = 'block';
+}
+</script>
+{% endblock extra_js %}

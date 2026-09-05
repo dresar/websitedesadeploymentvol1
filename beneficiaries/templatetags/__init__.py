@@ -1,0 +1,2 @@
+# Templatetags for beneficiaries app
+

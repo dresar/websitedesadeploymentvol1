@@ -1,0 +1,548 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/forms.css' %}">
+<style>
+/* Custom form styling */
+.history-form-container {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.form-section {
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.form-section-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.form-section-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-section-body {
+    padding: 1.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-outline-secondary {
+    border: 1px solid #6c757d;
+    color: #6c757d;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    transform: translateY(-1px);
+}
+
+.btn-outline-warning {
+    border: 1px solid #ffc107;
+    color: #ffc107;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-outline-warning:hover {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+    transform: translateY(-1px);
+}
+
+.form-actions {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .history-form-container {
+        padding: 0.5rem 1rem;
+    }
+    
+    .form-section-body {
+        padding: 1rem;
+    }
+    
+    .form-section-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-section-title {
+        font-size: 1rem;
+    }
+    
+    .btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .history-form-container {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .form-section-body {
+        padding: 0.75rem;
+    }
+    
+    .form-section-header {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .form-control {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+    
+    .d-flex.gap-2 .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <div class="col-12">
+            <div class="history-form-container">
+                <!-- Header Section -->
+                <div class="text-center mb-4">
+                    <h1 class="h2 mb-2 text-primary">
+                        <i class="fas fa-scroll me-2"></i>
+                        {% if history_id %}Edit Sejarah Desa{% else %}Tambah Sejarah Desa{% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">Kelola informasi sejarah dan peristiwa penting desa</p>
+                </div>
+
+                <form id="historyForm" method="post" enctype="multipart/form-data" action="{% if history_id %}{% url 'village_profile:admin_history_form_edit' history_id %}{% else %}{% url 'village_profile:admin_history_form' %}{% endif %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="historyId" name="history_id" value="{{ history_id|default:'' }}">
+                    
+                    <!-- Informasi Dasar Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-info-circle me-2 text-primary"></i>
+                                Informasi Dasar
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="row g-3">
+                                <div class="col-12 col-lg-8">
+                                    <div class="mb-3">
+                                        <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+                                        {{ form.title }}
+                                        {% if form.title.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.history_type.id_for_label }}" class="form-label">{{ form.history_type.label }} <span class="text-danger">*</span></label>
+                                        {{ form.history_type }}
+                                        {% if form.history_type.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.history_type.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.summary.id_for_label }}" class="form-label">{{ form.summary.label }} <span class="text-danger">*</span></label>
+                                {{ form.summary }}
+                                <div class="character-count text-muted small mt-1" id="summaryCount">0/500 karakter</div>
+                                {% if form.summary.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.summary.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Periode Waktu Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                                Periode Waktu
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="row g-3">
+                                <div class="col-12 col-sm-6 col-lg-3">
+                                    <div class="mb-3">
+                                        <label for="{{ form.year_start.id_for_label }}" class="form-label">{{ form.year_start.label }}</label>
+                                        {{ form.year_start }}
+                                        {% if form.year_start.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.year_start.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-lg-3">
+                                    <div class="mb-3">
+                                        <label for="{{ form.year_end.id_for_label }}" class="form-label">{{ form.year_end.label }}</label>
+                                        {{ form.year_end }}
+                                        {% if form.year_end.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.year_end.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-lg-3">
+                                    <div class="mb-3">
+                                        <label for="{{ form.period_start.id_for_label }}" class="form-label">{{ form.period_start.label }}</label>
+                                        {{ form.period_start }}
+                                        {% if form.period_start.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.period_start.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6 col-lg-3">
+                                    <div class="mb-3">
+                                        <label for="{{ form.period_end.id_for_label }}" class="form-label">{{ form.period_end.label }}</label>
+                                        {{ form.period_end }}
+                                        {% if form.period_end.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.period_end.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Konten Sejarah Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-file-alt me-2 text-primary"></i>
+                                Konten Sejarah
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="mb-3">
+                                <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }} <span class="text-danger">*</span></label>
+                                {{ form.content }}
+                                {% if form.content.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.content.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sumber & Penulis Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-book me-2 text-primary"></i>
+                                Sumber & Penulis
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.source.id_for_label }}" class="form-label">{{ form.source.label }}</label>
+                                        {{ form.source }}
+                                        {% if form.source.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.source.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.author.id_for_label }}" class="form-label">{{ form.author.label }}</label>
+                                        {{ form.author }}
+                                        {% if form.author.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.author.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gambar Utama Section -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <h3 class="form-section-title">
+                                <i class="fas fa-image me-2 text-primary"></i>
+                                Gambar Utama
+                            </h3>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="{{ form.featured_image.id_for_label }}" class="form-label">{{ form.featured_image.label }}</label>
+                                        {{ form.featured_image }}
+                                        <div class="form-text">Format: JPG, PNG, WEBP. Maksimal 5MB</div>
+                                        {% if form.featured_image.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.featured_image.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="{{ form.featured_image_caption.id_for_label }}" class="form-label">{{ form.featured_image_caption.label }}</label>
+                                        {{ form.featured_image_caption }}
+                                        {% if form.featured_image_caption.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.featured_image_caption.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        {{ form.is_featured }}
+                                        <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                                            <span class="badge bg-warning text-dark">Sejarah Unggulan</span>
+                                        </label>
+                                        {% if form.is_featured.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.is_featured.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <div class="row align-items-center">
+                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                            <a href="{% url 'village_profile:admin_history' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali
+                            </a>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="d-flex gap-2 justify-content-md-end">
+                                <button type="button" class="btn btn-outline-warning" onclick="resetForm()">
+                                    <i class="fas fa-undo me-2"></i>Reset
+                                </button>
+                                <button type="submit" form="historyForm" class="btn btn-danger">
+                                    <i class="fas fa-save me-2"></i>Simpan Sejarah
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+let isSubmitting = false;
+let isInitialized = false;
+
+$(document).ready(function() {
+    if (isInitialized) return;
+    isInitialized = true;
+
+    // Simple form validation without interfering with Django form submission
+    updateSummaryCount();
+    if (!$('#id_summary').data('summary-initialized')) {
+        $('#id_summary').data('summary-initialized', true);
+        let summaryTimeout;
+        $('#id_summary').on('input', function() {
+            clearTimeout(summaryTimeout);
+            summaryTimeout = setTimeout(function() {
+                updateSummaryCount();
+            }, 100);
+        });
+    }
+
+    setupFormValidation();
+});
+
+function updateSummaryCount() {
+    const count = $('#id_summary').val().length;
+    const countElement = $('#summaryCount');
+
+    countElement.text(`${count}/500 karakter`);
+
+    if (count > 500) {
+        countElement.addClass('danger');
+        countElement.removeClass('warning');
+        $('#id_summary').addClass('is-invalid');
+    } else if (count > 400) {
+        countElement.addClass('warning');
+        countElement.removeClass('danger');
+        $('#id_summary').removeClass('is-invalid');
+    } else {
+        countElement.removeClass('warning danger');
+        $('#id_summary').removeClass('is-invalid');
+    }
+}
+
+function setupFormValidation() {
+    if ($('#id_title').data('validation-initialized')) return;
+    $('#id_title, #id_history_type, #id_summary').data('validation-initialized', true);
+
+    let validationTimeout;
+    $('#id_title, #id_history_type, #id_summary').on('blur', function() {
+        clearTimeout(validationTimeout);
+        validationTimeout = setTimeout(function() {
+            validateField($(this));
+        }.bind(this), 100);
+    });
+}
+
+function validateField(field) {
+    const value = field.val().trim();
+    const fieldName = field.attr('name');
+    let isValid = true;
+    let errorMessage = '';
+
+    switch(fieldName) {
+        case 'title':
+            if (!value) {
+                isValid = false;
+                errorMessage = 'Judul sejarah harus diisi';
+            } else if (value.length < 5) {
+                isValid = false;
+                errorMessage = 'Judul minimal 5 karakter';
+            }
+            break;
+        case 'history_type':
+            if (!value) {
+                isValid = false;
+                errorMessage = 'Jenis sejarah harus dipilih';
+            }
+            break;
+        case 'summary':
+            if (!value) {
+                isValid = false;
+                errorMessage = 'Ringkasan harus diisi';
+            } else if (value.length > 500) {
+                isValid = false;
+                errorMessage = 'Ringkasan maksimal 500 karakter';
+            }
+            break;
+    }
+
+    if (isValid) {
+        field.removeClass('is-invalid').addClass('is-valid');
+        field.siblings('.invalid-feedback').text('');
+    } else {
+        field.removeClass('is-valid').addClass('is-invalid');
+        field.siblings('.invalid-feedback').text(errorMessage);
+    }
+
+    return isValid;
+}
+
+function resetForm() {
+    if (confirm('Apakah Anda yakin ingin mereset form? Semua data yang belum disimpan akan hilang.')) {
+        $('#historyForm')[0].reset();
+        updateSummaryCount();
+        $('.form-control').removeClass('is-invalid is-valid');
+        $('.invalid-feedback').text('');
+    }
+}
+
+function showToast(type, message) {
+    const toastClass = type === 'success' ? 'bg-success' : 'bg-danger';
+    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+    const toast = $(`
+        <div class="toast align-items-center text-white ${toastClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas ${iconClass} mr-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `);
+
+    $('#toast-container').append(toast);
+    toast.toast('show');
+    setTimeout(() => toast.remove(), 5000);
+}
+</script>
+{% endblock extra_js %}

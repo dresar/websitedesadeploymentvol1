@@ -1,0 +1,337 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Detail Kader Posyandu{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_detail.css' %}">
+<style>
+
+    .jabatan-anggota { background: #f5f5f5; color: #616161; }
+    .timeline-content {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    .timeline-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    .timeline-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-user-nurse text-primary mr-2"></i>
+                        Detail Kader Posyandu
+                    </h2>
+                    <p class="text-muted mb-0">Informasi lengkap kader posyandu</p>
+                </div>
+                <div>
+                    <a href="{% url 'admin_panel:posyandu:kaders' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left mr-1"></i>
+                        Kembali ke Daftar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-card">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                <img src="{% if kader.penduduk.photo %}{{ kader.penduduk.photo.url }}{% else %}/static/images/defaults/avatar-placeholder.svg{% endif %}"
+                     alt="Photo" class="profile-photo">
+            </div>
+            <div class="col-md-9">
+                <h3 class="mb-2">{{ kader.penduduk.name }}</h3>
+                <p class="mb-2">
+                    <span class="jabatan-badge jabatan-{{ kader.jabatan }}">
+                        {{ kader.get_jabatan_display }}
+                    </span>
+                </p>
+                <p class="mb-2">
+                    <span class="status-badge status-{{ kader.status }}">
+                        {{ kader.get_status_display }}
+                    </span>
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-map-marker-alt mr-2"></i>
+                    {{ kader.posyandu.name }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-number">-</div>
+            <div class="stat-label">Usia</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">{{ kader.tanggal_mulai|timesince }}</div>
+            <div class="stat-label">Lama Tugas</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">-</div>
+            <div class="stat-label">Pendidikan</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">-</div>
+            <div class="stat-label">Pekerjaan</div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="info-card">
+                <h6>
+                    <i class="fas fa-user mr-2"></i>
+                    Informasi Pribadi
+                </h6>
+                <table class="info-table">
+                    <tr>
+                        <td>NIK:</td>
+                        <td>{{ kader.penduduk.nik }}</td>
+                    </tr>
+                    <tr>
+                        <td>Jenis Kelamin:</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Tempat, Tanggal Lahir:</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Agama:</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Status Perkawinan:</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Golongan Darah:</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="info-card">
+                <h6>
+                    <i class="fas fa-phone mr-2"></i>
+                    Kontak & Alamat
+                </h6>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ kader.penduduk.telepon|default:"-" }}</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>{{ kader.penduduk.email|default:"-" }}</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{{ kader.penduduk.alamat|default:"-" }}</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-home"></i>
+                    <span>-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="info-card">
+                <h6>
+                    <i class="fas fa-user-nurse mr-2"></i>
+                    Informasi Kader
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="info-table">
+                            <tr>
+                                <td>Lokasi Posyandu:</td>
+                                <td>{{ kader.posyandu.name }}</td>
+                            </tr>
+                            <tr>
+                                <td>Alamat Posyandu:</td>
+                                <td>{{ kader.posyandu.address }}</td>
+                            </tr>
+                            <tr>
+                                <td>Jabatan:</td>
+                                <td>{{ kader.get_jabatan_display }}</td>
+                            </tr>
+                            <tr>
+                                <td>Status:</td>
+                                <td>
+                                    <span class="status-badge status-{{ kader.status }}">
+                                        {{ kader.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="info-table">
+                            <tr>
+                                <td>Tanggal Mulai:</td>
+                                <td>{{ kader.tanggal_mulai|date:"d F Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Tanggal Selesai:</td>
+                                <td>{{ kader.tanggal_selesai|date:"d F Y"|default:"Masih Aktif" }}</td>
+                            </tr>
+                            <tr>
+                                <td>No. HP Kader:</td>
+                                <td>{{ kader.nomor_hp|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td>Tanggal Dibuat:</td>
+                                <td>{{ kader.created_at|date:"d F Y H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                {% if kader.keterangan %}
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <strong>Keterangan:</strong>
+                        <p class="mt-2">{{ kader.keterangan }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="info-card">
+                <h6>
+                    <i class="fas fa-history mr-2"></i>
+                    Riwayat Kader
+                </h6>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <div class="timeline-date">{{ kader.created_at|date:"d F Y" }}</div>
+                            <div class="timeline-title">Bergabung sebagai Kader</div>
+                            <p class="mb-0">Mulai bertugas sebagai {{ kader.get_jabatan_display }} di {{ kader.posyandu.name }}</p>
+                        </div>
+                    </div>
+                    {% if kader.tanggal_selesai %}
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <div class="timeline-date">{{ kader.tanggal_selesai|date:"d F Y" }}</div>
+                            <div class="timeline-title">Selesai Tugas</div>
+                            <p class="mb-0">Menyelesaikan tugas sebagai kader posyandu</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if kader.updated_at != kader.created_at %}
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <div class="timeline-date">{{ kader.updated_at|date:"d F Y" }}</div>
+                            <div class="timeline-title">Data Diperbarui</div>
+                            <p class="mb-0">Informasi kader terakhir diperbarui</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <div class="text-center">
+            <a href="{% url 'admin_panel:posyandu:kader_update' kader.id %}" class="btn btn-warning btn-custom">
+                <i class="fas fa-edit mr-1"></i>
+                Edit Kader
+            </a>
+            <button class="btn btn-danger btn-custom" onclick="deleteKader({{ kader.id }})">
+                <i class="fas fa-trash mr-1"></i>
+                Hapus Kader
+            </button>
+            <a href="{% url 'admin_panel:posyandu:kaders' %}" class="btn btn-secondary btn-custom">
+                <i class="fas fa-list mr-1"></i>
+                Daftar Kader
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteKaderModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Konfirmasi Hapus
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus kader <strong>{{ kader.penduduk.name }}</strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Tindakan ini tidak dapat dibatalkan.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash mr-1"></i>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>function deleteKader(kaderId) {
+    $('#deleteKaderModal').modal('show');
+    $('#confirmDelete').off('click').on('click', function() {
+        $.ajax({
+            url: `{% url "admin_panel:posyandu:api_kader_delete" 0 %}`.replace('0', kaderId),
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                $('#deleteKaderModal').modal('hide');
+                showAlert('Kader berhasil dihapus', 'success');
+                setTimeout(function() {
+                    window.location.href = "{% url 'admin_panel:posyandu:kaders' %}";
+                }, 1500);
+            },
+            error: function(xhr, status, error) {
+                showAlert('Error deleting kader', 'error');
+            }
+        });
+    });
+}
+
+</script>
+{% endblock %}

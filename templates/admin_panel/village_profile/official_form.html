@@ -1,0 +1,1263 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Form Container Styling */
+    .official-form-wrapper {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .official-form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px 15px 0 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 0;
+    }
+
+    .official-form-header h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .official-form-header p {
+        margin: 10px 0 0 0;
+        font-size: 14px;
+        opacity: 0.95;
+    }
+
+    .official-form-body {
+        background: white;
+        padding: 35px;
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    /* Section Styling */
+    .form-section {
+        margin-bottom: 35px;
+        padding: 25px;
+        border: 2px solid #e3e6f0;
+        border-radius: 12px;
+        background: #f8f9fc;
+        transition: all 0.3s ease;
+    }
+
+    .form-section:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-section-title i {
+        color: #667eea;
+        font-size: 22px;
+    }
+
+    /* Form Row and Columns */
+    .form-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .form-col-full {
+        flex: 1 1 100%;
+    }
+
+    .form-col-half {
+        flex: 1 1 calc(50% - 10px);
+        min-width: 280px;
+    }
+
+    .form-col-third {
+        flex: 1 1 calc(33.333% - 14px);
+        min-width: 200px;
+    }
+
+    /* Form Group */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #5a6c7d;
+        margin-bottom: 8px;
+        font-size: 14px;
+        transition: color 0.2s;
+    }
+
+    .form-label-required::after {
+        content: ' *';
+        color: #e74a3b;
+        font-weight: 700;
+    }
+
+    /* Form Controls */
+    .form-control,
+    .form-select,
+    textarea.form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #d1d3e2;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .form-control:focus,
+    .form-select:focus,
+    textarea.form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .form-control.is-valid {
+        border-color: #1cc88a;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%231cc88a' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px 16px;
+        padding-right: 40px;
+    }
+
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    /* Autocomplete Styling */
+    .autocomplete-wrapper {
+        position: relative;
+    }
+
+    .autocomplete-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 2px solid #667eea;
+        border-radius: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        margin-top: 4px;
+        display: none;
+    }
+
+    .autocomplete-suggestions.show {
+        display: block;
+    }
+
+    .autocomplete-suggestion {
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #e3e6f0;
+        transition: all 0.2s;
+    }
+
+    .autocomplete-suggestion:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-suggestion:hover,
+    .autocomplete-suggestion.highlighted {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        color: #667eea;
+    }
+
+    .autocomplete-suggestion strong {
+        display: block;
+        color: #2c3e50;
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+
+    .autocomplete-suggestion small {
+        color: #6c757d;
+        font-size: 12px;
+    }
+
+    .autocomplete-suggestion:hover strong {
+        color: #667eea;
+    }
+
+    /* Penduduk Detail Info */
+    .penduduk-detail-info {
+        margin-top: 12px;
+        padding: 15px;
+        background: linear-gradient(135deg, rgba(28, 200, 138, 0.05) 0%, rgba(28, 200, 138, 0.1) 100%);
+        border-left: 4px solid #1cc88a;
+        border-radius: 8px;
+        display: none;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .penduduk-detail-info.show {
+        display: block;
+    }
+
+    .penduduk-detail-info .detail-label {
+        font-weight: 600;
+        color: #1cc88a;
+        font-size: 13px;
+        margin-bottom: 5px;
+    }
+
+    .penduduk-detail-info .detail-value {
+        color: #2c3e50;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    /* Photo Upload Preview */
+    .photo-upload-preview {
+        margin-top: 15px;
+        display: none;
+    }
+
+    .photo-upload-preview.show {
+        display: block;
+    }
+
+    .photo-preview-img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 3px solid #e3e6f0;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Checkbox and Radio */
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        background: white;
+        border-radius: 8px;
+        border: 2px solid #d1d3e2;
+        transition: all 0.3s;
+    }
+
+    .form-check:hover {
+        border-color: #667eea;
+    }
+
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .form-check-label {
+        font-weight: 600;
+        color: #5a6c7d;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    /* Buttons */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 2px solid #e3e6f0;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    /* Alert Messages */
+    .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideDown 0.3s ease;
+    }
+
+    .alert-success {
+        background: rgba(28, 200, 138, 0.1);
+        border-left-color: #1cc88a;
+        color: #0d7758;
+    }
+
+    .alert-danger {
+        background: rgba(231, 74, 59, 0.1);
+        border-left-color: #e74a3b;
+        color: #842029;
+    }
+
+    .alert-info {
+        background: rgba(54, 162, 235, 0.1);
+        border-left-color: #36a2eb;
+        color: #055160;
+    }
+
+    /* Loading State */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .loading-overlay.show {
+        display: flex;
+    }
+
+    .loading-spinner {
+        text-align: center;
+    }
+
+    .loading-spinner i {
+        font-size: 48px;
+        color: #667eea;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-spinner p {
+        margin-top: 15px;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .official-form-wrapper {
+            padding: 10px;
+        }
+
+        .official-form-header {
+            padding: 20px;
+        }
+
+        .official-form-header h2 {
+            font-size: 22px;
+        }
+
+        .official-form-body {
+            padding: 20px;
+        }
+
+        .form-section {
+            padding: 18px;
+        }
+
+        .form-col-half,
+        .form-col-third {
+            flex: 1 1 100%;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Invalid Feedback */
+    .invalid-feedback {
+        display: block;
+        color: #e74a3b;
+        font-size: 13px;
+        margin-top: 6px;
+        font-weight: 500;
+    }
+
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: #e74a3b;
+    }
+
+    /* Custom Position Field */
+    #custom_position_group {
+        display: none;
+        animation: slideDown 0.3s ease;
+    }
+
+    #custom_position_group.show {
+        display: block;
+    }
+
+    /* Readonly Field Styling */
+    .form-control[readonly],
+    .form-select[disabled] {
+        background-color: #f8f9fc !important;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+
+    /* Unlock Button */
+    .btn-unlock {
+        background: linear-gradient(135deg, #f6b93b 0%, #e58e26 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .btn-unlock:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(230, 142, 38, 0.3);
+    }
+
+    .btn-unlock.hidden {
+        display: none;
+    }
+
+    /* Lock indicator */
+    .lock-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, rgba(28, 200, 138, 0.1) 0%, rgba(28, 200, 138, 0.15) 100%);
+        border-radius: 6px;
+        font-size: 12px;
+        color: #1cc88a;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="official-form-wrapper">
+    <!-- Header -->
+    <div class="official-form-header">
+        <h2>
+            <i class="fas fa-user-tie"></i>
+            {% if official %}Edit Perangkat Desa{% else %}Tambah Perangkat Desa{% endif %}
+        </h2>
+        <p>
+            {% if official %}
+                Perbarui informasi perangkat desa
+            {% else %}
+                Lengkapi formulir untuk menambahkan perangkat desa baru
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Form Body -->
+    <div class="official-form-body">
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form id="officialForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="official_id" value="{{ official.id|default:'' }}">
+            <input type="hidden" name="village_id" value="{{ village_profile.id }}">
+            <input type="hidden" id="penduduk_id" name="penduduk_id" value="{% if official and official.penduduk %}{{ official.penduduk.id }}{% endif %}">
+
+            <!-- Informasi Dasar -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-user"></i>
+                    Informasi Dasar
+                </h3>
+
+                <div class="form-row">
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label form-label-required" for="name">Nama Lengkap</label>
+                            <div class="autocomplete-wrapper">
+                                <input type="text" class="form-control penduduk-autocomplete" id="name" name="name" 
+                                       value="{{ official.name|default:'' }}" 
+                                       placeholder="Ketik untuk mencari penduduk..."
+                                       required
+                                       autocomplete="off">
+                                <div class="autocomplete-suggestions"></div>
+                            </div>
+                            <div class="penduduk-detail-info"></div>
+                            <small class="text-muted">Ketik minimal 2 karakter untuk mencari data penduduk</small>
+                            <div class="lock-indicator" id="lockIndicator" style="display: none;">
+                                <i class="fas fa-lock"></i>
+                                <span>Data terkunci dari penduduk</span>
+                            </div>
+                            <button type="button" class="btn-unlock hidden" id="unlockBtn">
+                                <i class="fas fa-unlock"></i>
+                                Buka Kunci untuk Edit Manual
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label" for="nik">NIK</label>
+                            <input type="text" class="form-control" id="nik" name="nik" 
+                                   value="{{ official.nik|default:'' }}" 
+                                   placeholder="Nomor Induk Kependudukan"
+                                   maxlength="16">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label form-label-required" for="position">Jabatan</label>
+                            <select class="form-select" id="position" name="position" required>
+                                <option value="">-- Pilih Jabatan --</option>
+                                <option value="KEPALA_DESA" {% if official and official.position == 'KEPALA_DESA' %}selected{% endif %}>Kepala Desa</option>
+                                <option value="SEKRETARIS" {% if official and official.position == 'SEKRETARIS' %}selected{% endif %}>Sekretaris Desa</option>
+                                <option value="BENDAHARA" {% if official and official.position == 'BENDAHARA' %}selected{% endif %}>Bendahara Desa</option>
+                                <option value="KAUR_PEMERINTAHAN" {% if official and official.position == 'KAUR_PEMERINTAHAN' %}selected{% endif %}>Kaur Pemerintahan</option>
+                                <option value="KAUR_PEMBANGUNAN" {% if official and official.position == 'KAUR_PEMBANGUNAN' %}selected{% endif %}>Kaur Pembangunan</option>
+                                <option value="KAUR_KESRA" {% if official and official.position == 'KAUR_KESRA' %}selected{% endif %}>Kaur Kesejahteraan Rakyat</option>
+                                <option value="KAUR_UMUM" {% if official and official.position == 'KAUR_UMUM' %}selected{% endif %}>Kaur Umum</option>
+                                <option value="KAUR_KEUANGAN" {% if official and official.position == 'KAUR_KEUANGAN' %}selected{% endif %}>Kaur Keuangan</option>
+                                <option value="KADUS" {% if official and official.position == 'KADUS' %}selected{% endif %}>Kepala Dusun</option>
+                                <option value="RT" {% if official and official.position == 'RT' %}selected{% endif %}>Ketua RT</option>
+                                <option value="RW" {% if official and official.position == 'RW' %}selected{% endif %}>Ketua RW</option>
+                                <option value="LAINNYA" {% if official and official.position == 'LAINNYA' %}selected{% endif %}>Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-col-half">
+                        <div class="form-group" id="custom_position_group" {% if official and official.position == 'LAINNYA' %}style="display: block;"{% endif %}>
+                            <label class="form-label" for="custom_position">Jabatan Khusus</label>
+                            <input type="text" class="form-control" id="custom_position" name="custom_position" 
+                                   value="{{ official.custom_position|default:'' }}" 
+                                   placeholder="Isi jika memilih 'Lainnya'">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label form-label-required" for="start_date">Tanggal Mulai Jabatan</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ official.start_date|date:'Y-m-d'|default:'' }}" 
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label" for="end_date">Tanggal Berakhir Jabatan</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ official.end_date|date:'Y-m-d'|default:'' }}">
+                            <small class="text-muted">Kosongkan jika masih aktif</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label" for="display_order">Urutan Tampil</label>
+                            <input type="number" class="form-control" id="display_order" name="display_order" 
+                                   value="{{ official.display_order|default:'0' }}" 
+                                   min="0">
+                            <small class="text-muted">Angka lebih kecil akan ditampilkan lebih dulu</small>
+                        </div>
+                    </div>
+
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="is_active" name="is_active" 
+                                       {% if not official or official.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    <i class="fas fa-check-circle"></i> Status Aktif
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Pribadi -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-id-card"></i>
+                    Data Pribadi
+                </h3>
+
+                <div class="form-row">
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label" for="birth_place">Tempat Lahir</label>
+                            <input type="text" class="form-control" id="birth_place" name="birth_place" 
+                                   value="{{ official.birth_place|default:'' }}" 
+                                   placeholder="Tempat lahir">
+                        </div>
+                    </div>
+
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label" for="birth_date">Tanggal Lahir</label>
+                            <input type="date" class="form-control" id="birth_date" name="birth_date" 
+                                   value="{{ official.birth_date|date:'Y-m-d'|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="gender">Jenis Kelamin</label>
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="">-- Pilih --</option>
+                                <option value="L" {% if official and official.gender == 'L' %}selected{% endif %}>Laki-laki</option>
+                                <option value="P" {% if official and official.gender == 'P' %}selected{% endif %}>Perempuan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="religion">Agama</label>
+                            <select class="form-select" id="religion" name="religion">
+                                <option value="">-- Pilih --</option>
+                                <option value="Islam" {% if official and official.religion == 'Islam' %}selected{% endif %}>Islam</option>
+                                <option value="Kristen" {% if official and official.religion == 'Kristen' %}selected{% endif %}>Kristen</option>
+                                <option value="Katolik" {% if official and official.religion == 'Katolik' %}selected{% endif %}>Katolik</option>
+                                <option value="Hindu" {% if official and official.religion == 'Hindu' %}selected{% endif %}>Hindu</option>
+                                <option value="Buddha" {% if official and official.religion == 'Buddha' %}selected{% endif %}>Buddha</option>
+                                <option value="Konghucu" {% if official and official.religion == 'Konghucu' %}selected{% endif %}>Konghucu</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="marital_status">Status Perkawinan</label>
+                            <select class="form-select" id="marital_status" name="marital_status">
+                                <option value="">-- Pilih --</option>
+                                <option value="Belum Kawin" {% if official and official.marital_status == 'Belum Kawin' %}selected{% endif %}>Belum Kawin</option>
+                                <option value="Kawin" {% if official and official.marital_status == 'Kawin' %}selected{% endif %}>Kawin</option>
+                                <option value="Cerai Hidup" {% if official and official.marital_status == 'Cerai Hidup' %}selected{% endif %}>Cerai Hidup</option>
+                                <option value="Cerai Mati" {% if official and official.marital_status == 'Cerai Mati' %}selected{% endif %}>Cerai Mati</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label" for="education">Pendidikan</label>
+                            <input type="text" class="form-control" id="education" name="education" 
+                                   value="{{ official.education|default:'' }}" 
+                                   placeholder="Pendidikan terakhir">
+                        </div>
+                    </div>
+
+                    <div class="form-col-half">
+                        <div class="form-group">
+                            <label class="form-label" for="occupation">Pekerjaan</label>
+                            <input type="text" class="form-control" id="occupation" name="occupation" 
+                                   value="{{ official.occupation|default:'' }}" 
+                                   placeholder="Pekerjaan">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-full">
+                        <div class="form-group">
+                            <label class="form-label" for="experience">Pengalaman</label>
+                            <textarea class="form-control" id="experience" name="experience" 
+                                      placeholder="Tuliskan pengalaman kerja atau organisasi">{{ official.experience|default:'' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-full">
+                        <div class="form-group">
+                            <label class="form-label" for="photo">Foto</label>
+                            <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
+                            {% if official.photo %}
+                                <div class="photo-upload-preview show">
+                                    <img src="{{ official.photo.url }}" alt="Foto" class="photo-preview-img">
+                                </div>
+                            {% endif %}
+                            <div class="photo-upload-preview" id="newPhotoPreview"></div>
+                            <small class="text-muted">Format: JPG, PNG, maksimal 2MB</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informasi Kontak -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="fas fa-phone"></i>
+                    Informasi Kontak
+                </h3>
+
+                <div class="form-row">
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="phone">Telepon</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ official.phone|default:'' }}" 
+                                   placeholder="Nomor telepon">
+                        </div>
+                    </div>
+
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="mobile">Handphone</label>
+                            <input type="tel" class="form-control" id="mobile" name="mobile" 
+                                   value="{{ official.mobile|default:'' }}" 
+                                   placeholder="Nomor handphone">
+                        </div>
+                    </div>
+
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ official.email|default:'' }}" 
+                                   placeholder="alamat@email.com">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-full">
+                        <div class="form-group">
+                            <label class="form-label" for="address">Alamat Lengkap</label>
+                            <textarea class="form-control" id="address" name="address" 
+                                      placeholder="Alamat lengkap">{{ official.address|default:'' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="dusun">Dusun</label>
+                            <input type="text" class="form-control" id="dusun" name="dusun" 
+                                   value="{{ official.dusun|default:'' }}" 
+                                   placeholder="Nama dusun">
+                        </div>
+                    </div>
+
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="lorong">Lorong</label>
+                            <input type="text" class="form-control" id="lorong" name="lorong" 
+                                   value="{{ official.lorong|default:'' }}" 
+                                   placeholder="Nama lorong">
+                        </div>
+                    </div>
+
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="house_number">Nomor Rumah</label>
+                            <input type="text" class="form-control" id="house_number" name="house_number" 
+                                   value="{{ official.house_number|default:'' }}" 
+                                   placeholder="Nomor rumah">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="rt_number">RT</label>
+                            <input type="text" class="form-control" id="rt_number" name="rt_number" 
+                                   value="{{ official.rt_number|default:'' }}" 
+                                   placeholder="Nomor RT"
+                                   maxlength="3">
+                        </div>
+                    </div>
+
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="rw_number">RW</label>
+                            <input type="text" class="form-control" id="rw_number" name="rw_number" 
+                                   value="{{ official.rw_number|default:'' }}" 
+                                   placeholder="Nomor RW"
+                                   maxlength="3">
+                        </div>
+                    </div>
+
+                    <div class="form-col-third">
+                        <div class="form-group">
+                            <label class="form-label" for="postal_code">Kode Pos</label>
+                            <input type="text" class="form-control" id="postal_code" name="postal_code" 
+                                   value="{{ official.postal_code|default:'' }}" 
+                                   placeholder="Kode pos"
+                                   maxlength="5">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="{% url 'village_profile:admin_officials' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Batal
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    {% if official %}Simpan Perubahan{% else %}Simpan Data{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Menyimpan data...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    console.log('Official Form initialized');
+
+    // Enhanced Penduduk autocomplete - declare early
+    const nameInput = $('#name');
+    const suggestionsContainer = $('.autocomplete-suggestions');
+    const detailInfoContainer = $('.penduduk-detail-info');
+    
+    let searchTimeout;
+    let selectedPenduduk = null;
+
+    // Variable to track if fields are locked
+    let isFieldsLocked = false;
+
+    // Function to lock data penduduk fields
+    function lockPendudukFields() {
+        isFieldsLocked = true;
+        $('#lockIndicator').show();
+        $('#unlockBtn').removeClass('hidden');
+        nameInput.attr('readonly', true);
+    }
+
+    // Function to unlock all fields
+    function unlockAllFields() {
+        isFieldsLocked = false;
+        $('#lockIndicator').hide();
+        $('#unlockBtn').addClass('hidden');
+        
+        // Remove readonly/disabled from all fields
+        $('#nik, #birth_date, #birth_place, #phone, #mobile, #email, #address, #education, #occupation, #dusun, #lorong, #rt_number, #rw_number, #house_number, #postal_code').attr('readonly', false).css('background-color', '');
+        $('#gender, #religion, #marital_status').attr('disabled', false).css('background-color', '');
+        nameInput.attr('readonly', false);
+        
+        // Clear penduduk_id to indicate manual edit
+        $('#penduduk_id').val('');
+        detailInfoContainer.html('<div class="detail-label"><i class="fas fa-info-circle"></i> Mode Edit Manual - Data tidak terkait dengan penduduk</div>').addClass('show');
+        
+        console.log('All fields unlocked for manual editing');
+    }
+
+    // Check if editing existing official with penduduk data
+    const existingPendudukId = $('#penduduk_id').val();
+    if (existingPendudukId) {
+        console.log('Existing penduduk detected, locking fields');
+        lockPendudukFields();
+        
+        // Show info that data is locked
+        detailInfoContainer.html(
+            '<div class="detail-label"><i class="fas fa-lock"></i> Data terkunci dari database penduduk</div>' +
+            '<div class="detail-value">Data pribadi dan kontak tidak bisa diubah karena terkait dengan data penduduk.</div>' +
+            '<div class="detail-value"><small>Klik tombol "Buka Kunci" jika ingin edit manual.</small></div>'
+        ).addClass('show');
+    }
+
+    // Unlock button handler
+    $('#unlockBtn').on('click', function() {
+        if (confirm('Apakah Anda yakin ingin membuka kunci data?\n\nSetelah dibuka, data tidak akan lagi tersinkron dengan database penduduk.')) {
+            unlockAllFields();
+        }
+    });
+
+    // Show/hide custom position field
+    $('#position').on('change', function() {
+        const customGroup = $('#custom_position_group');
+        if ($(this).val() === 'LAINNYA') {
+            customGroup.addClass('show');
+            $('#custom_position').attr('required', true);
+        } else {
+            customGroup.removeClass('show');
+            $('#custom_position').attr('required', false);
+        }
+    });
+
+    // Photo preview
+    $('#photo').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#newPhotoPreview').html('<img src="' + e.target.result + '" alt="Preview" class="photo-preview-img">').addClass('show');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Input handler for autocomplete
+    nameInput.on('input', function() {
+        const query = $(this).val().trim();
+        clearTimeout(searchTimeout);
+
+        if (query.length < 2) {
+            suggestionsContainer.removeClass('show').empty();
+            detailInfoContainer.removeClass('show');
+            selectedPenduduk = null;
+            $('#penduduk_id').val('');
+            return;
+        }
+
+        // Show loading
+        suggestionsContainer.html(
+            '<div class="autocomplete-suggestion">' +
+            '<i class="fas fa-spinner fa-spin"></i> Mencari data penduduk...' +
+            '</div>'
+        ).addClass('show');
+
+        searchTimeout = setTimeout(() => {
+            $.ajax({
+                url: '/village-profile/admin/api/search-penduduk/',
+                method: 'GET',
+                data: { 
+                    q: query, 
+                    limit: 10
+                },
+                timeout: 10000,
+                success: function(response) {
+                    console.log('API Response:', response);
+                    
+                    if (response.success && response.results && response.results.length > 0) {
+                        suggestionsContainer.empty();
+                        
+                        response.results.forEach(function(penduduk) {
+                            const suggestion = $('<div class="autocomplete-suggestion"></div>');
+                            suggestion.html(
+                                '<strong>' + (penduduk.name || 'Nama tidak tersedia') + '</strong><br>' +
+                                '<small>NIK: ' + (penduduk.nik || '-') + ' | ' + (penduduk.address || 'Alamat tidak tersedia') + '</small>'
+                            );
+                            suggestion.data('penduduk', penduduk);
+                            suggestionsContainer.append(suggestion);
+                        });
+                        
+                        suggestionsContainer.addClass('show');
+                    } else {
+                        suggestionsContainer.html(
+                            '<div class="autocomplete-suggestion">' +
+                            '<i class="fas fa-exclamation-triangle"></i> Tidak ada data ditemukan' +
+                            '</div>'
+                        ).addClass('show');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching penduduk:', error);
+                    suggestionsContainer.html(
+                        '<div class="autocomplete-suggestion">' +
+                        '<i class="fas fa-exclamation-circle"></i> Error: Gagal memuat data' +
+                        '</div>'
+                    ).addClass('show');
+                }
+            });
+        }, 300);
+    });
+
+    // Click handler for suggestions
+    suggestionsContainer.on('click', '.autocomplete-suggestion', function() {
+        const penduduk = $(this).data('penduduk');
+        if (!penduduk) return;
+
+        selectedPenduduk = penduduk;
+        
+        // Fill form fields and make them readonly
+        nameInput.val(penduduk.name || '').addClass('is-valid').attr('readonly', true);
+        $('#penduduk_id').val(penduduk.id || '');
+        
+        // Set readonly untuk field yang diambil dari data penduduk
+        if (penduduk.nik) {
+            $('#nik').val(penduduk.nik).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.birth_date) {
+            $('#birth_date').val(penduduk.birth_date).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.birth_place) {
+            $('#birth_place').val(penduduk.birth_place).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.phone) {
+            $('#phone').val(penduduk.phone).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.mobile || penduduk.phone) {
+            $('#mobile').val(penduduk.mobile || penduduk.phone).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.email) {
+            $('#email').val(penduduk.email).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.address) {
+            $('#address').val(penduduk.address).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.gender) {
+            $('#gender').val(penduduk.gender).attr('disabled', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.religion) {
+            $('#religion').val(penduduk.religion).attr('disabled', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.education) {
+            $('#education').val(penduduk.education).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.occupation) {
+            $('#occupation').val(penduduk.occupation).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.marital_status) {
+            $('#marital_status').val(penduduk.marital_status).attr('disabled', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.dusun) {
+            $('#dusun').val(penduduk.dusun).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.lorong) {
+            $('#lorong').val(penduduk.lorong).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.rt_number) {
+            $('#rt_number').val(penduduk.rt_number).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.rw_number) {
+            $('#rw_number').val(penduduk.rw_number).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.house_number) {
+            $('#house_number').val(penduduk.house_number).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+        if (penduduk.postal_code) {
+            $('#postal_code').val(penduduk.postal_code).attr('readonly', true).css('background-color', '#f8f9fc');
+        }
+
+        // Show detail info
+        let detailHtml = '<div class="detail-label"><i class="fas fa-check-circle"></i> Data penduduk berhasil dipilih</div>';
+        detailHtml += '<div class="detail-value"><strong>' + (penduduk.name || '') + '</strong></div>';
+        if (penduduk.nik) {
+            detailHtml += '<div class="detail-value">NIK: ' + penduduk.nik + '</div>';
+        }
+        if (penduduk.address) {
+            detailHtml += '<div class="detail-value">Alamat: ' + penduduk.address + '</div>';
+        }
+        
+        detailInfoContainer.html(detailHtml).addClass('show');
+        suggestionsContainer.removeClass('show').empty();
+
+        // Lock the fields after selection
+        lockPendudukFields();
+
+        // Visual feedback
+        setTimeout(() => nameInput.removeClass('is-valid'), 2000);
+    });
+
+    // Keyboard navigation
+    nameInput.on('keydown', function(e) {
+        const suggestions = suggestionsContainer.find('.autocomplete-suggestion');
+        const current = suggestions.filter('.highlighted');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (current.length === 0) {
+                suggestions.first().addClass('highlighted');
+            } else {
+                current.removeClass('highlighted');
+                const next = current.next('.autocomplete-suggestion');
+                if (next.length) {
+                    next.addClass('highlighted');
+                } else {
+                    suggestions.first().addClass('highlighted');
+                }
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (current.length === 0) {
+                suggestions.last().addClass('highlighted');
+            } else {
+                current.removeClass('highlighted');
+                const prev = current.prev('.autocomplete-suggestion');
+                if (prev.length) {
+                    prev.addClass('highlighted');
+                } else {
+                    suggestions.last().addClass('highlighted');
+                }
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (current.length > 0) {
+                current.trigger('click');
+            }
+        } else if (e.key === 'Escape') {
+            suggestionsContainer.removeClass('show').empty();
+        }
+    });
+
+    // Hide suggestions when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.autocomplete-wrapper').length) {
+            suggestionsContainer.removeClass('show');
+        }
+    });
+
+    // Form submission
+    $('#officialForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading
+        $('#loadingOverlay').addClass('show');
+
+        // Temporarily enable disabled fields for submission
+        const disabledFields = $('#gender, #religion, #marital_status').filter('[disabled]');
+        disabledFields.attr('disabled', false);
+
+        // Submit form using AJAX
+        const formData = new FormData(this);
+        
+        // Re-disable fields if they were locked
+        if (isFieldsLocked) {
+            disabledFields.attr('disabled', true);
+        }
+
+        $.ajax({
+            url: '{% url "village_profile:admin_save_official" %}',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#loadingOverlay').removeClass('show');
+                
+                if (response.success) {
+                    // Show success message
+                    alert('Data berhasil disimpan!');
+                    // Redirect to officials list
+                    window.location.href = '{% url "village_profile:admin_officials" %}';
+                } else {
+                    alert('Error: ' + (response.message || 'Gagal menyimpan data'));
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#loadingOverlay').removeClass('show');
+                console.error('Submit error:', error);
+                alert('Error: Gagal menyimpan data. Silakan coba lagi.');
+            }
+        });
+    });
+
+    console.log('All event handlers attached');
+});
+</script>
+{% endblock %}
+

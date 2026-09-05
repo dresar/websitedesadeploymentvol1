@@ -1,0 +1,460 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load currency %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/business/business-list.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="business-list-container">
+
+    <div class="business-page-header">
+        <div>
+            <h1 class="business-page-title">
+                <i class="fas fa-building"></i>Data BUMG
+            </h1>
+            <p class="business-page-subtitle">Kelola Badan Usaha Milik Gampong</p>
+        </div>
+        <div class="business-header-actions">
+            <a href="{% url 'admin_panel:bumg_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Tambah BUMG
+            </a>
+        </div>
+    </div>
+
+    <div class="business-search-filter">
+        <form method="GET" class="business-search-simple">
+            <input type="text" class="form-control" name="search"
+                   value="{{ search }}" placeholder="Cari nama BUMG, direktur, atau nomor SK...">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+            </button>
+            <a href="{% url 'admin_panel:bumg_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+            </a>
+        </form>
+    </div>
+
+    <div class="business-table-card">
+        <div class="business-table-card-header">
+            <h2 class="business-table-card-title">
+                <i class="fas fa-list"></i>Daftar BUMG
+                <span class="business-table-count-badge">{{ page_obj.paginator.count }}</span>
+            </h2>
+        </div>
+        <div class="business-table-card-body">
+
+            <div class="business-table-desktop">
+                <table class="business-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th>Nama BUMG</th>
+                            <th>Direktur</th>
+                            <th>Nomor SK</th>
+                            <th>Tanggal SK</th>
+                            <th>Modal Dasar</th>
+                            <th style="width: 100px;">Status</th>
+                            <th style="width: 120px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bumg in page_obj %}
+                        <tr>
+                            <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                            <td>
+                                <div class="business-table-cell-primary">{{ bumg.nama }}</div>
+                                <div class="business-table-cell-secondary">{{ bumg.bidang_usaha|truncatechars:50 }}</div>
+                            </td>
+                            <td>
+                                <div class="business-table-cell-primary">{{ bumg.direktur }}</div>
+                                <div class="business-table-cell-secondary">Komisaris: {{ bumg.komisaris }}</div>
+                            </td>
+                            <td>{{ bumg.nomor_sk }}</td>
+                            <td>{{ bumg.tanggal_sk|date:"d M Y" }}</td>
+                            <td>{{ bumg.modal_dasar|rupiah }}</td>
+                            <td>
+                                <span class="business-badge business-badge-{{ bumg.status }}">
+                                    {{ bumg.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="business-action-buttons">
+                                    <a href="{% url 'admin_panel:bumg_detail' bumg.id %}" class="btn btn-outline-info" title="Detail">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'admin_panel:bumg_edit' bumg.id %}" class="btn btn-outline-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if bumg.foto_bumg or bumg.logo_bumg %}
+                                    <button type="button" class="btn btn-outline-primary" 
+                                            onclick="showBusinessImagesModal('{{ bumg.nama|escapejs }}', 
+                                                    {% if bumg.foto_bumg %}'{{ bumg.foto_bumg.url }}'{% else %}null{% endif %}, 
+                                                    {% if bumg.logo_bumg %}'{{ bumg.logo_bumg.url }}'{% else %}null{% endif %})"
+                                            title="Lihat Gambar">
+                                        <i class="fas fa-images"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-outline-danger"
+                                    onclick="showBusinessDeleteModal('{% url 'admin_panel:bumg_delete' bumg.id  %}', '{{ bumg.nama|escapejs }}', 'BUMG')"
+                                    title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8">
+                                <div class="business-empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p class="business-empty-state-title">Tidak ada data BUMG</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="business-mobile-list">
+                {% for bumg in page_obj %}
+                <div class="business-mobile-card">
+                    <div class="business-mobile-card-header">
+                        <div>
+                            <h3 class="business-mobile-card-title">{{ bumg.nama }}</h3>
+                            <div class="business-mobile-card-subtitle">{{ bumg.direktur }}</div>
+                        </div>
+                        <div class="business-mobile-card-number">{{ forloop.counter0|add:page_obj.start_index }}</div>
+                    </div>
+                    <div class="business-mobile-card-body">
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Bidang</span>
+                            <span class="business-mobile-info-value">{{ bumg.bidang_usaha|truncatechars:30 }}</span>
+                        </div>
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Komisaris</span>
+                            <span class="business-mobile-info-value">{{ bumg.komisaris }}</span>
+                        </div>
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">No. SK</span>
+                            <span class="business-mobile-info-value">{{ bumg.nomor_sk }}</span>
+                        </div>
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Tanggal SK</span>
+                            <span class="business-mobile-info-value">{{ bumg.tanggal_sk|date:"d M Y" }}</span>
+                        </div>
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Modal Dasar</span>
+                            <span class="business-mobile-info-value">{{ bumg.modal_dasar|rupiah }}</span>
+                        </div>
+                    </div>
+                    <div class="business-mobile-card-footer">
+                        <div class="business-mobile-card-badges">
+                            <span class="business-badge business-badge-{{ bumg.status }}">
+                                {{ bumg.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="business-mobile-actions">
+                            <a href="{% url 'admin_panel:bumg_detail' bumg.id %}" class="btn btn-outline-info" title="Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_panel:bumg_edit' bumg.id %}" class="btn btn-outline-warning" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if bumg.foto_bumg or bumg.logo_bumg %}
+                            <button type="button" class="btn btn-outline-primary" 
+                                    onclick="showBusinessImagesModal('{{ bumg.nama|escapejs }}', 
+                                            {% if bumg.foto_bumg %}'{{ bumg.foto_bumg.url }}'{% else %}null{% endif %}, 
+                                            {% if bumg.logo_bumg %}'{{ bumg.logo_bumg.url }}'{% else %}null{% endif %})"
+                                    title="Lihat Gambar">
+                                <i class="fas fa-images"></i>
+                            </button>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-danger"
+                                    onclick="showBusinessDeleteModal('{% url 'admin_panel:bumg_delete' bumg.id  %}', '{{ bumg.nama|escapejs }}', 'BUMG')"
+                                    title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="business-empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p class="business-empty-state-title">Tidak ada data BUMG</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="business-pagination-wrapper">
+            <ul class="business-pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search %}&amp;search={{ search }}{% endif %}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}{% if tahun_filter %}&amp;tahun={{ tahun_filter }}{% endif %}">
+                            <span class="business-pagination-text">First</span><span class="d-md-none">«</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&amp;search={{ search }}{% endif %}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}{% if tahun_filter %}&amp;tahun={{ tahun_filter }}{% endif %}">‹</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&amp;search={{ search }}{% endif %}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}{% if tahun_filter %}&amp;tahun={{ tahun_filter }}{% endif %}">›</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&amp;search={{ search }}{% endif %}{% if status_filter %}&amp;status={{ status_filter }}{% endif %}{% if tahun_filter %}&amp;tahun={{ tahun_filter }}{% endif %}">
+                            <span class="business-pagination-text">Last</span><span class="d-md-none">»</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- BUMG Delete Confirmation Modal -->
+<div class="modal fade" id="bumgDeleteModal" tabindex="-1" role="dialog" aria-labelledby="bumgDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="bumgDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Konfirmasi Penghapusan BUMG
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Peringatan!</strong> Tindakan ini tidak dapat dibatalkan.
+                </div>
+                
+                <p>Apakah Anda yakin ingin menghapus BUMG <strong id="bumgDeleteName"></strong>?</p>
+                <p class="text-muted">Semua data terkait akan dihapus secara permanen.</p>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="bumgDeleteConfirm" required>
+                    <label class="form-check-label" for="bumgDeleteConfirm">
+                        Saya yakin ingin menghapus data BUMG ini
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <form id="bumgDeleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" id="bumgDeleteBtn" disabled>
+                        <i class="fas fa-trash"></i> Hapus BUMG
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// BUMG Delete Modal Functions
+function showBusinessDeleteModal(deleteUrl, businessName, businessType) {
+    // Set form action
+    $('#bumgDeleteForm').attr('action', deleteUrl);
+    
+    // Set business details
+    $('#bumgDeleteName').text(businessName);
+    
+    // Reset form
+    $('#bumgDeleteConfirm').prop('checked', false);
+    $('#bumgDeleteBtn').prop('disabled', true);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('bumgDeleteModal'));
+    modal.show();
+}
+
+// Handle delete confirmation checkbox
+$('#bumgDeleteConfirm').on('change', function() {
+    const confirmed = $(this).is(':checked');
+    $('#bumgDeleteBtn').prop('disabled', !confirmed);
+});
+
+// Handle delete form submission
+$('#bumgDeleteForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const form = $(this);
+    const btn = $('#bumgDeleteBtn');
+    const originalText = btn.html();
+    
+    // Show loading state
+    btn.html('<i class="fas fa-spinner fa-spin"></i> Menghapus...');
+    btn.prop('disabled', true);
+    
+    // Get CSRF token
+    const csrftoken = $('[name=csrfmiddlewaretoken]').val();
+    
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: form.serialize(),
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            if (response.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('bumgDeleteModal'));
+                modal.hide();
+                
+                // Show success message
+                if (typeof showAlert === 'function') {
+                    showAlert(response.message || 'BUMG berhasil dihapus', 'success');
+                } else {
+                    alert(response.message || 'BUMG berhasil dihapus');
+                }
+                
+                // Reload page
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Show error message
+                if (typeof showAlert === 'function') {
+                    showAlert(response.message || 'Gagal menghapus BUMG', 'error');
+                } else {
+                    alert(response.message || 'Gagal menghapus BUMG');
+                }
+                
+                // Reset button
+                btn.html(originalText);
+                btn.prop('disabled', false);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Delete error:', error);
+            
+            // Show error message
+            if (typeof showAlert === 'function') {
+                showAlert('Terjadi kesalahan saat menghapus BUMG', 'error');
+            } else {
+                alert('Terjadi kesalahan saat menghapus BUMG');
+            }
+            
+            // Reset button
+            btn.html(originalText);
+            btn.prop('disabled', false);
+        }
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('bumgDeleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        const modal = bootstrap.Modal.getInstance(this);
+        modal.hide();
+    }
+});
+
+// Reset modal when closed
+document.getElementById('bumgDeleteModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('bumgDeleteConfirm').checked = false;
+    document.getElementById('bumgDeleteBtn').disabled = true;
+    document.getElementById('bumgDeleteForm').reset();
+});
+
+// Function to show business images modal
+function showBusinessImagesModal(businessName, fotoUrl, logoUrl) {
+    // Remove existing modal if any
+    $('#businessImagesModal').remove();
+    
+    let modalContent = `
+        <div class="modal fade" id="businessImagesModal" tabindex="-1" role="dialog" aria-labelledby="businessImagesModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="businessImagesModalLabel">
+                            <i class="fas fa-images"></i> Gambar ${businessName}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+    `;
+    
+    if (fotoUrl) {
+        modalContent += `
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-camera"></i> Foto BUMG</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${fotoUrl}" alt="Foto BUMG" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (logoUrl) {
+        modalContent += `
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-image"></i> Logo BUMG</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${logoUrl}" alt="Logo BUMG" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    modalContent += `
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    $('body').append(modalContent);
+    
+    // Show modal using Bootstrap 5.3.0 syntax
+    const modalElement = document.getElementById('businessImagesModal');
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+    });
+    modal.show();
+    
+    // Add event listeners for proper cleanup
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        modal.dispose();
+        modalElement.remove();
+    });
+}
+
+console.log('BUMG list page initialized with delete modal');
+</script>
+{% endblock extra_js %}

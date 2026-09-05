@@ -1,0 +1,1687 @@
+{% load static %}
+{% load role_permissions %}
+{% load admin_utils %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="{% static 'css/admin/admin-base.css' %}">
+    
+    <!-- Django Summernote CSS - handled by django-summernote -->
+    <style>
+        /* Summernote Editor Styling */
+        .note-editor {
+            border-radius: 8px !important;
+            border: 1px solid #d1d5db !important;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .note-toolbar {
+            background: #f8fafc !important;
+            border-bottom: 1px solid #d1d5db !important;
+            border-radius: 8px 8px 0 0 !important;
+        }
+        
+        .note-btn {
+            border-radius: 4px !important;
+            margin: 2px !important;
+            border: 1px solid transparent !important;
+        }
+        
+        .note-btn:hover {
+            background: #f3f4f6 !important;
+            border-color: #d1d5db !important;
+        }
+        
+        .note-btn.active {
+            background: #3b82f6 !important;
+            color: #ffffff !important;
+            border-color: #3b82f6 !important;
+        }
+        
+        .note-editable {
+            font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+            padding: 15px !important;
+        }
+        
+        .note-editable:focus {
+            outline: none !important;
+        }
+        
+        /* Summernote Modal Styling */
+        .note-modal {
+            border-radius: 8px !important;
+        }
+        
+        .note-modal .modal-header {
+            background: #f8fafc !important;
+            border-bottom: 1px solid #d1d5db !important;
+        }
+        
+        .note-modal .modal-footer {
+            background: #f8fafc !important;
+            border-top: 1px solid #d1d5db !important;
+        }
+    </style>
+
+    <style>
+        .nav-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 0.5rem 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Header stability fixes */
+        .admin-header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .admin-header .navbar {
+            min-height: 60px;
+        }
+        
+        /* Reduce spacing between header and main content */
+        .main-content {
+            margin-top: 0;
+            padding-top: 0;
+        }
+        
+        .main-content .container-fluid {
+            padding-top: 0.5rem;
+            padding-bottom: 0;
+        }
+        
+        .main-content .row {
+            margin: 0;
+        }
+        
+        .main-content main {
+            padding: 0;
+        }
+        
+        /* Remove default margins and padding that create unwanted spacing */
+        .main-content .content-wrapper {
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Ensure dashboard content starts immediately after header */
+        .main-content .container-fluid .row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        .main-content .container-fluid .row > * {
+            padding-left: 0;
+            padding-right: 0;
+        }
+        
+        .admin-header .d-flex {
+            gap: 0.5rem;
+        }
+        
+        .admin-header .navbar-brand {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 300px;
+        }
+        
+        .admin-header .navbar-brand h1 {
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        /* Ensure dropdown doesn't affect layout */
+        .admin-header .dropdown {
+            position: relative;
+        }
+        
+        .admin-header .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: auto;
+            z-index: 1001;
+        }
+        
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .admin-header .navbar-brand {
+                max-width: 150px;
+            }
+            
+            .admin-header .navbar-brand h1 {
+                font-size: 0.9rem;
+            }
+            
+            .admin-header .navbar {
+                min-height: 50px;
+                padding: 0.25rem 0;
+            }
+            
+            .admin-header .container-fluid {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            
+            /* Reduce spacing on mobile */
+            .main-content .container-fluid {
+                padding-top: 0.25rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .admin-header .navbar-brand {
+                max-width: 120px;
+            }
+            
+            .admin-header .navbar-brand h1 {
+                font-size: 0.8rem;
+            }
+            
+            .admin-header .navbar {
+                min-height: 45px;
+            }
+            
+            /* Even tighter spacing on small mobile */
+            .main-content .container-fluid {
+                padding-top: 0.125rem;
+            }
+        }
+        
+    </style>
+
+
+    {% block extra_css %}
+    {% endblock extra_css %}
+
+    <title>{% block title %}Admin Panel{% endblock %}</title>
+</head>
+<body>
+
+    <nav class="sidebar" id="sidebarMenu">
+        <div class="sidebar-sticky">
+
+            <div class="sidebar-header">
+                <a href="{% url 'admin_panel:dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+
+
+            <ul class="nav flex-column">
+
+                <li class="nav-item">
+                    <a href="{% url 'admin_panel:dashboard' %}" class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-home me-2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+
+
+
+
+                {% if user|can_view:"references" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'references' or active_submenu in 'references_dashboard,penduduk,dusun,lorong,rw,rt,disabilitas,pelajar,keluarga,global_import,import_export_dashboard' %}active{% endif %}" data-bs-toggle="collapse" href="#referencesMenu" role="button" aria-expanded="{% if active_menu == 'references' or active_submenu in 'references_dashboard,penduduk,dusun,lorong,rw,rt,disabilitas,pelajar,keluarga,global_import,import_export_dashboard' %}true{% else %}false{% endif %}" aria-controls="referencesMenu">
+                        <i class="fas fa-database me-2"></i>
+                        <span>Data Referensi</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'references' or active_submenu in 'references_dashboard,penduduk,dusun,lorong,rw,rt,disabilitas,pelajar,keluarga,global_import,import_export_dashboard' %}show{% endif %}" id="referencesMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_dashboard' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'references_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard Referensi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_penduduk_list' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'penduduk' %}active{% endif %}">
+                                    <i class="fas fa-users me-2"></i>
+                                    Data Penduduk
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_dusun_list' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'dusun' %}active{% endif %}">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Data Dusun
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_lorong_list' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'lorong' %}active{% endif %}">
+                                    <i class="fas fa-road me-2"></i>
+                                    Data Lorong
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_rw_list' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'rw' %}active{% endif %}">
+                                    <i class="fas fa-users me-2"></i>
+                                    Data RW
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_rt_list' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'rt' %}active{% endif %}">
+                                    <i class="fas fa-home me-2"></i>
+                                    Data RT
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_disabilitas_list' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'disabilitas' %}active{% endif %}">
+                                    <i class="fas fa-wheelchair me-2"></i>
+                                    Data Disabilitas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_pelajar_list' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'pelajar' %}active{% endif %}">
+                                    <i class="fas fa-graduation-cap me-2"></i>
+                                    Data Pelajar
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:references_keluarga_list' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'keluarga' %}active{% endif %}">
+                                    <i class="fas fa-home me-2"></i>
+                                    Data Keluarga
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <div class="nav-divider"></div>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'references:global_import' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'global_import' %}active{% endif %}">
+                                    <i class="fas fa-file-upload me-2"></i>
+                                    Global Import
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'references:import_export_dashboard' %}" class="nav-link {% if active_menu == 'references' and active_submenu == 'import_export_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>
+                                    Export Dashboard
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"beneficiaries" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'beneficiaries' or active_submenu in 'beneficiaries_dashboard,beneficiaries_list,beneficiaries_add,beneficiaries_edit,beneficiaries_detail,distributions,distributions_add,categories,aid_programs,verifications' %}active{% endif %}" data-bs-toggle="collapse" href="#beneficiariesMenu" role="button" aria-expanded="{% if active_menu == 'beneficiaries' or active_submenu in 'beneficiaries_dashboard,beneficiaries_list,beneficiaries_add,beneficiaries_edit,beneficiaries_detail,distributions,distributions_add,categories,aid_programs,verifications' %}true{% else %}false{% endif %}" aria-controls="beneficiariesMenu">
+                        <i class="fas fa-hand-holding-heart me-2"></i>
+                        <span>Penerima Bantuan</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'beneficiaries' or active_submenu in 'beneficiaries_dashboard,beneficiaries_list,beneficiaries_add,beneficiaries_edit,beneficiaries_detail,distributions,distributions_add,categories,aid_programs,verifications' %}show{% endif %}" id="beneficiariesMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:beneficiaries_dashboard' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'beneficiaries_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:beneficiaries_list' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'beneficiaries_list' %}active{% endif %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Daftar Penerima
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:beneficiary_create' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'beneficiaries_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Penerima
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:aid_distributions_list' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'distributions' %}active{% endif %}">
+                                    <i class="fas fa-gift me-2"></i>
+                                    Distribusi Bantuan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:aid_distribution_create' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'distributions_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Distribusi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:categories_list' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'categories' %}active{% endif %}">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Kategori Bantuan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:beneficiaries_aid_programs' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'aid_programs' %}active{% endif %}">
+                                    <i class="fas fa-gift me-2"></i>
+                                    Program Bantuan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:beneficiaries_verifications' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'verifications' %}active{% endif %}">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Verifikasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:beneficiaries_reports' %}" class="nav-link {% if active_menu == 'beneficiaries' and active_submenu == 'reports' %}active{% endif %}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Laporan
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"business" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'business' or active_submenu in 'business_dashboard,umkm,umkm_add,umkm_edit,umkm_detail,koperasi,koperasi_add,koperasi_edit,koperasi_detail,bumg,bumg_add,bumg_edit,bumg_detail,layanan_jasa,layanan_jasa_add,layanan_jasa_edit,layanan_jasa_detail,categories,business_registrations' %}active{% endif %}" data-bs-toggle="collapse" href="#businessMenu" role="button" aria-expanded="{% if active_menu == 'business' or active_submenu in 'business_dashboard,umkm,umkm_add,umkm_edit,umkm_detail,koperasi,koperasi_add,koperasi_edit,koperasi_detail,bumg,bumg_add,bumg_edit,bumg_detail,layanan_jasa,layanan_jasa_add,layanan_jasa_edit,layanan_jasa_detail,categories,business_registrations' %}true{% else %}false{% endif %}" aria-controls="businessMenu">
+                        <i class="fas fa-store me-2"></i>
+                        <span>Usaha</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'business' or active_submenu in 'business_dashboard,umkm,umkm_add,umkm_edit,umkm_detail,koperasi,koperasi_add,koperasi_edit,koperasi_detail,bumg,bumg_add,bumg_edit,bumg_detail,layanan_jasa,layanan_jasa_add,layanan_jasa_edit,layanan_jasa_detail,categories,business_registrations' %}show{% endif %}" id="businessMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:business_dashboard' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'business_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:umkm_list' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'umkm' %}active{% endif %}">
+                                    <i class="fas fa-industry me-2"></i>
+                                    UMKM
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:umkm_create' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'umkm_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah UMKM
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:koperasi_list' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'koperasi' %}active{% endif %}">
+                                    <i class="fas fa-handshake me-2"></i>
+                                    Koperasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:koperasi_create' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'koperasi_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Koperasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:bumg_list' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'bumg' %}active{% endif %}">
+                                    <i class="fas fa-building me-2"></i>
+                                    BUMG
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:bumg_create' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'bumg_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah BUMG
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:layanan_jasa_list' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'layanan_jasa' %}active{% endif %}">
+                                    <i class="fas fa-tools me-2"></i>
+                                    Layanan Jasa
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:layanan_jasa_create' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'layanan_jasa_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Layanan Jasa
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:business_categories_list' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'categories' %}active{% endif %}">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Kategori Usaha
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <div class="nav-divider"></div>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:business_registration_list' %}" class="nav-link {% if active_menu == 'business' and active_submenu == 'business_registrations' %}active{% endif %}">
+                                    <i class="fas fa-clipboard-list me-2"></i>
+                                    Pendaftaran Bisnis
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"complaints" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'complaints' or active_submenu in 'complaints_dashboard,complaints_list,complaints_detail,complaints_edit,categories' %}active{% endif %}" data-bs-toggle="collapse" href="#complaintsMenu" role="button" aria-expanded="{% if active_menu == 'complaints' or active_submenu in 'complaints_dashboard,complaints_list,complaints_detail,complaints_edit,categories' %}true{% else %}false{% endif %}" aria-controls="complaintsMenu">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span>Keluhan</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'complaints' or active_submenu in 'complaints_dashboard,complaints_list,complaints_detail,complaints_edit,categories' %}show{% endif %}" id="complaintsMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:complaints_dashboard' %}" class="nav-link {% if active_menu == 'complaints' and active_submenu == 'complaints_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:complaints_list' %}" class="nav-link {% if active_menu == 'complaints' and active_submenu == 'complaints_list' %}active{% endif %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Daftar Keluhan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:complaint_categories_list' %}" class="nav-link {% if active_menu == 'complaints' and active_submenu == 'categories' %}active{% endif %}">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Kategori Keluhan
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"documents" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'documents' or active_submenu in 'documents_dashboard,documents_list,document_create,document_edit,document_detail,document_categories' %}active{% endif %}" data-bs-toggle="collapse" href="#documentsMenu" role="button" aria-expanded="{% if active_menu == 'documents' or active_submenu in 'documents_dashboard,documents_list,document_create,document_edit,document_detail,document_categories' %}true{% else %}false{% endif %}" aria-controls="documentsMenu">
+                        <i class="fas fa-file-alt me-2"></i>
+                        <span>Dokumen Transparansi</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'documents' or active_submenu in 'documents_dashboard,documents_list,document_create,document_edit,document_detail,document_categories' %}show{% endif %}" id="documentsMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:documents_dashboard' %}" class="nav-link {% if active_menu == 'documents' and active_submenu == 'documents_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:documents_list' %}" class="nav-link {% if active_menu == 'documents' and active_submenu == 'documents_list' %}active{% endif %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Daftar Dokumen
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:document_create' %}" class="nav-link {% if active_menu == 'documents' and active_submenu == 'document_create' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Dokumen
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:document_categories_list' %}" class="nav-link {% if active_menu == 'documents' and active_submenu == 'document_categories' %}active{% endif %}">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Kategori Dokumen
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"tourism" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'tourism' or active_submenu in 'tourism_dashboard,locations,locations_add,locations_edit,locations_detail,categories,categories_add,events,events_add,packages,packages_add,reviews,gallery,faq,reports,settings' %}active{% endif %}" data-bs-toggle="collapse" href="#tourismMenu" role="button" aria-expanded="{% if active_menu == 'tourism' or active_submenu in 'tourism_dashboard,locations,locations_add,locations_edit,locations_detail,categories,categories_add,events,events_add,packages,packages_add,reviews,gallery,faq,reports,settings' %}true{% else %}false{% endif %}" aria-controls="tourismMenu">
+                        <i class="fas fa-map-marked-alt me-2"></i>
+                        <span>Wisata</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'tourism' or active_submenu in 'tourism_dashboard,locations,locations_add,locations_edit,locations_detail,categories,categories_add,events,events_add,packages,packages_add,reviews,gallery,faq,reports,settings' %}show{% endif %}" id="tourismMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_dashboard' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'tourism_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_locations_list' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'locations' %}active{% endif %}">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Lokasi Wisata
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_location_create' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'locations_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Lokasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_categories_list' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'categories' %}active{% endif %}">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Kategori Wisata
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_category_create' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'categories_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Kategori
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_events_list' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'events' %}active{% endif %}">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    Event Wisata
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_event_create' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'events_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Event
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_packages_list' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'packages' %}active{% endif %}">
+                                    <i class="fas fa-box me-2"></i>
+                                    Paket Wisata
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_package_create' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'packages_add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Paket
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_reviews_list' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'reviews' %}active{% endif %}">
+                                    <i class="fas fa-star me-2"></i>
+                                    Review Wisata
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_gallery_list' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'gallery' %}active{% endif %}">
+                                    <i class="fas fa-images me-2"></i>
+                                    Galeri Wisata
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_faq_list' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'faq' %}active{% endif %}">
+                                    <i class="fas fa-question-circle me-2"></i>
+                                    FAQ Wisata
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_reports' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'reports' %}active{% endif %}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Laporan Wisata
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:tourism_settings' %}" class="nav-link {% if active_menu == 'tourism' and active_submenu == 'settings' %}active{% endif %}">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Pengaturan Wisata
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"posyandu" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'posyandu' or active_submenu in 'posyandu_dashboard,locations,schedules,health_records,kaders,ibu_hamil,immunizations,nutrition,stunting,patient_types,reports' %}active{% endif %}" data-bs-toggle="collapse" href="#posyanduMenu" role="button" aria-expanded="{% if active_menu == 'posyandu' or active_submenu in 'posyandu_dashboard,locations,schedules,health_records,kaders,ibu_hamil,immunizations,nutrition,stunting,patient_types,reports' %}true{% else %}false{% endif %}" aria-controls="posyanduMenu">
+                        <i class="fas fa-heartbeat me-2"></i>
+                        <span>Posyandu</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'posyandu' or active_submenu in 'posyandu_dashboard,locations,schedules,health_records,kaders,ibu_hamil,immunizations,nutrition,stunting,patient_types,reports' %}show{% endif %}" id="posyanduMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:posyandu_admin' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'posyandu_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:locations' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'locations' %}active{% endif %}">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Lokasi Posyandu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:schedules' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'schedules' %}active{% endif %}">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    Jadwal Posyandu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:health_records' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'health_records' %}active{% endif %}">
+                                    <i class="fas fa-heartbeat me-2"></i>
+                                    Rekam Medis
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:kaders' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'kaders' %}active{% endif %}">
+                                    <i class="fas fa-user-nurse me-2"></i>
+                                    Kader Posyandu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:ibu_hamil' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'ibu_hamil' %}active{% endif %}">
+                                    <i class="fas fa-baby me-2"></i>
+                                    Ibu Hamil
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:immunizations' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'immunizations' %}active{% endif %}">
+                                    <i class="fas fa-syringe me-2"></i>
+                                    Imunisasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:nutrition_data' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'nutrition' %}active{% endif %}">
+                                    <i class="fas fa-apple-alt me-2"></i>
+                                    Data Gizi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:stunting_data' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'stunting' %}active{% endif %}">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Data Stunting
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:patient_types' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'patient_types' %}active{% endif %}">
+                                    <i class="fas fa-users me-2"></i>
+                                    Jenis Pasien
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:posyandu:reports' %}" class="nav-link {% if active_menu == 'posyandu' and active_submenu == 'reports' %}active{% endif %}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Laporan Posyandu
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'hero_images' %}active{% endif %}" data-bs-toggle="collapse" href="#heroImagesMenu" role="button" aria-expanded="{% if active_menu == 'hero_images' %}true{% else %}false{% endif %}" aria-controls="heroImagesMenu">
+                        <i class="fas fa-images me-2"></i>
+                        <span>Hero Images</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'hero_images' %}show{% endif %}" id="heroImagesMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:hero_images:hero_images_list' %}" class="nav-link {% if active_menu == 'hero_images' and active_submenu == 'list' %}active{% endif %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Daftar Gambar
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:hero_images:hero_image_create' %}" class="nav-link {% if active_menu == 'hero_images' and active_submenu == 'add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Gambar
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+
+                {% if user|can_view:"organization" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'organization' or active_submenu in 'organization_dashboard,perangkat_desa,lembaga_adat,pkk,karang_taruna' %}active{% endif %}" data-bs-toggle="collapse" href="#organizationMenu" role="button" aria-expanded="{% if active_menu == 'organization' or active_submenu in 'organization_dashboard,perangkat_desa,lembaga_adat,pkk,karang_taruna' %}true{% else %}false{% endif %}" aria-controls="organizationMenu">
+                        <i class="fas fa-sitemap me-2"></i>
+                        <span>Organisasi</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'organization' or active_submenu in 'organization_dashboard,perangkat_desa,lembaga_adat,pkk,karang_taruna' %}show{% endif %}" id="organizationMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:organization:organization_list' %}" class="nav-link {% if active_menu == 'organization' and active_submenu == 'dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard Organisasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:organization:admin_perangkat_desa_list' %}" class="nav-link {% if active_menu == 'organization' and active_submenu == 'perangkat_desa' %}active{% endif %}">
+                                    <i class="fas fa-user-tie me-2"></i>
+                                    Perangkat Desa
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:organization:admin_lembaga_adat_list' %}" class="nav-link {% if active_menu == 'organization' and active_submenu == 'lembaga_adat' %}active{% endif %}">
+                                    <i class="fas fa-landmark me-2"></i>
+                                    Lembaga Adat
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:organization:admin_pkk_list' %}" class="nav-link {% if active_menu == 'organization' and active_submenu == 'pkk' %}active{% endif %}">
+                                    <i class="fas fa-female me-2"></i>
+                                    PKK
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:organization:admin_karang_taruna_list' %}" class="nav-link {% if active_menu == 'organization' and active_submenu == 'karang_taruna' %}active{% endif %}">
+                                    <i class="fas fa-users me-2"></i>
+                                    Karang Taruna
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"news" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'news' or active_submenu in 'news_dashboard,list,add,edit,detail,categories,tags,comments,announcements,announcements_add,reports' %}active{% endif %}" data-bs-toggle="collapse" href="#newsMenu" role="button" aria-expanded="{% if active_menu == 'news' or active_submenu in 'news_dashboard,list,add,edit,detail,categories,tags,comments,announcements,announcements_add,reports' %}true{% else %}false{% endif %}" aria-controls="newsMenu">
+                        <i class="fas fa-newspaper me-2"></i>
+                        <span>Berita</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'news' or active_submenu in 'news_dashboard,list,add,edit,detail,categories,tags,comments,announcements,announcements_add,reports' %}show{% endif %}" id="newsMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_dashboard' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'news_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_list' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'list' %}active{% endif %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Daftar Berita
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_create' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'add' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Tambah Berita
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_categories_list' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'categories' %}active{% endif %}">
+                                    <i class="fas fa-folder me-2"></i>
+                                    Kategori Berita
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_tags_list' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'tags' %}active{% endif %}">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Tag Berita
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_announcements_list' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'announcements' %}active{% endif %}">
+                                    <i class="fas fa-bullhorn me-2"></i>
+                                    Pengumuman
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_announcement_create' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'announcements_add' %}active{% endif %}">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Tambah Pengumuman
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_comments' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'comments' %}active{% endif %}">
+                                    <i class="fas fa-comments me-2"></i>
+                                    Komentar Berita
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:news_reports' %}" class="nav-link {% if active_menu == 'news' and active_submenu == 'reports' %}active{% endif %}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Laporan Berita
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"village_profile" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'village_profile' or active_submenu in 'village_dashboard,general_info,officials,geography,demography,history,facilities,gallery' %}active{% endif %}" data-bs-toggle="collapse" href="#villageProfileMenu" role="button" aria-expanded="{% if active_menu == 'village_profile' or active_submenu in 'village_dashboard,general_info,officials,geography,demography,history,facilities,gallery' %}true{% else %}false{% endif %}" aria-controls="villageProfileMenu">
+                        <i class="fas fa-flag me-2"></i>
+                        <span>Profil Desa</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'village_profile' or active_submenu in 'village_dashboard,general_info,officials,geography,demography,history,facilities,gallery' %}show{% endif %}" id="villageProfileMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'village_profile:admin_dashboard' %}" class="nav-link {% if active_menu == 'village_profile' and active_submenu == 'dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'village_profile:admin_general_info' %}" class="nav-link {% if active_submenu == 'general_info' %}active{% endif %}">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informasi Umum
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'village_profile:admin_officials' %}" class="nav-link {% if active_submenu == 'officials' %}active{% endif %}">
+                                    <i class="fas fa-users-cog me-2"></i>
+                                    Struktur Organisasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'village_profile:admin_geography' %}" class="nav-link {% if active_submenu == 'geography' %}active{% endif %}">
+                                    <i class="fas fa-map me-2"></i>
+                                    Geografi Desa
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'village_profile:admin_demography' %}" class="nav-link {% if active_submenu == 'demography' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Demografi Desa
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'village_profile:admin_history' %}" class="nav-link {% if active_submenu == 'history' %}active{% endif %}">
+                                    <i class="fas fa-history me-2"></i>
+                                    Sejarah Desa
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'village_profile:admin_facilities' %}" class="nav-link {% if active_submenu == 'facilities' %}active{% endif %}">
+                                    <i class="fas fa-building me-2"></i>
+                                    Fasilitas Desa
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'village_profile:admin_gallery' %}" class="nav-link {% if active_submenu == 'gallery' %}active{% endif %}">
+                                    <i class="fas fa-images me-2"></i>
+                                    Galeri Foto
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"reports" %}
+                <li class="nav-item">
+                    <a href="{% url 'admin_panel:reports_dashboard' %}" class="nav-link {% if active_menu == 'reports' %}active{% endif %}">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        <span>Laporan</span>
+                    </a>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"settings" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'settings' or active_submenu in 'index,website,cache,media,security,seo,maintenance,system,users,logs' %}active{% endif %}" data-bs-toggle="collapse" href="#settingsMenu" role="button" aria-expanded="{% if active_menu == 'settings' or active_submenu in 'index,website,cache,media,security,seo,maintenance,system,users,logs' %}true{% else %}false{% endif %}" aria-controls="settingsMenu">
+                        <i class="fas fa-cog me-2"></i>
+                        <span>Pengaturan</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'settings' or active_submenu in 'index,website,cache,media,security,seo,maintenance,system,users,logs' %}show{% endif %}" id="settingsMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'core:settings' %}" class="nav-link {% if active_submenu == 'index' %}active{% endif %}">
+                                    <i class="fas fa-tachometer-alt me-2"></i>
+                                    Dashboard Pengaturan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:website_settings' %}" class="nav-link {% if active_submenu == 'website' %}active{% endif %}">
+                                    <i class="fas fa-globe me-2"></i>
+                                    Pengaturan Website
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:cache_settings' %}" class="nav-link {% if active_submenu == 'cache' %}active{% endif %}">
+                                    <i class="fas fa-database me-2"></i>
+                                    Pengaturan Cache
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:media_settings' %}" class="nav-link {% if active_submenu == 'media' %}active{% endif %}">
+                                    <i class="fas fa-image me-2"></i>
+                                    Pengaturan Media
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:security_settings' %}" class="nav-link {% if active_submenu == 'security' %}active{% endif %}">
+                                    <i class="fas fa-shield-alt me-2"></i>
+                                    Pengaturan Keamanan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:seo_settings' %}" class="nav-link {% if active_submenu == 'seo' %}active{% endif %}">
+                                    <i class="fas fa-search me-2"></i>
+                                    Pengaturan SEO
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:maintenance_mode' %}" class="nav-link {% if active_submenu == 'maintenance' %}active{% endif %}">
+                                    <i class="fas fa-tools me-2"></i>
+                                    Mode Maintenance
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:system_info' %}" class="nav-link {% if active_submenu == 'system' %}active{% endif %}">
+                                    <i class="fas fa-server me-2"></i>
+                                    Informasi Sistem
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:user_management' %}" class="nav-link {% if active_submenu == 'users' %}active{% endif %}">
+                                    <i class="fas fa-users me-2"></i>
+                                    Manajemen Pengguna
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:activity_logs' %}" class="nav-link {% if active_submenu == 'logs' %}active{% endif %}">
+                                    <i class="fas fa-clipboard-list me-2"></i>
+                                    Log Aktivitas
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+                <!-- Database Reset Management -->
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'database_reset' or active_submenu in 'database_reset_list,database_reset_create,database_reset_detail,database_reset_edit,database_reset_execute,database_backup_list,database_backup_create' %}active{% endif %}" data-bs-toggle="collapse" href="#databaseResetMenu" role="button" aria-expanded="{% if active_menu == 'database_reset' or active_submenu in 'database_reset_list,database_reset_create,database_reset_detail,database_reset_edit,database_reset_execute,database_backup_list,database_backup_create' %}true{% else %}false{% endif %}" aria-controls="databaseResetMenu">
+                        <i class="fas fa-database me-2"></i>
+                        <span>Database Reset</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'database_reset' or active_submenu in 'database_reset_list,database_reset_create,database_reset_detail,database_reset_edit,database_reset_execute,database_backup_list,database_backup_create' %}show{% endif %}" id="databaseResetMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'core:database_reset_list' %}" class="nav-link {% if active_menu == 'database_reset' and active_submenu == 'database_reset_list' %}active{% endif %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Daftar Konfigurasi
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:database_reset_create' %}" class="nav-link {% if active_menu == 'database_reset' and active_submenu == 'database_reset_create' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Buat Konfigurasi Baru
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <div class="nav-divider"></div>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:database_backup_list' %}" class="nav-link {% if active_menu == 'database_reset' and active_submenu == 'database_backup_list' %}active{% endif %}">
+                                    <i class="fas fa-save me-2"></i>
+                                    Kelola Backup
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'core:database_backup_create' %}" class="nav-link {% if active_menu == 'database_reset' and active_submenu == 'database_backup_create' %}active{% endif %}">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Buat Backup Manual
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+
+                {% if user|can_view:"layanan" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'layanan' or active_submenu in 'layanan_dashboard,feedback,faq,contact,service' %}active{% endif %}" data-bs-toggle="collapse" href="#layananMenu" role="button" aria-expanded="{% if active_menu == 'layanan' or active_submenu in 'layanan_dashboard,feedback,faq,contact,service' %}true{% else %}false{% endif %}" aria-controls="layananMenu">
+                        <i class="fas fa-cogs me-2"></i>
+                        <span>Layanan</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'layanan' or active_submenu in 'layanan_dashboard,feedback,faq,contact,service' %}show{% endif %}" id="layananMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:layanan:dashboard' %}" class="nav-link {% if active_menu == 'layanan' and active_submenu == 'dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard Layanan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:layanan:feedback_list' %}" class="nav-link {% if active_submenu == 'feedback' %}active{% endif %}">
+                                    <i class="fas fa-comments me-2"></i>
+                                    Feedback & Komentar
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:layanan:faq_list' %}" class="nav-link {% if active_submenu == 'faq' %}active{% endif %}">
+                                    <i class="fas fa-question-circle me-2"></i>
+                                    FAQ
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:layanan:contact_list' %}" class="nav-link {% if active_submenu == 'contact' %}active{% endif %}">
+                                    <i class="fas fa-phone me-2"></i>
+                                    Kontak Layanan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:layanan:service_list' %}" class="nav-link {% if active_submenu == 'service' %}active{% endif %}">
+                                    <i class="fas fa-tools me-2"></i>
+                                    Layanan
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+                {% if user|can_view:"letters" %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_menu == 'letters' or active_submenu in 'letters_dashboard,letters_list,letters_create,letters_edit,letters_detail,letters_types,letters_templates,letters_settings,letters_analytics,requests,outgoing' %}active{% endif %}" data-bs-toggle="collapse" href="#lettersMenu" role="button" aria-expanded="{% if active_menu == 'letters' or active_submenu in 'letters_dashboard,letters_list,letters_create,letters_edit,letters_detail,letters_types,letters_templates,letters_settings,letters_analytics,requests,outgoing' %}true{% else %}false{% endif %}" aria-controls="lettersMenu">
+                        <i class="fas fa-envelope me-2"></i>
+                        <span>Manajemen Surat</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse {% if active_menu == 'letters' or active_submenu in 'letters_dashboard,letters_list,letters_create,letters_edit,letters_detail,letters_types,letters_templates,letters_settings,letters_analytics,requests,outgoing' %}show{% endif %}" id="lettersMenu">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:admin_dashboard' %}" class="nav-link {% if active_menu == 'letters' and active_submenu == 'dashboard' %}active{% endif %}">
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    Dashboard Surat
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:admin_letter_list' %}" class="nav-link {% if active_menu == 'letters' and active_submenu == 'list' %}active{% endif %}">
+                                    <i class="fas fa-list me-2"></i>
+                                    Semua Surat
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:letter_request_list' %}" class="nav-link {% if active_submenu == 'requests' %}active{% endif %}">
+                                    <i class="fas fa-inbox me-2"></i>
+                                    Permintaan Surat
+                                    <span class="badge bg-warning ms-auto" style="font-size: 0.6rem;">Masuk</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:outgoing_letters_list' %}" class="nav-link {% if active_submenu == 'outgoing' %}active{% endif %}">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    Surat Keluar
+                                    <span class="badge bg-info ms-auto" style="font-size: 0.6rem;">Keluar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:admin_letter_create' %}" class="nav-link {% if active_submenu == 'create' %}active{% endif %}">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Buat Surat Baru
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:letter_request_create' %}" class="nav-link {% if active_submenu == 'request_create' %}active{% endif %}">
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Buat Permintaan
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:admin_letter_type_list' %}" class="nav-link {% if active_submenu == 'types' %}active{% endif %}">
+                                    <i class="fas fa-tags me-2"></i>
+                                    Jenis Surat
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:admin_template_list' %}" class="nav-link {% if active_submenu == 'templates' %}active{% endif %}">
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    Template Surat
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:admin_analytics' %}" class="nav-link {% if active_submenu == 'analytics' %}active{% endif %}">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Analytics
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'admin_panel:letters:admin_settings' %}" class="nav-link {% if active_submenu == 'settings' %}active{% endif %}">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Pengaturan
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
+
+
+
+                <li class="nav-item">
+                    <a href="{% url 'admin_panel:profile' %}" class="nav-link {% if active_menu == 'profile' %}active{% endif %}">
+                        <i class="fas fa-user-circle me-2"></i>
+                        <span>Profil</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+    <header class="admin-header">
+        <nav class="navbar navbar-light bg-white border-bottom shadow-sm">
+            <div class="container-fluid px-2 px-md-4">
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    <!-- Left side - Title area -->
+                    <div class="d-flex align-items-center">
+                        <button class="hamburger-toggle me-2" id="sidebarToggle" aria-label="Toggle Sidebar">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="navbar-brand mb-0">
+                            <h1 class="h4 mb-0 text-dark fw-bold">{% block page_title %}Dashboard{% endblock %}</h1>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side - Profile dropdown -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center p-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if user.userprofile.photo %}
+                                <img src="{{ user.userprofile.photo.url }}" alt="Profile Photo" class="rounded-circle me-0 me-md-2" style="width: 32px; height: 32px; object-fit: cover;">
+                            {% else %}
+                                <i class="fas fa-user-circle fa-lg me-0 me-md-2 text-muted"></i>
+                            {% endif %}
+                            <span class="d-none d-lg-inline text-dark fw-medium">{{ user.get_full_name|default:user.username }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a class="dropdown-item" href="{% url 'admin_panel:profile' %}">
+                                <i class="fas fa-user me-2"></i>Profil
+                            </a>
+                            <a class="dropdown-item" href="{% url 'core:settings' %}">
+                                <i class="fas fa-cog me-2"></i>Pengaturan
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <form method="post" action="{% url 'admin_panel:logout' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item" style="border: none; background: none; width: 100%; text-align: left;">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Keluar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="row">
+                <main role="main" class="col-12" id="mainContent">
+                    {% csrf_token %}
+
+
+
+                    {% if messages %}
+                        <div id="djangoMessages" style="display: none;">
+                            {% for message in messages %}
+                                <div data-message="{{ message }}" data-type="{{ message.tags }}"></div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+
+
+
+                    <div class="content-wrapper">
+                        {% block content %}
+                        {% endblock content %}
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    
+    <!-- Bootstrap Bundle JS (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+
+            (function enforceAccordionImmediately() {
+                console.log('🚨 IMMEDIATE ACCORDION ENFORCEMENT - STARTING...');
+                const sidebar = document.getElementById('sidebarMenu');
+                const allCollapses = sidebar.querySelectorAll('.collapse');
+
+                let activeSubmenu = null;
+                allCollapses.forEach(collapse => {
+                    const activeLink = collapse.querySelector('.nav-link.active');
+                    if (activeLink && !activeSubmenu) {
+                        activeSubmenu = collapse;
+                        console.log('✅ Active submenu found:', collapse.id);
+                    }
+                });
+
+                allCollapses.forEach(collapse => {
+                    collapse.classList.remove('show');
+                    const btn = document.querySelector(`[href="#${collapse.id}"]`);
+                    if (btn) {
+                        btn.classList.remove('active');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                console.log('❌ Forced close ALL submenus');
+
+                if (activeSubmenu) {
+                    activeSubmenu.classList.add('show');
+                    const btn = document.querySelector(`[href="#${activeSubmenu.id}"]`);
+                    if (btn) {
+                        btn.classList.add('active');
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                    console.log('✅ Opened active submenu:', activeSubmenu.id);
+                }
+
+                console.log('✅ IMMEDIATE ACCORDION ENFORCEMENT - DONE!');
+            })();
+
+            const djangoMessagesContainer = document.getElementById('djangoMessages');
+            if (djangoMessagesContainer) {
+                const messageElements = djangoMessagesContainer.querySelectorAll('[data-message]');
+                messageElements.forEach((el, index) => {
+                    const message = el.getAttribute('data-message');
+                    const type = el.getAttribute('data-type');
+
+                    let notificationType = 'info';
+                    if (type === 'success') notificationType = 'success';
+                    else if (type === 'error' || type === 'danger') notificationType = 'error';
+                    else if (type === 'warning') notificationType = 'warning';
+
+                    setTimeout(() => {
+                        showAlert(message, notificationType);
+                    }, index * 300);
+                });
+            }
+
+            const sidebar = document.getElementById('sidebarMenu');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            let lastClickedElement = null;
+            document.addEventListener('click', function(e) {
+                lastClickedElement = e.target;
+            }, true);
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                    sidebarOverlay.classList.toggle('active');
+                    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+                });
+            }
+
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+
+            // Disable automatic menu closing to let Django template handle menu states
+            // const menuToggleButtons = sidebar.querySelectorAll('[data-bs-toggle="collapse"]');
+            // menuToggleButtons.forEach(toggleBtn => {
+            //     toggleBtn.addEventListener('click', function(e) {
+            //         const targetId = this.getAttribute('href').substring(1);
+            //         const targetCollapse = document.getElementById(targetId);
+            //         console.log('🔘 Menu toggle clicked:', targetId);
+            //         // Let Django template handle menu states
+            //     }, true);
+            // });
+
+            const sidebarLinks = sidebar.querySelectorAll('.nav-link');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const isCollapseToggle = link.hasAttribute('data-bs-toggle');
+                    const isInSubmenu = link.closest('.collapse');
+                    const isMobile = sidebar.classList.contains('active');
+
+                    if (isInSubmenu && !isMobile && !isCollapseToggle) {
+                        e.stopPropagation();
+
+                    }
+
+                    if (isMobile && !isCollapseToggle) {
+                        setTimeout(() => {
+                            sidebar.classList.remove('active');
+                            sidebarOverlay.classList.remove('active');
+                            document.body.style.overflow = '';
+                        }, 200);
+                    }
+                });
+            });
+
+            const collapseElements = document.querySelectorAll('.collapse');
+
+            function closeAllSubmenusExcept(exceptElement) {
+                collapseElements.forEach(collapse => {
+                    if (collapse !== exceptElement && collapse.classList.contains('show')) {
+                        collapse.classList.remove('show');
+                        const triggerBtn = document.querySelector(`[href="#${collapse.id}"]`);
+                        if (triggerBtn) {
+                            triggerBtn.classList.remove('active');
+                            triggerBtn.setAttribute('aria-expanded', 'false');
+                        }
+                    }
+                });
+            }
+
+            collapseElements.forEach(collapse => {
+                collapse.addEventListener('show.bs.collapse', function(e) {
+                    const triggerButton = document.querySelector(`[href="#${this.id}"]`);
+                    if (triggerButton) {
+                        triggerButton.classList.add('active');
+                    }
+
+                    closeAllSubmenusExcept(this);
+                });
+
+                collapse.addEventListener('hide.bs.collapse', function(e) {
+                    const triggerButton = document.querySelector(`[href="#${this.id}"]`);
+
+                    const isToggleButtonClick = lastClickedElement && (
+                        lastClickedElement.hasAttribute('data-bs-toggle') ||
+                        lastClickedElement.closest('[data-bs-toggle="collapse"]') === triggerButton ||
+                        lastClickedElement === triggerButton
+                    );
+
+                    if (!isToggleButtonClick) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+
+                    if (triggerButton) {
+                        triggerButton.classList.remove('active');
+                    }
+                });
+            });
+
+            setTimeout(function() {
+                console.log('🔍 Starting STRICT ACCORDION enforcement...');
+
+                const collapseMenus = sidebar.querySelectorAll('.collapse');
+                console.log('📋 Found', collapseMenus.length, 'collapse menus');
+
+                let activeSubmenu = null;
+                collapseMenus.forEach(menu => {
+                    const activeLink = menu.querySelector('.nav-link.active');
+                    if (activeLink && !activeSubmenu) {
+                        activeSubmenu = menu;
+                        console.log('✅ Found active submenu:', menu.id);
+                    }
+                });
+
+                if (!activeSubmenu) {
+                    collapseMenus.forEach(menu => {
+                        if (menu.classList.contains('show') && !activeSubmenu) {
+                            activeSubmenu = menu;
+                            console.log('📌 Using first open submenu:', menu.id);
+                        }
+                    });
+                }
+
+                collapseMenus.forEach(menu => {
+                    menu.classList.remove('show');
+                    menu.style.display = '';
+                    menu.style.height = '';
+                    const triggerButton = document.querySelector(`[href="#${menu.id}"]`);
+                    if (triggerButton) {
+                        triggerButton.classList.remove('active');
+                        triggerButton.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                console.log('❌ Closed all submenus');
+
+                if (activeSubmenu) {
+                    activeSubmenu.classList.add('show');
+                    activeSubmenu.style.display = 'block';
+                    activeSubmenu.style.height = 'auto';
+
+                    const triggerButton = document.querySelector(`[href="#${activeSubmenu.id}"]`);
+                    if (triggerButton) {
+                        triggerButton.classList.add('active');
+                        triggerButton.setAttribute('aria-expanded', 'true');
+                    }
+                    console.log('✅ Opened submenu:', activeSubmenu.id);
+                } else {
+                    console.log('⚠️ No submenu to open');
+                }
+
+                console.log('✅ STRICT ACCORDION enforcement complete - Only 1 submenu open!');
+            }, 250);
+
+            const observer = new MutationObserver(function(mutations) {
+                const openSubmenus = Array.from(collapseElements).filter(el => el.classList.contains('show'));
+
+                if (openSubmenus.length > 1) {
+                    console.warn('⚠️ Multiple submenus detected! Enforcing accordion...');
+
+                    openSubmenus.slice(0, -1).forEach(menu => {
+                        menu.classList.remove('show');
+                        const triggerBtn = document.querySelector(`[href="#${menu.id}"]`);
+                        if (triggerBtn) {
+                            triggerBtn.classList.remove('active');
+                            triggerBtn.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                }
+            });
+
+            collapseElements.forEach(collapse => {
+                observer.observe(collapse, { attributes: true, attributeFilter: ['class'] });
+            });
+
+            setInterval(function() {
+                const openSubmenus = Array.from(collapseElements).filter(el => el.classList.contains('show'));
+
+                if (openSubmenus.length > 1) {
+                    console.warn('⚠️ CONTINUOUS CHECK: Multiple submenus open! Closing extras...');
+
+                    let keepOpen = null;
+                    openSubmenus.forEach(menu => {
+                        if (menu.querySelector('.nav-link.active') && !keepOpen) {
+                            keepOpen = menu;
+                        }
+                    });
+
+                    if (!keepOpen) {
+                        keepOpen = openSubmenus[0];
+                    }
+
+                    openSubmenus.forEach(menu => {
+                        if (menu !== keepOpen) {
+                            menu.classList.remove('show');
+                            const triggerBtn = document.querySelector(`[href="#${menu.id}"]`);
+                            if (triggerBtn) {
+                                triggerBtn.classList.remove('active');
+                                triggerBtn.setAttribute('aria-expanded', 'false');
+                            }
+                            console.log('   ❌ Closed:', menu.id);
+                        }
+                    });
+                }
+            }, 500);
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 991) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            sidebar.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+
+            sidebar.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+
+            function handleSwipe() {
+
+                if (touchStartX - touchEndX > 50) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
+        });
+
+</script>
+
+
+    <div id="globalNotificationContainer"></div>
+
+
+    <script>        let notificationQueue = [];
+        let notificationTimeouts = new Map();
+
+        window.showAlert = function(message, type = 'info', duration = 5000) {
+
+            const notificationId = `${type}-${message}`;
+
+            if (notificationTimeouts.has(notificationId)) {
+                return;
+            }
+
+            const notification = createNotificationElement(message, type, notificationId);
+
+            const container = document.getElementById('globalNotificationContainer');
+            container.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            const timeout = setTimeout(() => {
+                removeNotification(notification, notificationId);
+            }, duration);
+
+            notificationTimeouts.set(notificationId, timeout);
+
+            const closeBtn = notification.querySelector('.global-notification-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    removeNotification(notification, notificationId);
+                });
+            }
+        };
+
+        function createNotificationElement(message, type, notificationId) {
+            const notification = document.createElement('div');
+            notification.className = `global-notification global-notification-${type}`;
+            notification.setAttribute('data-notification-id', notificationId);
+
+            const icons = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            };
+
+            const iconClass = icons[type] || icons['info'];
+
+            notification.innerHTML = `
+                <div class="global-notification-content">
+                    <div class="global-notification-icon">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="global-notification-message">${message}</div>
+                    <button type="button" class="global-notification-close" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            return notification;
+        }
+
+        function removeNotification(notification, notificationId) {
+            notification.classList.remove('show');
+            notification.classList.add('hide');
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+                notificationTimeouts.delete(notificationId);
+            }, 300);
+        }
+
+        window.showSuccess = function(message) {
+            showAlert(message, 'success');
+        };
+
+        window.showError = function(message) {
+            showAlert(message, 'error');
+        };
+
+        window.showWarning = function(message) {
+            showAlert(message, 'warning');
+        };
+
+        window.showInfo = function(message) {
+            showAlert(message, 'info');
+        };
+
+        // Django Summernote is handled automatically by django-summernote
+        // No manual initialization needed
+</script>
+
+<!-- Django Summernote JS - handled by django-summernote -->
+
+    {% block extra_js %}
+    {% endblock extra_js %}
+
+</body>
+</html>

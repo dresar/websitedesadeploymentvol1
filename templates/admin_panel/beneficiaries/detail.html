@@ -1,0 +1,210 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load beneficiary_filters %}
+{% load currency %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/beneficiaries/beneficiaries-detail.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="beneficiaries-detail-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+                <div class="mb-3">
+                    <a href="{% url 'admin_panel:beneficiaries_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar
+                    </a>
+                </div>
+
+                <div class="beneficiaries-detail-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4>{{ beneficiary.person.name }}</h4>
+                            <p class="text-muted mb-0">Detail lengkap penerima bantuan</p>
+                        </div>
+                        <div>
+                            <span class="beneficiaries-detail-badge beneficiaries-detail-badge-{% if beneficiary.status == 'aktif' %}success{% elif beneficiary.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                {% if beneficiary.status == 'aktif' %}
+                                    <i class="fas fa-check-circle me-1"></i>Aktif
+                                {% elif beneficiary.status == 'tidak_aktif' %}
+                                    <i class="fas fa-times-circle me-1"></i>Tidak Aktif
+                                {% else %}
+                                    <i class="fas fa-clock me-1"></i>Pending
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card mb-4">
+                    <div class="beneficiaries-detail-card-header">
+                        {% if beneficiary.person.photo %}
+                            <img src="{{ beneficiary.person.photo.url }}" alt="{{ beneficiary.person.name }}"
+                                 class="beneficiaries-detail-avatar">
+                        {% else %}
+                            <div class="beneficiaries-detail-avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        {% endif %}
+                        <h1>{{ beneficiary.person.name }}</h1>
+                        <p>NIK: {{ beneficiary.person.nik }}</p>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-user me-2"></i>Informasi Pribadi
+                    </h5>
+                    <div class="beneficiaries-detail-section">
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Nama Lengkap</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.person.name }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">NIK</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.person.nik }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Jenis Kelamin</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.person.get_gender_display }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Tanggal Lahir</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.person.birth_date|date:"d F Y" }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Alamat</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.person.address|default:"-" }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">No. Telepon</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.person.phone_number|default:beneficiary.person.mobile_number|default:"-" }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-hand-holding-heart me-2"></i>Informasi Penerima Bantuan
+                    </h5>
+                    <div class="beneficiaries-detail-section">
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Kategori Bantuan</div>
+                            <div class="beneficiaries-detail-info-value">
+                                <span class="beneficiaries-detail-badge beneficiaries-detail-badge-info">{{ beneficiary.category.name }}</span>
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Status</div>
+                            <div class="beneficiaries-detail-info-value">
+                                <span class="beneficiaries-detail-badge beneficiaries-detail-badge-{% if beneficiary.status == 'aktif' %}success{% elif beneficiary.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                    {{ beneficiary.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Tanggal Pendaftaran</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.registration_date|date:"d F Y" }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Status Ekonomi</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.get_economic_status_display|default:"-" }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Pendapatan Bulanan</div>
+                            <div class="beneficiaries-detail-info-value">
+                                {% if beneficiary.monthly_income %}
+                                    {{ beneficiary.monthly_income|rupiah }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Jumlah Anggota Keluarga</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.family_members_count }} orang</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if beneficiary.house_condition or beneficiary.special_needs or beneficiary.notes %}
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-info-circle me-2"></i>Informasi Tambahan
+                    </h5>
+                    <div class="beneficiaries-detail-section">
+                        {% if beneficiary.house_condition %}
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Kondisi Rumah</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.house_condition }}</div>
+                        </div>
+                        {% endif %}
+                        {% if beneficiary.special_needs %}
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Kebutuhan Khusus</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.special_needs }}</div>
+                        </div>
+                        {% endif %}
+                        {% if beneficiary.notes %}
+                        <div class="beneficiaries-detail-info-item">
+                            <div class="beneficiaries-detail-info-label">Catatan</div>
+                            <div class="beneficiaries-detail-info-value">{{ beneficiary.notes }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-info me-2"></i>Informasi Sistem
+                    </h5>
+                    <div class="beneficiaries-detail-stats">
+                        <div class="beneficiaries-detail-stat-card">
+                            <div class="beneficiaries-detail-stat-label">ID Penerima</div>
+                            <div class="beneficiaries-detail-stat-value">#{{ beneficiary.id }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-stat-card">
+                            <div class="beneficiaries-detail-stat-label">Dibuat</div>
+                            <div class="beneficiaries-detail-stat-value beneficiaries-detail-stat-value-sm">
+                                {% if beneficiary.created_at %}
+                                    {{ beneficiary.created_at|date:"d M Y" }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-stat-card">
+                            <div class="beneficiaries-detail-stat-label">Diperbarui</div>
+                            <div class="beneficiaries-detail-stat-value beneficiaries-detail-stat-value-sm">
+                                {% if beneficiary.updated_at %}
+                                    {{ beneficiary.updated_at|date:"d M Y" }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card">
+                    <div class="beneficiaries-detail-actions">
+                        <a href="{% url 'admin_panel:beneficiary_update' beneficiary.pk %}" class="btn btn-warning">
+                            <i class="fas fa-edit me-1"></i>Edit Data
+                        </a>
+                        {% if beneficiary.person.phone_number or beneficiary.person.mobile_number %}
+                        <a href="https://wa.me/{{ beneficiary.person.phone_number|default:beneficiary.person.mobile_number|cut:'+' }}"
+                           target="_blank" class="btn btn-success">
+                            <i class="fab fa-whatsapp me-1"></i>Hubungi WhatsApp
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

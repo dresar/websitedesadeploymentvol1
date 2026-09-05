@@ -1,0 +1,719 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/complaints/complaints.css' %}">
+<style>
+.complaint-detail-container {
+    padding: 0;
+}
+
+.complaint-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.complaint-header h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.complaint-header .badge {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.info-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    border: none;
+}
+
+.info-card-header {
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+    color: #495057;
+    font-size: 1rem;
+}
+
+.info-card-body {
+    padding: 1.5rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #6c757d;
+    font-size: 0.9rem;
+    min-width: 120px;
+}
+
+.info-value {
+    color: #212529;
+    font-weight: 500;
+    text-align: right;
+    flex: 1;
+}
+
+.status-text {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-in-progress {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.status-resolved {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.priority-text {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.priority-urgent {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.priority-high {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.priority-medium {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.priority-low {
+    background: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
+}
+
+.description-content {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid #007bff;
+    line-height: 1.6;
+}
+
+.admin-notes-section {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+
+.admin-notes-form textarea {
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2.5rem;
+    top: 1.5rem;
+    width: 12px;
+    height: 12px;
+    background: #007bff;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .complaint-detail-container {
+        padding: 0;
+    }
+    
+    .complaint-header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0;
+    }
+    
+    .complaint-header h1 {
+        font-size: 1.2rem;
+        line-height: 1.3;
+        margin-bottom: 0.5rem;
+    }
+    
+    .complaint-header .badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        margin: 0.2rem 0.2rem 0.2rem 0;
+    }
+    
+    .complaint-header .btn-group {
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .complaint-header .btn-group .btn {
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+    }
+    
+    .complaint-header .btn-group .btn.flex-fill {
+        flex: 1;
+    }
+    
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .info-card {
+        margin-bottom: 1rem;
+        border-radius: 10px;
+    }
+    
+    .info-card-header {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .info-card-body {
+        padding: 1rem;
+    }
+    
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+        padding: 0.5rem 0;
+    }
+    
+    .info-label {
+        font-size: 0.8rem;
+        min-width: auto;
+        font-weight: 600;
+    }
+    
+    .info-value {
+        text-align: left;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+    
+    .status-text, .priority-text {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        display: inline-block;
+        margin-top: 0.2rem;
+    }
+    
+    .description-content {
+        padding: 1rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    .admin-notes-section {
+        padding: 1rem;
+    }
+    
+    .admin-notes-form textarea {
+        min-height: 100px;
+        font-size: 0.9rem;
+    }
+    
+    .timeline {
+        padding-left: 1rem;
+    }
+    
+    .timeline-item {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .timeline-item::before {
+        left: -1.5rem;
+        width: 8px;
+        height: 8px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="complaint-detail-container">
+    <!-- Header Section -->
+    <div class="complaint-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Mobile-first layout -->
+                    <div class="d-flex align-items-center mb-3">
+                        <a href="{% url 'admin_panel:complaints_list' %}" class="btn btn-light btn-sm me-3 d-md-none">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <a href="{% url 'admin_panel:complaints_list' %}" class="btn btn-light btn-sm me-3 d-none d-md-inline">
+                            <i class="fas fa-arrow-left"></i> Kembali
+                        </a>
+                        <h1 class="mb-0 flex-grow-1">{{ complaint.title }}</h1>
+                    </div>
+                    
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <span class="badge">{{ complaint.complaint_id }}</span>
+                        {% if complaint.category %}
+                        <span class="badge">{{ complaint.category.name }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Action buttons - responsive -->
+                    <div class="btn-group d-md-none w-100">
+                        <a href="{% url 'admin_panel:complaint_edit' complaint.id %}" class="btn btn-light flex-fill">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button type="button" onclick="confirmDelete({{ complaint.id }})" class="btn btn-outline-light flex-fill">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                    
+                    <div class="btn-group d-none d-md-inline">
+                        <a href="{% url 'admin_panel:complaint_edit' complaint.id %}" class="btn btn-light">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button type="button" onclick="confirmDelete({{ complaint.id }})" class="btn btn-outline-light">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- Status & Priority Section -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fas fa-flag me-2"></i>Status & Prioritas
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-row">
+                            <span class="info-label">Status</span>
+                            <span class="info-value">
+                                <span class="status-text 
+                                    {% if complaint.status == 'pending' %}status-pending
+                                    {% elif complaint.status == 'in_progress' %}status-in-progress
+                                    {% elif complaint.status == 'resolved' %}status-resolved
+                                    {% endif %}">
+                                    {{ complaint.get_status_display }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Prioritas</span>
+                            <span class="info-value">
+                                <span class="priority-text 
+                                    {% if complaint.priority == 'urgent' %}priority-urgent
+                                    {% elif complaint.priority == 'high' %}priority-high
+                                    {% elif complaint.priority == 'medium' %}priority-medium
+                                    {% elif complaint.priority == 'low' %}priority-low
+                                    {% endif %}">
+                                    {{ complaint.get_priority_display }}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fas fa-calendar me-2"></i>Informasi Waktu
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-row">
+                            <span class="info-label">Dibuat</span>
+                            <span class="info-value">{{ complaint.created_at|date:"d M Y H:i" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Diperbarui</span>
+                            <span class="info-value">{{ complaint.updated_at|date:"d M Y H:i" }}</span>
+                        </div>
+                        {% if complaint.resolved_at %}
+                        <div class="info-row">
+                            <span class="info-label">Selesai</span>
+                            <span class="info-value">{{ complaint.resolved_at|date:"d M Y H:i" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporter Information -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fas fa-user me-2"></i>Informasi Pelapor
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-row">
+                            <span class="info-label">Nama</span>
+                            <span class="info-value">{{ complaint.reporter_name|default:"-" }}</span>
+                        </div>
+                        {% if complaint.reporter_email %}
+                        <div class="info-row">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">{{ complaint.reporter_email }}</span>
+                        </div>
+                        {% endif %}
+                        {% if complaint.reporter_phone %}
+                        <div class="info-row">
+                            <span class="info-label">Telepon</span>
+                            <span class="info-value">{{ complaint.reporter_phone }}</span>
+                        </div>
+                        {% endif %}
+                        {% if complaint.location %}
+                        <div class="info-row">
+                            <span class="info-label">Lokasi</span>
+                            <span class="info-value">{{ complaint.location }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fas fa-cogs me-2"></i>Penanganan
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-row">
+                            <span class="info-label">Ditugaskan</span>
+                            <span class="info-value">
+                                {% if complaint.assigned_to %}
+                                    {{ complaint.assigned_to.get_full_name|default:complaint.assigned_to.username }}
+                                {% else %}
+                                    <span class="text-muted">Belum ditugaskan</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if complaint.resolution %}
+                        <div class="info-row">
+                            <span class="info-label">Penyelesaian</span>
+                            <span class="info-value">{{ complaint.resolution }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fas fa-file-alt me-2"></i>Deskripsi Keluhan
+                    </div>
+                    <div class="info-card-body">
+                        <div class="description-content">
+                            {{ complaint.description|safe|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if complaint.attachment %}
+        <!-- Attachment Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fas fa-paperclip me-2"></i>File Lampiran
+                    </div>
+                    <div class="info-card-body">
+                        <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file fa-2x text-primary me-3"></i>
+                                <div>
+                                    <div class="fw-bold">{{ complaint.attachment.name|default:"File Lampiran" }}</div>
+                                    <small class="text-muted">
+                                        {% if complaint.attachment.size %}
+                                            {{ complaint.attachment.size|filesizeformat }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <a href="{{ complaint.attachment.url }}" class="btn btn-outline-primary" target="_blank">
+                                    <i class="fas fa-eye"></i> Lihat
+                                </a>
+                                <a href="{{ complaint.attachment.url }}" class="btn btn-outline-success" download>
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Admin Notes Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="info-card admin-notes-section">
+                    <div class="info-card-header">
+                        <i class="fas fa-sticky-note me-2"></i>Catatan Admin
+                    </div>
+                    <div class="info-card-body">
+                        <!-- Current Admin Notes -->
+                        {% if complaint.admin_notes %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Catatan Saat Ini:</label>
+                            <div class="p-3 bg-white rounded border">{{ complaint.admin_notes|safe }}</div>
+                        </div>
+                        {% endif %}
+
+                        <form id="adminNotesForm" method="post" action="{% url 'admin_panel:complaint_update_admin_notes' complaint.id %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    {% if complaint.admin_notes %}Update Catatan Admin{% else %}Tambah Catatan Admin{% endif %}:
+                                </label>
+                                {{ admin_notes_form.admin_notes }}
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Simpan Catatan
+                                </button>
+                                {% if complaint.admin_notes %}
+                                <button type="button" class="btn btn-outline-danger" onclick="clearAdminNotes()">
+                                    <i class="fas fa-trash"></i> Hapus Catatan
+                                </button>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if updates %}
+        <!-- Timeline Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fas fa-history me-2"></i>Riwayat Update
+                    </div>
+                    <div class="info-card-body">
+                        <div class="timeline">
+                            {% for update in updates %}
+                            <div class="timeline-item">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <strong>{{ update.updated_by.get_full_name|default:update.updated_by.username }}</strong>
+                                    <small class="text-muted">{{ update.created_at|date:"d M Y H:i" }}</small>
+                                </div>
+                                <p class="mb-2">{{ update.message }}</p>
+                                {% if update.status %}
+                                <span class="status-text 
+                                    {% if update.status == 'pending' %}status-pending
+                                    {% elif update.status == 'in_progress' %}status-in-progress
+                                    {% elif update.status == 'resolved' %}status-resolved
+                                    {% endif %}">
+                                    Status: {{ update.get_status_display }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+
+{{ admin_notes_form.media }}
+
+<script>
+$(document).ready(function() {
+    // Handle admin notes form submission
+    $('#adminNotesForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Get content from Summernote
+        const adminNotes = $('#id_admin_notes');
+        
+        if (!adminNotes.trim() || adminNotes === '<p><br></p>') {
+            alert('Catatan admin tidak boleh kosong');
+            return;
+        }
+        
+        // Create FormData with Summernote content
+        const formData = new FormData();
+        formData.append('admin_notes', adminNotes);
+        formData.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').val());
+        
+        $.ajax({
+            url: $(this).attr('action'),
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    if (window.showAlert) {
+                        window.showAlert(response.message || 'Catatan admin berhasil disimpan', 'success');
+                    }
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    if (window.showAlert) {
+                        window.showAlert(response.message || 'Gagal menyimpan catatan admin', 'error');
+                    }
+                }
+            },
+            error: function() {
+                if (window.showAlert) {
+                    window.showAlert('Terjadi kesalahan saat menyimpan catatan admin', 'error');
+                }
+            }
+        });
+    });
+});
+
+function confirmDelete(complaintId) {
+    if (confirm('Apakah Anda yakin ingin menghapus keluhan ini?')) {
+        $.ajax({
+            url: '/admin-panel/complaints/' + complaintId + '/delete/',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() || '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (window.showAlert) {
+                        window.showAlert(response.message || 'Keluhan berhasil dihapus', 'success');
+                    }
+                    setTimeout(function() {
+                        window.location.href = '{% url "admin_panel:complaints_list" %}';
+                    }, 1000);
+                } else {
+                    if (window.showAlert) {
+                        window.showAlert(response.message || 'Gagal menghapus keluhan', 'error');
+                    }
+                }
+            },
+            error: function() {
+                if (window.showAlert) {
+                    window.showAlert('Terjadi kesalahan saat menghapus keluhan', 'error');
+                }
+            }
+        });
+    }
+}
+
+function clearAdminNotes() {
+    if (confirm('Apakah Anda yakin ingin menghapus catatan admin?')) {
+        $('#admin_notes');
+        $('#adminNotesForm').submit();
+    }
+}
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,492 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_description %}Editor template surat untuk membuat dan mengedit template dokumen{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Template Editor Styles */
+.template-editor-page {
+    padding: 2rem 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+.template-editor-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.template-editor-header h1 {
+    color: #495057;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.template-editor-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.template-editor-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.template-editor-form {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.template-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.template-form-label {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.template-form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    background: white;
+    color: #495057;
+}
+
+.template-form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.template-form-textarea {
+    min-height: 200px;
+    resize: vertical;
+}
+
+.template-form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+.template-form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.template-preview-section {
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.template-preview-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.template-preview-title {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.template-preview-content {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    min-height: 200px;
+}
+
+.template-variables-section {
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.template-variables-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.template-variable-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 0.25rem;
+    border: 1px solid #dee2e6;
+}
+
+.template-variable-name {
+    font-weight: 500;
+    color: #495057;
+    min-width: 120px;
+}
+
+.template-variable-description {
+    color: #6c757d;
+    flex: 1;
+}
+
+.template-variable-example {
+    color: #007bff;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .template-editor-page {
+        padding: 1rem 0;
+    }
+    
+    .template-editor-header {
+        margin-bottom: 2rem;
+        padding: 1.5rem 1rem;
+    }
+    
+    .template-editor-content {
+        padding: 0 0.5rem;
+    }
+    
+    .template-editor-form {
+        padding: 1.5rem;
+    }
+    
+    .template-form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .template-variable-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .template-variable-name {
+        min-width: auto;
+    }
+}
+
+/* Summernote Customization */
+.note-editor {
+    border: 1px solid #ced4da !important;
+    border-radius: 0.5rem !important;
+}
+
+.note-editor .note-toolbar {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.note-editor .note-editing-area {
+    background: white !important;
+}
+
+.note-editor .note-editing-area .note-editable {
+    background: white !important;
+    color: #495057 !important;
+    padding: 1rem !important;
+}
+
+.note-editor .note-editing-area .note-editable:focus {
+    outline: none !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Template Editor Page Container -->
+<div class="template-editor-page">
+    <!-- Template Editor Header -->
+    <div class="template-editor-header">
+        <h1>{{ page_title }}</h1>
+        <p>Editor template surat untuk membuat dan mengedit template dokumen</p>
+    </div>
+    
+    <!-- Template Editor Content -->
+    <div class="template-editor-content">
+        <form method="post" class="template-editor-form" id="templateEditorForm">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="template-form-group">
+                        <label for="{{ form.name.id_for_label }}" class="template-form-label">
+                            <i class="fas fa-tag me-1"></i>{{ form.name.label }}
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger">
+                                {% for error in form.name.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="template-form-group">
+                        <label for="{{ form.template_type.id_for_label }}" class="template-form-label">
+                            <i class="fas fa-list me-1"></i>{{ form.template_type.label }}
+                        </label>
+                        {{ form.template_type }}
+                        {% if form.template_type.errors %}
+                            <div class="text-danger">
+                                {% for error in form.template_type.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="template-form-group">
+                        <label for="{{ form.description.id_for_label }}" class="template-form-label">
+                            <i class="fas fa-info-circle me-1"></i>{{ form.description.label }}
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger">
+                                {% for error in form.description.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Template Content -->
+            <div class="template-form-group">
+                <label for="{{ form.content_template.id_for_label }}" class="template-form-label">
+                    <i class="fas fa-edit me-1"></i>{{ form.content_template.label }}
+                </label>
+                {{ form.content_template }}
+                {% if form.content_template.errors %}
+                    <div class="text-danger">
+                        {% for error in form.content_template.errors %}
+                            <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="form-text">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Gunakan editor rich text untuk format yang lebih baik. Variabel template: {{nama}}, {{nik}}, {{alamat}}, {{tanggal}}, {{nomor_surat}}
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Template Variables -->
+            <div class="template-variables-section">
+                <h6 class="template-variables-title">
+                    <i class="fas fa-code me-1"></i>Variabel Template yang Tersedia
+                </h6>
+                <div class="template-variable-item">
+                    <div class="template-variable-name">{{nama}}</div>
+                    <div class="template-variable-description">Nama lengkap pemohon</div>
+                    <div class="template-variable-example">{{nama}}</div>
+                </div>
+                <div class="template-variable-item">
+                    <div class="template-variable-name">{{nik}}</div>
+                    <div class="template-variable-description">Nomor Induk Kependudukan</div>
+                    <div class="template-variable-example">{{nik}}</div>
+                </div>
+                <div class="template-variable-item">
+                    <div class="template-variable-name">{{alamat}}</div>
+                    <div class="template-variable-description">Alamat lengkap pemohon</div>
+                    <div class="template-variable-example">{{alamat}}</div>
+                </div>
+                <div class="template-variable-item">
+                    <div class="template-variable-name">{{tanggal}}</div>
+                    <div class="template-variable-description">Tanggal surat</div>
+                    <div class="template-variable-example">{{tanggal}}</div>
+                </div>
+                <div class="template-variable-item">
+                    <div class="template-variable-name">{{nomor_surat}}</div>
+                    <div class="template-variable-description">Nomor surat</div>
+                    <div class="template-variable-example">{{nomor_surat}}</div>
+                </div>
+            </div>
+            
+            <!-- Template Preview -->
+            <div class="template-preview-section">
+                <div class="template-preview-header">
+                    <h6 class="template-preview-title">
+                        <i class="fas fa-eye me-1"></i>Preview Template
+                    </h6>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="updatePreview()">
+                        <i class="fas fa-sync-alt me-1"></i>Update Preview
+                    </button>
+                </div>
+                <div class="template-preview-content" id="templatePreview">
+                    <p class="text-muted">Konten template akan muncul di sini...</p>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="template-form-actions">
+                <a href="{% url 'admin_panel:letters:admin_template_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Kembali
+                </a>
+                <button type="button" class="btn btn-outline-primary" onclick="previewTemplate()">
+                    <i class="fas fa-eye me-1"></i>Preview
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>Simpan Template
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Template editor functionality
+$(document).ready(function() {
+    console.log('Template editor loaded successfully');
+    
+    // Update preview when content changes
+    $('#id_name, #id_template_type, #id_description').on('input change', function() {
+        updatePreview();
+    });
+    
+    // Initial preview update
+    updatePreview();
+});
+
+function updatePreview() {
+    // Get content from Summernote editor
+    const content = $('#id_content_template').summernote('code') || $('#id_content_template').val() || '';
+    const name = $('#id_name').val() || 'Nama Template';
+    const templateType = $('#id_template_type option:selected').text() || 'Jenis Template';
+    const description = $('#id_description').val() || 'Deskripsi template';
+    
+    // Replace variables with sample data
+    let previewContent = content
+        .replace(/\{\{nama\}\}/g, 'John Doe')
+        .replace(/\{\{nik\}\}/g, '1234567890123456')
+        .replace(/\{\{alamat\}\}/g, 'Jl. Contoh No. 123, Kelurahan Contoh')
+        .replace(/\{\{tanggal\}\}/g, new Date().toLocaleDateString('id-ID'))
+        .replace(/\{\{nomor_surat\}\}/g, '001/SP/2025');
+    
+    const previewHtml = `
+        <div class="template-preview-header">
+            <h5>${name}</h5>
+            <p class="text-muted">${templateType}</p>
+            <p class="text-muted">${description}</p>
+        </div>
+        <hr>
+        <div class="template-preview-body">
+            ${previewContent}
+        </div>
+    `;
+    
+    $('#templatePreview').html(previewHtml);
+}
+
+function previewTemplate() {
+    // Get content from Summernote editor
+    const content = $('#id_content_template').summernote('code') || $('#id_content_template').val() || '';
+    const name = $('#id_name').val() || 'Template Preview';
+    
+    // Open preview in new window
+    const previewWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+    previewWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${name} - Preview</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 2rem; }
+                .preview-header { border-bottom: 2px solid #007bff; padding-bottom: 1rem; margin-bottom: 2rem; }
+                .preview-content { line-height: 1.6; }
+            </style>
+        </head>
+        <body>
+            <div class="preview-header">
+                <h2>${name}</h2>
+                <p>Preview Template</p>
+            </div>
+            <div class="preview-content">
+                ${content}
+            </div>
+        </body>
+        </html>
+    `);
+    previewWindow.document.close();
+}
+
+// Form validation
+$('#templateEditorForm').on('submit', function(e) {
+    const name = $('#id_name').val().trim();
+    const templateType = $('#id_template_type').val();
+    // Get content from Summernote editor
+    const content = $('#id_content_template').summernote('code') || $('#id_content_template').val() || '';
+    const contentText = content.replace(/<[^>]*>/g, '').trim(); // Strip HTML tags for validation
+    
+    if (!name) {
+        alert('Nama template harus diisi');
+        e.preventDefault();
+        return false;
+    }
+    
+    if (!templateType) {
+        alert('Jenis template harus dipilih');
+        e.preventDefault();
+        return false;
+    }
+    
+    
+    if (!contentText) {
+        alert('Konten template harus diisi');
+        e.preventDefault();
+        return false;
+    }
+    
+    return true;
+});
+</script>
+{% endblock %}

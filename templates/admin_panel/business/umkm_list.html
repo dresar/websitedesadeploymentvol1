@@ -1,0 +1,445 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/business/business-list.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/business/modal.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="business-list-container">
+
+    <div class="business-page-header">
+        <div>
+            <h1 class="business-page-title">
+                <i class="fas fa-store"></i>Data UMKM
+            </h1>
+            <p class="business-page-subtitle">Kelola Usaha Mikro, Kecil, dan Menengah</p>
+        </div>
+        <div class="business-header-actions">
+            <a href="{% url 'admin_panel:umkm_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Tambah UMKM
+            </a>
+        </div>
+    </div>
+
+    <div class="business-search-filter">
+        <form method="GET" class="business-search-simple">
+            <input type="text" class="form-control" name="search"
+                   value="{{ search }}" placeholder="Cari nama usaha, pemilik, atau jenis...">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+            </button>
+            <a href="{% url 'admin_panel:umkm_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+            </a>
+        </form>
+    </div>
+
+    <div class="business-table-card">
+        <div class="business-table-card-header">
+            <h2 class="business-table-card-title">
+                <i class="fas fa-list"></i>Daftar UMKM
+                <span class="business-table-count-badge">{{ page_obj.paginator.count }}</span>
+            </h2>
+        </div>
+        <div class="business-table-card-body">
+
+            <div class="business-table-desktop">
+                <table class="business-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th style="width: 60px;">Logo</th>
+                            <th>Nama Usaha</th>
+                            <th>Pemilik</th>
+                            <th>Jenis Usaha</th>
+                            <th style="width: 100px;">Skala</th>
+                            <th style="width: 150px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for umkm in page_obj %}
+                        <tr>
+                            <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                            <td>
+                                {% if umkm.logo_usaha %}
+                                    <img src="{{ umkm.logo_usaha.url }}" alt="Logo {{ umkm.nama_usaha }}" 
+                                         class="business-logo-thumbnail" 
+                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
+                                {% else %}
+                                    <div class="business-logo-placeholder" style="width: 40px; height: 40px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 12px;">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="business-table-cell-primary">{{ umkm.nama_usaha }}</div>
+                                {% if umkm.nomor_izin %}
+                                    <div class="business-table-cell-secondary">Izin: {{ umkm.nomor_izin }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="business-table-cell-primary">{{ umkm.pemilik }}</div>
+                                <div class="business-table-cell-secondary">{{ umkm.nik_pemilik }}</div>
+                            </td>
+                            <td>{{ umkm.jenis_usaha }}</td>
+                            <td>
+                                <span class="business-badge {% if umkm.skala_usaha == 'mikro' %}business-badge-info{% elif umkm.skala_usaha == 'kecil' %}business-badge-warning{% else %}business-badge-success{% endif %}">
+                                    {{ umkm.get_skala_usaha_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="business-action-buttons">
+                                    <a href="{% url 'admin_panel:umkm_detail' umkm.id %}" class="btn btn-outline-info" title="Detail">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'admin_panel:umkm_edit' umkm.id %}" class="btn btn-outline-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if umkm.foto_usaha or umkm.logo_usaha %}
+                                    <button type="button" class="btn btn-outline-primary" 
+                                            onclick="showBusinessImagesModal('{{ umkm.nama_usaha|escapejs }}', 
+                                                    {% if umkm.foto_usaha %}'{{ umkm.foto_usaha.url }}'{% else %}null{% endif %}, 
+                                                    {% if umkm.logo_usaha %}'{{ umkm.logo_usaha.url }}'{% else %}null{% endif %})"
+                                            title="Lihat Gambar">
+                                        <i class="fas fa-images"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-outline-danger"
+                                            onclick="showBusinessDeleteModal('{% url 'admin_panel:umkm_delete' umkm.id %}', '{{ umkm.nama_usaha|escapejs }}', 'UMKM')"
+                                            title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="business-empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p class="business-empty-state-title">Tidak ada data UMKM</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="business-mobile-list">
+                {% for umkm in page_obj %}
+                <div class="business-mobile-card">
+                    <div class="business-mobile-card-header">
+                        <div>
+                            <h3 class="business-mobile-card-title">{{ umkm.nama_usaha }}</h3>
+                            <div class="business-mobile-card-subtitle">{{ umkm.pemilik }}</div>
+                        </div>
+                        <div class="business-mobile-card-number">{{ forloop.counter0|add:page_obj.start_index }}</div>
+                    </div>
+                    <div class="business-mobile-card-body">
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">NIK</span>
+                            <span class="business-mobile-info-value">{{ umkm.nik_pemilik }}</span>
+                        </div>
+                        {% if umkm.nomor_izin %}
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">No. Izin</span>
+                            <span class="business-mobile-info-value">{{ umkm.nomor_izin }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Jenis</span>
+                            <span class="business-mobile-info-value">{{ umkm.jenis_usaha }}</span>
+                        </div>
+                    </div>
+                    <div class="business-mobile-card-footer">
+                        <div class="business-mobile-card-badges">
+                            <span class="business-badge {% if umkm.skala_usaha == 'mikro' %}business-badge-info{% elif umkm.skala_usaha == 'kecil' %}business-badge-warning{% else %}business-badge-success{% endif %}">
+                                {{ umkm.get_skala_usaha_display }}
+                            </span>
+                        </div>
+                        <div class="business-mobile-actions">
+                            <a href="{% url 'admin_panel:umkm_detail' umkm.id %}" class="btn btn-outline-info" title="Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_panel:umkm_edit' umkm.id %}" class="btn btn-outline-warning" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button type="button" class="btn btn-outline-danger"
+                                    onclick="showBusinessDeleteModal('{% url 'admin_panel:umkm_delete' umkm.id %}', '{{ umkm.nama_usaha|escapejs }}', 'UMKM')"
+                                    title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="business-empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p class="business-empty-state-title">Tidak ada data UMKM</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="business-pagination-wrapper">
+            <ul class="business-pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">‹</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">›</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- UMKM Delete Confirmation Modal -->
+<div class="modal fade" id="umkmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="umkmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="umkmDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Konfirmasi Penghapusan UMKM
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Peringatan!</strong> Tindakan ini tidak dapat dibatalkan.
+                </div>
+                
+                <p>Apakah Anda yakin ingin menghapus UMKM <strong id="umkmDeleteName"></strong>?</p>
+                <p class="text-muted">Semua data terkait akan dihapus secara permanen.</p>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="umkmDeleteConfirm" required>
+                    <label class="form-check-label" for="umkmDeleteConfirm">
+                        Saya yakin ingin menghapus data UMKM ini
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <form id="umkmDeleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" id="umkmDeleteBtn" disabled>
+                        <i class="fas fa-trash"></i> Hapus UMKM
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// UMKM Delete Modal Functions
+function showBusinessDeleteModal(deleteUrl, businessName, businessType) {
+    // Set form action
+    $('#umkmDeleteForm').attr('action', deleteUrl);
+    
+    // Set business details
+    $('#umkmDeleteName').text(businessName);
+    
+    // Reset form
+    $('#umkmDeleteConfirm').prop('checked', false);
+    $('#umkmDeleteBtn').prop('disabled', true);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('umkmDeleteModal'));
+    modal.show();
+}
+
+// Handle delete confirmation checkbox
+$('#umkmDeleteConfirm').on('change', function() {
+    const confirmed = $(this).is(':checked');
+    $('#umkmDeleteBtn').prop('disabled', !confirmed);
+});
+
+// Handle delete form submission
+$('#umkmDeleteForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const form = $(this);
+    const btn = $('#umkmDeleteBtn');
+    const originalText = btn.html();
+    
+    // Show loading state
+    btn.html('<i class="fas fa-spinner fa-spin"></i> Menghapus...');
+    btn.prop('disabled', true);
+    
+    // Get CSRF token
+    const csrftoken = $('[name=csrfmiddlewaretoken]').val();
+    
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: form.serialize(),
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            if (response.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('umkmDeleteModal'));
+                modal.hide();
+                
+                // Show success message
+                if (typeof showAlert === 'function') {
+                    showAlert(response.message || 'UMKM berhasil dihapus', 'success');
+                } else {
+                    alert(response.message || 'UMKM berhasil dihapus');
+                }
+                
+                // Reload page
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Show error message
+                if (typeof showAlert === 'function') {
+                    showAlert(response.message || 'Gagal menghapus UMKM', 'error');
+                } else {
+                    alert(response.message || 'Gagal menghapus UMKM');
+                }
+                
+                // Reset button
+                btn.html(originalText);
+                btn.prop('disabled', false);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Delete error:', error);
+            
+            // Show error message
+            if (typeof showAlert === 'function') {
+                showAlert('Terjadi kesalahan saat menghapus UMKM', 'error');
+            } else {
+                alert('Terjadi kesalahan saat menghapus UMKM');
+            }
+            
+            // Reset button
+            btn.html(originalText);
+            btn.prop('disabled', false);
+        }
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('umkmDeleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        const modal = bootstrap.Modal.getInstance(this);
+        modal.hide();
+    }
+});
+
+// Reset modal when closed
+document.getElementById('umkmDeleteModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('umkmDeleteConfirm').checked = false;
+    document.getElementById('umkmDeleteBtn').disabled = true;
+    document.getElementById('umkmDeleteForm').reset();
+});
+
+// Function to show business images modal
+function showBusinessImagesModal(businessName, fotoUrl, logoUrl) {
+    // Remove existing modal if any
+    $('#businessImagesModal').remove();
+    
+    let modalContent = `
+        <div class="modal fade" id="businessImagesModal" tabindex="-1" role="dialog" aria-labelledby="businessImagesModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="businessImagesModalLabel">
+                            <i class="fas fa-images"></i> Gambar ${businessName}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+    `;
+    
+    if (fotoUrl) {
+        modalContent += `
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-camera"></i> Foto Usaha</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${fotoUrl}" alt="Foto Usaha" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (logoUrl) {
+        modalContent += `
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-image"></i> Logo Usaha</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${logoUrl}" alt="Logo Usaha" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    modalContent += `
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    $('body').append(modalContent);
+    
+    // Show modal using Bootstrap 5.3.0 syntax
+    const modalElement = document.getElementById('businessImagesModal');
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+    });
+    modal.show();
+    
+    // Add event listeners for proper cleanup
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        modal.dispose();
+        modalElement.remove();
+    });
+}
+
+console.log('UMKM list page initialized with delete modal');
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,455 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load currency %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/business/business-list.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/business/modal.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="business-list-container">
+
+    <div class="business-page-header">
+        <div>
+            <h1 class="business-page-title">
+                <i class="fas fa-handshake"></i>Data Koperasi
+            </h1>
+            <p class="business-page-subtitle">Kelola data koperasi di Desa Pulosari</p>
+        </div>
+        <div class="business-header-actions">
+            <a href="{% url 'admin_panel:koperasi_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Tambah Koperasi
+            </a>
+        </div>
+    </div>
+
+    <div class="business-search-filter">
+        <form method="GET" class="business-search-simple">
+            <input type="text" class="form-control" name="search"
+                   value="{{ search }}" placeholder="Cari nama koperasi, ketua, atau jenis...">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+            </button>
+            <a href="{% url 'admin_panel:koperasi_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i>
+            </a>
+        </form>
+    </div>
+
+    <div class="business-table-card">
+        <div class="business-table-card-header">
+            <h2 class="business-table-card-title">
+                <i class="fas fa-list"></i>Daftar Koperasi
+                <span class="business-table-count-badge">{{ page_obj.paginator.count }}</span>
+            </h2>
+        </div>
+        <div class="business-table-card-body">
+
+            <div class="business-table-desktop">
+                <table class="business-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th style="width: 60px;">Logo</th>
+                            <th>Nama Koperasi</th>
+                            <th>Ketua</th>
+                            <th>Jenis Koperasi</th>
+                            <th style="width: 120px;">Jumlah Anggota</th>
+                            <th style="width: 150px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for koperasi in page_obj %}
+                        <tr>
+                            <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                            <td>
+                                {% if koperasi.logo_koperasi %}
+                                    <img src="{{ koperasi.logo_koperasi.url }}" alt="Logo {{ koperasi.nama }}" 
+                                         class="business-logo-thumbnail" 
+                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;">
+                                {% else %}
+                                    <div class="business-logo-placeholder" style="width: 40px; height: 40px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 12px;">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="business-table-cell-primary">{{ koperasi.nama }}</div>
+                                <div class="business-table-cell-secondary">SK: {{ koperasi.nomor_badan_hukum }}</div>
+                            </td>
+                            <td>
+                                <div class="business-table-cell-primary">{{ koperasi.ketua }}</div>
+                                <div class="business-table-cell-secondary">Berdiri: {{ koperasi.tanggal_berdiri|date:"d M Y" }}</div>
+                            </td>
+                            <td>
+                                {% if koperasi.jenis_koperasi %}
+                                    {{ koperasi.jenis_koperasi }}
+                                {% else %}
+                                    <span class="business-text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ koperasi.jumlah_anggota }} orang</td>
+                            <td>
+                                <div class="business-action-buttons">
+                                    <a href="{% url 'admin_panel:koperasi_detail' koperasi.id %}" class="btn btn-outline-info" title="Detail">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'admin_panel:koperasi_edit' koperasi.id %}" class="btn btn-outline-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if koperasi.foto_koperasi or koperasi.logo_koperasi %}
+                                    <button type="button" class="btn btn-outline-primary" 
+                                            onclick="showBusinessImagesModal('{{ koperasi.nama|escapejs }}', 
+                                                    {% if koperasi.foto_koperasi %}'{{ koperasi.foto_koperasi.url }}'{% else %}null{% endif %}, 
+                                                    {% if koperasi.logo_koperasi %}'{{ koperasi.logo_koperasi.url }}'{% else %}null{% endif %})"
+                                            title="Lihat Gambar">
+                                        <i class="fas fa-images"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-outline-danger"
+                                    onclick="showBusinessDeleteModal('{% url 'admin_panel:koperasi_delete' koperasi.id  %}', '{{ koperasi.nama|escapejs }}', 'Koperasi')"
+                                    title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="business-empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p class="business-empty-state-title">Tidak ada data Koperasi</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="business-mobile-list">
+                {% for koperasi in page_obj %}
+                <div class="business-mobile-card">
+                    <div class="business-mobile-card-header">
+                        <div>
+                            <h3 class="business-mobile-card-title">{{ koperasi.nama }}</h3>
+                            <div class="business-mobile-card-subtitle">{{ koperasi.ketua }}</div>
+                        </div>
+                        <div class="business-mobile-card-number">{{ forloop.counter0|add:page_obj.start_index }}</div>
+                    </div>
+                    <div class="business-mobile-card-body">
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">No. SK</span>
+                            <span class="business-mobile-info-value">{{ koperasi.nomor_badan_hukum }}</span>
+                        </div>
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Berdiri</span>
+                            <span class="business-mobile-info-value">{{ koperasi.tanggal_berdiri|date:"d M Y" }}</span>
+                        </div>
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Jenis</span>
+                            <span class="business-mobile-info-value">
+                                {% if koperasi.jenis_koperasi %}{{ koperasi.jenis_koperasi }}{% else %}-{% endif %}
+                            </span>
+                        </div>
+                        <div class="business-mobile-info-row">
+                            <span class="business-mobile-info-label">Anggota</span>
+                            <span class="business-mobile-info-value">{{ koperasi.jumlah_anggota }} orang</span>
+                        </div>
+                    </div>
+                    <div class="business-mobile-card-footer">
+                        <div class="business-mobile-card-badges"></div>
+                        <div class="business-mobile-actions">
+                            <a href="{% url 'admin_panel:koperasi_detail' koperasi.id %}" class="btn btn-outline-info" title="Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_panel:koperasi_edit' koperasi.id %}" class="btn btn-outline-warning" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if koperasi.foto_koperasi or koperasi.logo_koperasi %}
+                            <button type="button" class="btn btn-outline-primary" 
+                                    onclick="showBusinessImagesModal('{{ koperasi.nama|escapejs }}', 
+                                            {% if koperasi.foto_koperasi %}'{{ koperasi.foto_koperasi.url }}'{% else %}null{% endif %}, 
+                                            {% if koperasi.logo_koperasi %}'{{ koperasi.logo_koperasi.url }}'{% else %}null{% endif %})"
+                                    title="Lihat Gambar">
+                                <i class="fas fa-images"></i>
+                            </button>
+                            {% endif %}
+                            <button type="button" class="btn btn-outline-danger"
+                                    onclick="showBusinessDeleteModal('{% url 'admin_panel:koperasi_delete' koperasi.id  %}', '{{ koperasi.nama|escapejs }}', 'Koperasi')"
+                                    title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="business-empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p class="business-empty-state-title">Tidak ada data Koperasi</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="business-pagination-wrapper">
+            <ul class="business-pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&amp;search={{ search }}{% endif %}">‹</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&amp;search={{ search }}{% endif %}">›</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Koperasi Delete Confirmation Modal -->
+<div class="modal fade" id="koperasiDeleteModal" tabindex="-1" role="dialog" aria-labelledby="koperasiDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="koperasiDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Konfirmasi Penghapusan Koperasi
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Peringatan!</strong> Tindakan ini tidak dapat dibatalkan.
+                </div>
+                
+                <p>Apakah Anda yakin ingin menghapus Koperasi <strong id="koperasiDeleteName"></strong>?</p>
+                <p class="text-muted">Semua data terkait akan dihapus secara permanen.</p>
+                
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="koperasiDeleteConfirm" required>
+                    <label class="form-check-label" for="koperasiDeleteConfirm">
+                        Saya yakin ingin menghapus data Koperasi ini
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <form id="koperasiDeleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" id="koperasiDeleteBtn" disabled>
+                        <i class="fas fa-trash"></i> Hapus Koperasi
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// Koperasi Delete Modal Functions
+function showBusinessDeleteModal(deleteUrl, businessName, businessType) {
+    // Set form action
+    $('#koperasiDeleteForm').attr('action', deleteUrl);
+    
+    // Set business details
+    $('#koperasiDeleteName').text(businessName);
+    
+    // Reset form
+    $('#koperasiDeleteConfirm').prop('checked', false);
+    $('#koperasiDeleteBtn').prop('disabled', true);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('koperasiDeleteModal'));
+    modal.show();
+}
+
+// Handle delete confirmation checkbox
+$('#koperasiDeleteConfirm').on('change', function() {
+    const confirmed = $(this).is(':checked');
+    $('#koperasiDeleteBtn').prop('disabled', !confirmed);
+});
+
+// Handle delete form submission
+$('#koperasiDeleteForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const form = $(this);
+    const btn = $('#koperasiDeleteBtn');
+    const originalText = btn.html();
+    
+    // Show loading state
+    btn.html('<i class="fas fa-spinner fa-spin"></i> Menghapus...');
+    btn.prop('disabled', true);
+    
+    // Get CSRF token
+    const csrftoken = $('[name=csrfmiddlewaretoken]').val();
+    
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: form.serialize(),
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            if (response.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('koperasiDeleteModal'));
+                modal.hide();
+                
+                // Show success message
+                if (typeof showAlert === 'function') {
+                    showAlert(response.message || 'Koperasi berhasil dihapus', 'success');
+                } else {
+                    alert(response.message || 'Koperasi berhasil dihapus');
+                }
+                
+                // Reload page
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                // Show error message
+                if (typeof showAlert === 'function') {
+                    showAlert(response.message || 'Gagal menghapus Koperasi', 'error');
+                } else {
+                    alert(response.message || 'Gagal menghapus Koperasi');
+                }
+                
+                // Reset button
+                btn.html(originalText);
+                btn.prop('disabled', false);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Delete error:', error);
+            
+            // Show error message
+            if (typeof showAlert === 'function') {
+                showAlert('Terjadi kesalahan saat menghapus Koperasi', 'error');
+            } else {
+                alert('Terjadi kesalahan saat menghapus Koperasi');
+            }
+            
+            // Reset button
+            btn.html(originalText);
+            btn.prop('disabled', false);
+        }
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('koperasiDeleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        const modal = bootstrap.Modal.getInstance(this);
+        modal.hide();
+    }
+});
+
+// Reset modal when closed
+document.getElementById('koperasiDeleteModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('koperasiDeleteConfirm').checked = false;
+    document.getElementById('koperasiDeleteBtn').disabled = true;
+    document.getElementById('koperasiDeleteForm').reset();
+});
+
+// Function to show business images modal
+function showBusinessImagesModal(businessName, fotoUrl, logoUrl) {
+    // Remove existing modal if any
+    $('#businessImagesModal').remove();
+    
+    let modalContent = `
+        <div class="modal fade" id="businessImagesModal" tabindex="-1" role="dialog" aria-labelledby="businessImagesModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="businessImagesModalLabel">
+                            <i class="fas fa-images"></i> Gambar ${businessName}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+    `;
+    
+    if (fotoUrl) {
+        modalContent += `
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-camera"></i> Foto Koperasi</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${fotoUrl}" alt="Foto Koperasi" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (logoUrl) {
+        modalContent += `
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-image"></i> Logo Koperasi</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="${logoUrl}" alt="Logo Koperasi" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    modalContent += `
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to body
+    $('body').append(modalContent);
+    
+    // Show modal using Bootstrap 5.3.0 syntax
+    const modalElement = document.getElementById('businessImagesModal');
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+    });
+    modal.show();
+    
+    // Add event listeners for proper cleanup
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        modal.dispose();
+        modalElement.remove();
+    });
+}
+
+console.log('Koperasi list page initialized with delete modal');
+</script>
+{% endblock extra_js %}

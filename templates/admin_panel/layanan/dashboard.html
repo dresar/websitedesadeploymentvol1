@@ -1,0 +1,161 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/layanan/layanan-dashboard.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="layanan-dashboard">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+                <div class="layanan-dashboard-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4>Dashboard Layanan</h4>
+                            <p class="text-muted mb-0">Kelola semua layanan desa</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'admin_panel:layanan:feedback_form' %}" class="btn btn-primary">
+                                <i class="fas fa-comments me-1"></i>Feedback
+                            </a>
+                            <a href="{% url 'admin_panel:layanan:faq_form' %}" class="btn btn-primary">
+                                <i class="fas fa-question-circle me-1"></i>FAQ
+                            </a>
+                            <a href="{% url 'admin_panel:layanan:contact_form' %}" class="btn btn-primary">
+                                <i class="fas fa-phone me-1"></i>Kontak
+                            </a>
+                            <a href="{% url 'admin_panel:layanan:service_form' %}" class="btn btn-primary">
+                                <i class="fas fa-cogs me-1"></i>Layanan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layanan-stats-grid">
+                    <div class="layanan-stat-card feedback">
+                        <div class="layanan-stat-icon feedback">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="layanan-stat-number">{{ total_feedback|default:"0" }}</div>
+                        <div class="layanan-stat-label">Total Feedback</div>
+                        <div class="layanan-stat-details">
+                            <span>Bulan ini: {{ monthly_feedback|default:"0" }}</span>
+                            <span class="text-warning">Belum dibaca: {{ unread_feedback|default:"0" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="layanan-stat-card faq">
+                        <div class="layanan-stat-icon faq">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <div class="layanan-stat-number">{{ total_faq|default:"0" }}</div>
+                        <div class="layanan-stat-label">Total FAQ</div>
+                        <div class="layanan-stat-details">
+                            <span>Aktif: {{ active_faq|default:"0" }}</span>
+                            <span>Kategori: {{ faq_categories|default:"0" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="layanan-stat-card contact">
+                        <div class="layanan-stat-icon contact">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="layanan-stat-number">{{ total_contacts|default:"0" }}</div>
+                        <div class="layanan-stat-label">Kontak Layanan</div>
+                        <div class="layanan-stat-details">
+                            <span>Aktif: {{ active_contacts|default:"0" }}</span>
+                            <span>Departemen: {{ contact_departments|default:"0" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="layanan-stat-card service">
+                        <div class="layanan-stat-icon service">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="layanan-stat-number">{{ total_services|default:"0" }}</div>
+                        <div class="layanan-stat-label">Layanan</div>
+                        <div class="layanan-stat-details">
+                            <span>Aktif: {{ active_services|default:"0" }}</span>
+                            <span>Kategori: {{ service_categories|default:"0" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layanan-quick-actions">
+                    <h5><i class="fas fa-bolt me-2"></i>Aksi Cepat</h5>
+                    <div class="layanan-action-buttons-grid">
+                        <a href="{% url 'admin_panel:layanan:feedback_list' %}" class="layanan-action-btn">
+                            <i class="fas fa-comments"></i>
+                            <div>
+                                <strong>Kelola Feedback</strong>
+                                <small>Lihat dan kelola feedback</small>
+                            </div>
+                        </a>
+                        <a href="{% url 'admin_panel:layanan:faq_list' %}" class="layanan-action-btn">
+                            <i class="fas fa-question-circle"></i>
+                            <div>
+                                <strong>Kelola FAQ</strong>
+                                <small>Tambah dan edit FAQ</small>
+                            </div>
+                        </a>
+                        <a href="{% url 'admin_panel:layanan:contact_list' %}" class="layanan-action-btn">
+                            <i class="fas fa-phone"></i>
+                            <div>
+                                <strong>Kelola Kontak</strong>
+                                <small>Kelola informasi kontak</small>
+                            </div>
+                        </a>
+                        <a href="{% url 'admin_panel:layanan:service_list' %}" class="layanan-action-btn">
+                            <i class="fas fa-cogs"></i>
+                            <div>
+                                <strong>Kelola Layanan</strong>
+                                <small>Tambah dan edit layanan</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="layanan-recent-activity">
+                    <h5><i class="fas fa-clock me-2"></i>Aktivitas Terbaru</h5>
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="layanan-activity-item">
+                            <div class="layanan-activity-icon {{ activity.type }}">
+                                <i class="fas fa-{{ activity.icon }}"></i>
+                            </div>
+                            <div class="layanan-activity-content">
+                                <div class="layanan-activity-title">{{ activity.title }}</div>
+                                <div class="layanan-activity-description">{{ activity.description }}</div>
+                                <div class="layanan-activity-time">{{ activity.time }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="layanan-empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h5>Belum ada aktivitas terbaru</h5>
+                        <p>Belum ada aktivitas yang tercatat</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+    console.log('Layanan Dashboard loaded');
+
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock extra_js %}
+

@@ -1,0 +1,254 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Daftar FAQ Wisata{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-list.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-list-compact.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="tourism-list-container">
+    <div class="tourism-list-wrapper">
+        <!-- Tombol Kembali -->
+        <a href="{% url 'admin_panel:tourism_dashboard' %}" class="td-back-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border-radius: 6px; text-decoration: none; margin-bottom: 1.5rem; transition: all 0.2s ease;">
+            <i class="fas fa-arrow-left"></i>
+            Kembali ke Dashboard Wisata
+        </a>
+
+        <div class="tourism-page-header">
+            <div class="tourism-page-header-content">
+                <h1 class="tourism-page-title">
+                    <i class="fas fa-question-circle"></i>
+                    Daftar FAQ Wisata
+                </h1>
+                <p class="tourism-page-subtitle">Kelola semua FAQ wisata Desa Pulosarok</p>
+            </div>
+            <div class="tourism-page-actions">
+                <a href="{% url 'admin_panel:tourism_faq_create' %}" class="tourism-btn tourism-btn-primary tourism-btn-sm">
+                    <i class="fas fa-plus"></i>
+                    Tambah FAQ
+                </a>
+            </div>
+        </div>
+
+        <div class="tourism-filter-container">
+            <div class="tourism-filter-header">
+                <h6 class="tourism-filter-title">
+                    <i class="fas fa-filter"></i>
+                    Filter & Pencarian
+                </h6>
+            </div>
+            <form method="get" class="tourism-filter-grid">
+                <div class="tourism-filter-group">
+                    <label for="search" class="tourism-filter-label">
+                        <i class="fas fa-search"></i>
+                        Pencarian
+                    </label>
+                    <input type="text" class="tourism-filter-input" id="search" name="search"
+                           value="{{ search_query }}" placeholder="Cari FAQ...">
+                </div>
+                <div class="tourism-filter-group">
+                    <label for="category" class="tourism-filter-label">
+                        <i class="fas fa-tags"></i>
+                        Kategori
+                    </label>
+                    <select class="tourism-filter-select" id="category" name="category">
+                        <option value="">Semua Kategori</option>
+                        <option value="tiket" {% if current_category == 'tiket' %}selected{% endif %}>Tiket & Harga</option>
+                        <option value="jam" {% if current_category == 'jam' %}selected{% endif %}>Jam Operasional</option>
+                        <option value="lokasi" {% if current_category == 'lokasi' %}selected{% endif %}>Lokasi & Akses</option>
+                        <option value="fasilitas" {% if current_category == 'fasilitas' %}selected{% endif %}>Fasilitas</option>
+                        <option value="keamanan" {% if current_category == 'keamanan' %}selected{% endif %}>Keamanan</option>
+                    </select>
+                </div>
+                <div class="tourism-filter-group">
+                    <label for="status" class="tourism-filter-label">
+                        <i class="fas fa-toggle-on"></i>
+                        Status
+                    </label>
+                    <select class="tourism-filter-select" id="status" name="status">
+                        <option value="">Semua Status</option>
+                        <option value="active" {% if current_status == 'active' %}selected{% endif %}>Aktif</option>
+                        <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Tidak Aktif</option>
+                        <option value="featured" {% if current_status == 'featured' %}selected{% endif %}>Unggulan</option>
+                    </select>
+                </div>
+                <div class="tourism-filter-group">
+                    <label for="sort" class="tourism-filter-label">
+                        <i class="fas fa-sort"></i>
+                        Urutkan
+                    </label>
+                    <select class="tourism-filter-select" id="sort" name="sort">
+                        <option value="-created_at" {% if current_sort == '-created_at' %}selected{% endif %}>Terbaru</option>
+                        <option value="question" {% if current_sort == 'question' %}selected{% endif %}>Pertanyaan A-Z</option>
+                        <option value="-question" {% if current_sort == '-question' %}selected{% endif %}>Pertanyaan Z-A</option>
+                        <option value="priority" {% if current_sort == 'priority' %}selected{% endif %}>Prioritas</option>
+                    </select>
+                </div>
+                <div class="tourism-filter-group">
+                    <div class="tourism-filter-actions">
+                        <button type="submit" class="tourism-btn tourism-btn-primary tourism-btn-sm">
+                            <i class="fas fa-search"></i>
+                            Filter
+                        </button>
+                        <a href="{% url 'admin_panel:tourism_faq_list' %}" class="tourism-btn tourism-btn-secondary tourism-btn-sm">
+                            <i class="fas fa-times"></i>
+                            Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="tourism-card-grid tourism-grid-3">
+            {% for faq in page_obj.object_list %}
+            <div class="tourism-card tourism-animate-fade-in">
+                <div class="tourism-card-body">
+                    <div class="tourism-card-header tourism-mb-3">
+                        <h6 class="tourism-card-title">{{ faq.question|truncatechars:35 }}</h6>
+                        <div class="tourism-action-group">
+                            <a href="{% url 'admin_panel:tourism_faq_detail' faq.id %}"
+                               class="tourism-action-btn tourism-action-btn-view" title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_panel:tourism_faq_edit' faq.id %}"
+                               class="tourism-action-btn tourism-action-btn-edit" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="tourism-action-btn tourism-action-btn-delete"
+                                    onclick="deleteFAQ({{ faq.id }})" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {% if faq.tags %}
+                        <div class="tourism-tags-container tourism-mb-2">
+                            {% for tag in faq.tags_list %}
+                                <span class="tourism-tag tourism-text-xs">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <p class="tourism-card-text tourism-mb-3">{{ faq.answer|truncatechars:100 }}</p>
+
+                    <div class="tourism-d-flex tourism-gap-2 tourism-mb-3 tourism-flex-wrap">
+                        <span class="tourism-badge tourism-badge-info tourism-badge-sm">{{ faq.get_category_display }}</span>
+
+                        {% if faq.priority == 1 %}
+                            <span class="tourism-badge tourism-badge-danger tourism-badge-sm">
+                                <i class="fas fa-exclamation-circle"></i> P1
+                            </span>
+                        {% elif faq.priority == 2 %}
+                            <span class="tourism-badge tourism-badge-warning tourism-badge-sm">
+                                <i class="fas fa-exclamation-triangle"></i> P2
+                            </span>
+                        {% elif faq.priority == 3 %}
+                            <span class="tourism-badge tourism-badge-info tourism-badge-sm">P3</span>
+                        {% elif faq.priority == 4 %}
+                            <span class="tourism-badge tourism-badge-secondary tourism-badge-sm">P4</span>
+                        {% else %}
+                            <span class="tourism-badge tourism-badge-light tourism-badge-sm">P5</span>
+                        {% endif %}
+
+                        {% if faq.is_featured %}
+                            <span class="tourism-badge tourism-badge-success tourism-badge-sm">
+                                <i class="fas fa-star"></i> Unggulan
+                            </span>
+                        {% elif faq.is_active %}
+                            <span class="tourism-status tourism-status-active tourism-text-xs">
+                                <span class="tourism-status-dot"></span>
+                                Aktif
+                            </span>
+                        {% else %}
+                            <span class="tourism-status tourism-status-inactive tourism-text-xs">
+                                <span class="tourism-status-dot"></span>
+                                Nonaktif
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tourism-card-footer">
+                    <span class="tourism-card-text-muted tourism-text-xs">
+                        <i class="fas fa-calendar"></i>
+                        {{ faq.created_at|date:"d/m/Y H:i" }}
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="tourism-empty-state" style="grid-column: 1 / -1;">
+                <div class="tourism-empty-icon">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <h5 class="tourism-empty-title">Belum ada FAQ wisata</h5>
+                <p class="tourism-empty-text">Mulai dengan menambahkan FAQ wisata pertama Anda.</p>
+                <a href="{% url 'admin_panel:tourism_faq_create' %}" class="tourism-btn tourism-btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Tambah FAQ
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <div class="tourism-pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn">
+                        <i class="fas fa-angle-double-left"></i> First
+                    </a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn">
+                        <i class="fas fa-angle-left"></i> Prev
+                    </a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="tourism-pagination-btn active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn">
+                        Next <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn">
+                        Last <i class="fas fa-angle-double-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>function deleteFAQ(faqId) {
+    if (confirm('Apakah Anda yakin ingin menghapus FAQ ini?\n\nTindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.')) {
+        fetch(`{% url 'admin_panel:tourism_faq_delete' 0 %}`.replace('0', faqId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                showError('Gagal menghapus FAQ: ' + (data.error || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Terjadi kesalahan saat menghapus FAQ');
+        });
+    }
+}
+</script>
+{% endblock %}

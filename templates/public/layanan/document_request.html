@@ -1,0 +1,609 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .form-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .step-indicator {
+        transition: all 0.3s ease;
+    }
+    
+    .step-indicator.active {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        transform: scale(1.05);
+    }
+    
+    .step-indicator.completed {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+    
+    .form-section {
+        display: none;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    .form-section.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .file-upload-area {
+        border: 2px dashed #d1d5db;
+        transition: all 0.3s ease;
+    }
+    
+    .file-upload-area:hover {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+    
+    .file-upload-area.dragover {
+        border-color: #3b82f6;
+        background-color: #dbeafe;
+    }
+    
+    .loading-spinner {
+        display: none;
+    }
+    
+    .loading-spinner.active {
+        display: inline-block;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        .form-card {
+            margin: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .step-indicator {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative py-8 sm:py-12 lg:py-16 overflow-hidden">
+    {% if hero_image_url %}
+    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ hero_image_url }}');"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-600/80 to-indigo-700/80"></div>
+    {% else %}
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-700"></div>
+    {% endif %}
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center text-white">
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">
+                {% if document_type %}
+                    Pengajuan {{ document_type.name }}
+                {% else %}
+                    Pengajuan Dokumen
+                {% endif %}
+            </h1>
+            <p class="text-lg opacity-90 max-w-3xl mx-auto">
+                Ajukan permohonan dokumen secara online dengan mudah. Isi formulir di bawah ini untuk memulai proses pengajuan.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="flex items-center justify-center space-x-4 sm:space-x-8">
+                <div class="step-indicator active flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-semibold">
+                    <span class="text-sm">1</span>
+                </div>
+                <div class="hidden sm:block flex-1 h-1 bg-gray-300 rounded"></div>
+                <div class="step-indicator flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-600 font-semibold">
+                    <span class="text-sm">2</span>
+                </div>
+                <div class="hidden sm:block flex-1 h-1 bg-gray-300 rounded"></div>
+                <div class="step-indicator flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-600 font-semibold">
+                    <span class="text-sm">3</span>
+                </div>
+            </div>
+            <div class="flex justify-between mt-4 text-sm text-gray-600">
+                <span class="text-center">Informasi Dasar</span>
+                <span class="text-center hidden sm:block">Dokumen Pendukung</span>
+                <span class="text-center hidden sm:block">Konfirmasi</span>
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="form-card bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+            <form id="documentRequestForm" method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Step 1: Basic Information -->
+                <div id="step1" class="form-section active">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-user text-blue-600 mr-3"></i>
+                        Informasi Pemohon
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Document Type Selection -->
+                        <div class="md:col-span-2">
+                            <label for="document_type" class="block text-sm font-medium text-gray-700 mb-2">
+                                Jenis Dokumen <span class="text-red-500">*</span>
+                            </label>
+                            <select name="document_type_id" id="document_type" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
+                                <option value="">Pilih Jenis Dokumen</option>
+                                {% for doc_type in document_types %}
+                                <option value="{{ doc_type.id }}" {% if document_type and document_type.id == doc_type.id %}selected{% endif %}>
+                                    {{ doc_type.name }} - {{ doc_type.description|truncatewords:10 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- NIK Input -->
+                        <div>
+                            <label for="nik" class="block text-sm font-medium text-gray-700 mb-2">
+                                NIK <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="nik" id="nik" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Masukkan NIK" required maxlength="16">
+                            <p class="text-xs text-gray-500 mt-1">Nomor Induk Kependudukan 16 digit</p>
+                        </div>
+                        
+                        <!-- Full Name -->
+                        <div>
+                            <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                Nama Lengkap <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="full_name" id="full_name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Masukkan nama lengkap" required>
+                        </div>
+                        
+                        <!-- Phone Number -->
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                                Nomor Telepon
+                            </label>
+                            <input type="tel" name="phone" id="phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="08xxxxxxxxxx">
+                        </div>
+                        
+                        <!-- Email -->
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email
+                            </label>
+                            <input type="email" name="email" id="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="email@example.com">
+                        </div>
+                    </div>
+                    
+                    <!-- Subject -->
+                    <div>
+                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">
+                            Perihal <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="subject" id="subject" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Masukkan perihal surat" required>
+                    </div>
+                    
+                    <!-- Purpose -->
+                    <div>
+                        <label for="purpose" class="block text-sm font-medium text-gray-700 mb-2">
+                            Tujuan Penggunaan <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="purpose" id="purpose" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Jelaskan tujuan penggunaan dokumen ini" required></textarea>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div>
+                        <label for="content" class="block text-sm font-medium text-gray-700 mb-2">
+                            Isi Surat
+                        </label>
+                        <textarea name="content" id="content" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Isi surat (opsional)"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Supporting Documents -->
+                <div id="step2" class="form-section">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-paperclip text-green-600 mr-3"></i>
+                        Dokumen Pendukung
+                    </h2>
+                    
+                    <!-- File Upload Area -->
+                    <div class="file-upload-area rounded-lg p-8 text-center mb-6" id="fileUploadArea">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-lg font-medium text-gray-700 mb-2">Upload Dokumen Pendukung</p>
+                        <p class="text-sm text-gray-500 mb-4">Drag & drop file atau klik untuk memilih file</p>
+                        <input type="file" name="supporting_documents" id="supporting_documents" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="hidden">
+                        <button type="button" onclick="document.getElementById('supporting_documents').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                            Pilih File
+                        </button>
+                        <p class="text-xs text-gray-400 mt-2">Format: PDF, JPG, PNG, DOC, DOCX (Max 5MB per file)</p>
+                    </div>
+                    
+                    <!-- Selected Files Display -->
+                    <div id="selectedFiles" class="space-y-3"></div>
+                    
+                    <!-- Required Documents Info -->
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-900 mb-2">Dokumen yang Diperlukan:</h3>
+                        <ul id="requiredDocs" class="text-sm text-blue-800 space-y-1">
+                            <li>• Fotokopi KTP</li>
+                            <li>• Fotokopi KK</li>
+                            <li>• Surat pengantar RT/RW</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Confirmation -->
+                <div id="step3" class="form-section">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-check-circle text-purple-600 mr-3"></i>
+                        Konfirmasi Pengajuan
+                    </h2>
+                    
+                    <!-- Summary -->
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h3 class="font-semibold text-gray-900 mb-4">Ringkasan Pengajuan:</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Jenis Dokumen:</span>
+                                <span id="summaryDocumentType" class="font-medium">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Nama Pemohon:</span>
+                                <span id="summaryName" class="font-medium">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">NIK:</span>
+                                <span id="summaryNIK" class="font-medium">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Perihal:</span>
+                                <span id="summarySubject" class="font-medium">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Dokumen Pendukung:</span>
+                                <span id="summaryFiles" class="font-medium">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms and Conditions -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 mt-1"></i>
+                            <div>
+                                <h4 class="font-semibold text-yellow-800 mb-2">Syarat dan Ketentuan:</h4>
+                                <ul class="text-sm text-yellow-700 space-y-1">
+                                    <li>• Data yang diisi harus benar dan lengkap</li>
+                                    <li>• Dokumen pendukung harus jelas dan dapat dibaca</li>
+                                    <li>• Proses pengajuan membutuhkan waktu 1-3 hari kerja</li>
+                                    <li>• Status pengajuan dapat dicek melalui website</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Agreement Checkbox -->
+                    <div class="flex items-start space-x-3">
+                        <input type="checkbox" id="agreement" name="agreement" class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" required>
+                        <label for="agreement" class="text-sm text-gray-700">
+                            Saya menyatakan bahwa data yang diisi adalah benar dan lengkap. Saya setuju dengan syarat dan ketentuan yang berlaku.
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between pt-6 border-t border-gray-200">
+                    <button type="button" id="prevBtn" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" style="display: none;">
+                        <i class="fas fa-arrow-left mr-2"></i>Sebelumnya
+                    </button>
+                    <button type="button" id="nextBtn" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                        Selanjutnya<i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                    <button type="submit" id="submitBtn" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors" style="display: none;">
+                        <span class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                        </span>
+                        <span class="submit-text">Kirim Pengajuan</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Help Section -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-question-circle text-blue-600 mr-3"></i>
+                    Butuh Bantuan?
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-phone text-green-600"></i>
+                        <span class="text-gray-700">+62 812-3456-7890</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-envelope text-blue-600"></i>
+                        <span class="text-gray-700">dokumen@pulosarok.desa.id</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-clock text-orange-600"></i>
+                        <span class="text-gray-700">Senin - Jumat: 08:00 - 16:00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-purple-600 mr-3"></i>
+                    Informasi Penting
+                </h3>
+                <div class="space-y-2 text-sm text-gray-700">
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-check text-green-600 mt-1"></i>
+                        <span>Proses pengajuan 100% online</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-check text-green-600 mt-1"></i>
+                        <span>Status dapat dicek kapan saja</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <i class="fas fa-check text-green-600 mt-1"></i>
+                        <span>Dokumen siap dalam 1-3 hari kerja</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentStep = 1;
+    const totalSteps = 3;
+    
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('documentRequestForm');
+    
+    // Step navigation
+    function showStep(step) {
+        // Hide all steps
+        document.querySelectorAll('.form-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        // Show current step
+        document.getElementById(`step${step}`).classList.add('active');
+        
+        // Update step indicators
+        document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+            indicator.classList.remove('active', 'completed');
+            if (index + 1 < step) {
+                indicator.classList.add('completed');
+            } else if (index + 1 === step) {
+                indicator.classList.add('active');
+            }
+        });
+        
+        // Update navigation buttons
+        if (step === 1) {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'inline-flex';
+            submitBtn.style.display = 'none';
+        } else if (step === totalSteps) {
+            prevBtn.style.display = 'inline-flex';
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'inline-flex';
+            updateSummary();
+        } else {
+            prevBtn.style.display = 'inline-flex';
+            nextBtn.style.display = 'inline-flex';
+            submitBtn.style.display = 'none';
+        }
+    }
+    
+    // Next button
+    nextBtn.addEventListener('click', function() {
+        if (validateCurrentStep()) {
+            currentStep++;
+            showStep(currentStep);
+        }
+    });
+    
+    // Previous button
+    prevBtn.addEventListener('click', function() {
+        currentStep--;
+        showStep(currentStep);
+    });
+    
+    // Form validation
+    function validateCurrentStep() {
+        const currentSection = document.getElementById(`step${currentStep}`);
+        const requiredFields = currentSection.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('border-red-500');
+                isValid = false;
+            } else {
+                field.classList.remove('border-red-500');
+            }
+        });
+        
+        if (!isValid) {
+            alert('Mohon lengkapi semua field yang wajib diisi.');
+        }
+        
+        return isValid;
+    }
+    
+    // File upload handling
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('supporting_documents');
+    const selectedFilesDiv = document.getElementById('selectedFiles');
+    
+    // Drag and drop
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+    });
+    
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+    
+    // Click to upload
+    fileUploadArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+    
+    function handleFiles(files) {
+        selectedFilesDiv.innerHTML = '';
+        
+        Array.from(files).forEach(file => {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                alert(`File ${file.name} terlalu besar. Maksimal 5MB.`);
+                return;
+            }
+            
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+            fileDiv.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-file text-blue-600"></i>
+                    <div>
+                        <p class="font-medium text-gray-900">${file.name}</p>
+                        <p class="text-sm text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                </div>
+                <button type="button" class="text-red-600 hover:text-red-800" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            selectedFilesDiv.appendChild(fileDiv);
+        });
+    }
+    
+    // Update summary
+    function updateSummary() {
+        const documentTypeSelect = document.getElementById('document_type');
+        const selectedOption = documentTypeSelect.options[documentTypeSelect.selectedIndex];
+        document.getElementById('summaryDocumentType').textContent = selectedOption.text;
+        document.getElementById('summaryName').textContent = document.getElementById('full_name').value;
+        document.getElementById('summaryNIK').textContent = document.getElementById('nik').value;
+        document.getElementById('summarySubject').textContent = document.getElementById('subject').value;
+        
+        const fileCount = document.querySelectorAll('#selectedFiles > div').length;
+        document.getElementById('summaryFiles').textContent = fileCount > 0 ? `${fileCount} file` : 'Tidak ada';
+    }
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!document.getElementById('agreement').checked) {
+            alert('Anda harus menyetujui syarat dan ketentuan.');
+            return;
+        }
+        
+        // Show loading
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingSpinner = submitBtn.querySelector('.loading-spinner');
+        const submitText = submitBtn.querySelector('.submit-text');
+        
+        loadingSpinner.classList.add('active');
+        submitText.textContent = 'Mengirim...';
+        submitBtn.disabled = true;
+        
+        // Submit form
+        const formData = new FormData(form);
+        
+        // Debug: Log form data
+        console.log('Form data being sent:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
+        
+        fetch('{% url "letters:api_submit_request" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Pengajuan berhasil dikirim! Nomor tracking: ' + data.request_number);
+                window.location.href = '{% url "letters:request_status" %}';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mengirim pengajuan.');
+        })
+        .finally(() => {
+            loadingSpinner.classList.remove('active');
+            submitText.textContent = 'Kirim Pengajuan';
+            submitBtn.disabled = false;
+        });
+    });
+    
+    // Auto-populate required documents based on selected document type
+    document.getElementById('document_type').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            // You can fetch required documents via AJAX here
+            // For now, we'll use default requirements
+            const requiredDocs = document.getElementById('requiredDocs');
+            requiredDocs.innerHTML = `
+                <li>• Fotokopi KTP</li>
+                <li>• Fotokopi KK</li>
+                <li>• Surat pengantar RT/RW</li>
+                <li>• Dokumen pendukung sesuai jenis ${selectedOption.text}</li>
+            `;
+        }
+    });
+    
+    // Initialize
+    showStep(1);
+});
+</script>
+{% endblock %}

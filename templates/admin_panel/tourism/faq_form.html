@@ -1,0 +1,200 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block page_title %}
+    {% if form.instance.pk %}Edit FAQ{% else %}Tambah FAQ{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-form.css' %}">
+
+{% endblock %}
+
+{% block content %}
+<div class="tf-form-wrapper">
+    <div class="tf-container">
+        <!-- Tombol Kembali -->
+        <a href="{% url 'admin_panel:tourism_faq_list' %}" class="td-back-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border-radius: 6px; text-decoration: none; margin-bottom: 1.5rem; transition: all 0.2s ease;">
+            <i class="fas fa-arrow-left"></i>
+            Kembali ke Daftar FAQ
+        </a>
+
+        <div class="tf-header">
+            <h1 class="tf-title">
+                <i class="fas fa-question-circle"></i>
+                {% if form.instance.pk %}Edit FAQ{% else %}Tambah FAQ{% endif %}
+            </h1>
+            <p class="tf-subtitle">
+                {% if form.instance.pk %}
+                    Perbarui informasi FAQ
+                {% else %}
+                    Buat FAQ baru untuk lokasi wisata
+                {% endif %}
+            </p>
+        </div>
+
+        <form method="post" id="faqForm">
+            {% csrf_token %}
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-comments"></i>
+                    Pertanyaan & Jawaban
+                </h2>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.question.id_for_label }}" class="tf-label tf-label-required">
+                        <i class="fas fa-question"></i>
+                        Pertanyaan
+                    </label>
+                    {{ form.question }}
+                    {% if form.question.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% for error in form.question.errors %}{{ error }}{% endfor %}
+                        </span>
+                    {% endif %}
+                    <small class="tf-help-text">
+                        <i class="fas fa-lightbulb"></i>
+                        Masukkan pertanyaan yang sering ditanyakan
+                    </small>
+                </div>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.answer.id_for_label }}" class="tf-label tf-label-required">
+                        <i class="fas fa-comment-dots"></i>
+                        Jawaban
+                    </label>
+                    {{ form.answer }}
+                    {% if form.answer.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% for error in form.answer.errors %}{{ error }}{% endfor %}
+                        </span>
+                    {% endif %}
+                    <small class="tf-help-text">
+                        <i class="fas fa-lightbulb"></i>
+                        Berikan jawaban yang jelas dan informatif
+                    </small>
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-cog"></i>
+                    Pengaturan FAQ
+                </h2>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.tourism_location.id_for_label }}" class="tf-label">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Lokasi Wisata
+                    </label>
+                    {{ form.tourism_location }}
+                    {% if form.tourism_location.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% for error in form.tourism_location.errors %}{{ error }}{% endfor %}
+                        </span>
+                    {% endif %}
+                    <small class="tf-help-text">
+                        <i class="fas fa-lightbulb"></i>
+                        Pilih lokasi wisata terkait (opsional, kosongkan untuk FAQ umum)
+                    </small>
+                </div>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.order.id_for_label }}" class="tf-label">
+                        <i class="fas fa-sort-numeric-down"></i>
+                        Urutan Tampilan
+                    </label>
+                    {{ form.order }}
+                    {% if form.order.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% for error in form.order.errors %}{{ error }}{% endfor %}
+                        </span>
+                    {% endif %}
+                    <small class="tf-help-text">
+                        <i class="fas fa-lightbulb"></i>
+                        Urutan untuk menampilkan FAQ (angka lebih kecil muncul lebih dulu)
+                    </small>
+                </div>
+
+                <div class="tf-form-group">
+                    <div class="tf-checkbox-wrapper">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="tf-checkbox-label">
+                            FAQ Aktif
+                        </label>
+                    </div>
+                    {% if form.is_active.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% for error in form.is_active.errors %}{{ error }}{% endfor %}
+                        </span>
+                    {% endif %}
+                    <small class="tf-help-text">
+                        <i class="fas fa-lightbulb"></i>
+                        FAQ aktif akan ditampilkan di halaman publik
+                    </small>
+                </div>
+            </div>
+
+            <div class="tf-form-actions">
+                <a href="{% if form.instance.pk %}{% url 'admin_panel:tourism_faq_detail' form.instance.pk %}{% else %}{% url 'admin_panel:tourism_faq_list' %}{% endif %}"
+                   class="tf-btn tf-btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
+                </a>
+                <button type="submit" class="tf-btn tf-btn-primary">
+                    <i class="fas fa-save"></i>
+                    {% if form.instance.pk %}Simpan Perubahan{% else %}Tambah FAQ{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+$(document).ready(function() {
+    // Apply form styling
+    const form = document.getElementById('faqForm');
+    const inputs = form.querySelectorAll('input[type="text"], input[type="number"]');
+    const textareas = form.querySelectorAll('textarea:not(.summernote-editor)');
+    const selects = form.querySelectorAll('select');
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+
+    inputs.forEach(input => input.classList.add('tf-input'));
+    textareas.forEach(textarea => textarea.classList.add('tf-textarea'));
+    selects.forEach(select => select.classList.add('tf-select'));
+    checkboxes.forEach(checkbox => checkbox.classList.add('tf-checkbox'));
+
+    // Initialize Summernote
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const question = document.querySelector('[name="question"]');
+        const answerContent = $('#id_answer');
+
+        if (!question.value.trim()) {
+            e.preventDefault();
+            alert('⚠️ Pertanyaan harus diisi!');
+            question.focus();
+            return false;
+        }
+
+        if (!answerContent.trim() || answerContent === '<p><br></p>') {
+            e.preventDefault();
+            alert('⚠️ Jawaban harus diisi!');
+            $('#id_answer');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

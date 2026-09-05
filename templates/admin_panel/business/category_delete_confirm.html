@@ -1,0 +1,414 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+.delete-confirm-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.delete-confirm-header {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.delete-confirm-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #dc3545;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.delete-confirm-subtitle {
+    color: #6c757d;
+    margin: 0.5rem 0 0 0;
+    font-size: 1.1rem;
+}
+
+.category-info-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.category-info-header {
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    color: #212529;
+    padding: 1rem;
+    border-bottom: none;
+}
+
+.category-info-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: #212529;
+}
+
+.category-info-body {
+    padding: 1.5rem;
+}
+
+.category-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.category-info-item:last-child {
+    border-bottom: none;
+}
+
+.category-info-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.category-info-value {
+    color: #6c757d;
+}
+
+.businesses-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.businesses-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 1rem;
+    border-bottom: none;
+}
+
+.businesses-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.businesses-body {
+    padding: 1.5rem;
+}
+
+.business-type-section {
+    margin-bottom: 1rem;
+}
+
+.business-type-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.business-type-count {
+    color: #dc3545;
+    font-weight: 700;
+}
+
+.business-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.business-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.business-item:last-child {
+    border-bottom: none;
+}
+
+.business-name {
+    color: #6c757d;
+}
+
+.business-details {
+    font-size: 0.9rem;
+    color: #9ca3af;
+}
+
+.warning-section {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.warning-title {
+    color: #856404;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.warning-text {
+    color: #856404;
+    margin: 0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btn-cancel {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    background: white;
+    cursor: pointer;
+}
+
+.btn-cancel:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.btn-delete {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.empty-state-title {
+    color: #6c757d;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-description {
+    color: #9ca3af;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 767px) {
+    .delete-confirm-header {
+        padding: 1.5rem;
+    }
+
+    .delete-confirm-title {
+        font-size: 1.5rem;
+    }
+
+    .category-info-body,
+    .businesses-body {
+        padding: 1rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn-cancel,
+    .btn-delete {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="delete-confirm-container">
+    <div class="delete-confirm-header">
+        <h1 class="delete-confirm-title">
+            <i class="fas fa-exclamation-triangle"></i>Konfirmasi Penghapusan
+        </h1>
+        <p class="delete-confirm-subtitle">Anda akan menghapus kategori usaha dan semua data terkait</p>
+    </div>
+
+    <div class="category-info-card">
+        <div class="category-info-header">
+            <h5 class="category-info-title">Informasi Kategori</h5>
+        </div>
+        <div class="category-info-body">
+            <div class="category-info-item">
+                <span class="category-info-label">Nama Kategori:</span>
+                <span class="category-info-value">{{ category.name }}</span>
+            </div>
+            <div class="category-info-item">
+                <span class="category-info-label">Deskripsi:</span>
+                <span class="category-info-value">{{ category.description|default:"-" }}</span>
+            </div>
+            <div class="category-info-item">
+                <span class="category-info-label">Status:</span>
+                <span class="category-info-value">
+                    {% if category.is_active %}
+                        <span class="badge badge-success">Aktif</span>
+                    {% else %}
+                        <span class="badge badge-secondary">Non-Aktif</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {% if total_businesses > 0 %}
+    <div class="businesses-section">
+        <div class="businesses-header">
+            <h5 class="businesses-title">Usaha yang Akan Dihapus ({{ total_businesses }})</h5>
+        </div>
+        <div class="businesses-body">
+            {% if umkm_count > 0 %}
+            <div class="business-type-section">
+                <div class="business-type-title">
+                    UMKM <span class="business-type-count">({{ umkm_count }})</span>
+                </div>
+                <ul class="business-list">
+                    {% for business in businesses %}
+                        {% if business.business_type == 'umkm' %}
+                        <li class="business-item">
+                            <div class="business-name">{{ business.name }}</div>
+                            <div class="business-details">{{ business.address|truncatechars:50 }}</div>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if koperasi_count > 0 %}
+            <div class="business-type-section">
+                <div class="business-type-title">
+                    Koperasi <span class="business-type-count">({{ koperasi_count }})</span>
+                </div>
+                <ul class="business-list">
+                    {% for business in businesses %}
+                        {% if business.business_type == 'koperasi' %}
+                        <li class="business-item">
+                            <div class="business-name">{{ business.name }}</div>
+                            <div class="business-details">{{ business.address|truncatechars:50 }}</div>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if bumg_count > 0 %}
+            <div class="business-type-section">
+                <div class="business-type-title">
+                    BUMG <span class="business-type-count">({{ bumg_count }})</span>
+                </div>
+                <ul class="business-list">
+                    {% for business in businesses %}
+                        {% if business.business_type == 'bumg' %}
+                        <li class="business-item">
+                            <div class="business-name">{{ business.name }}</div>
+                            <div class="business-details">{{ business.address|truncatechars:50 }}</div>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if layanan_count > 0 %}
+            <div class="business-type-section">
+                <div class="business-type-title">
+                    Layanan Jasa <span class="business-type-count">({{ layanan_count }})</span>
+                </div>
+                <ul class="business-list">
+                    {% for business in businesses %}
+                        {% if business.business_type == 'layanan_jasa' %}
+                        <li class="business-item">
+                            <div class="business-name">{{ business.name }}</div>
+                            <div class="business-details">{{ business.address|truncatechars:50 }}</div>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="warning-section">
+        <h6 class="warning-title">
+            <i class="fas fa-exclamation-triangle"></i> Peringatan
+        </h6>
+        <p class="warning-text">
+            Tindakan ini akan menghapus kategori "{{ category.name }}" dan semua data usaha yang terkait. 
+            Tindakan ini tidak dapat dibatalkan. Pastikan Anda benar-benar yakin sebelum melanjutkan.
+        </p>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{% url 'admin_panel:business_categories_list' %}" class="btn-cancel">
+            <i class="fas fa-arrow-left"></i>Batal
+        </a>
+        <form method="post" action="{% url 'admin_panel:business_category_delete' category.id %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete" onclick="return confirm('Apakah Anda yakin ingin menghapus kategori ini? Tindakan ini tidak dapat dibatalkan.')">
+                <i class="fas fa-trash"></i>Ya, Hapus Semua
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock content %}

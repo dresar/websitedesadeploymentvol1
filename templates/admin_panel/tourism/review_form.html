@@ -1,0 +1,412 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-form.css' %}">
+
+{% endblock %}
+
+{% block content %}
+<div class="tf-form-wrapper">
+    <div class="tf-container">
+        <!-- Tombol Kembali -->
+        <a href="{% url 'admin_panel:tourism_reviews_list' %}" class="td-back-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border-radius: 6px; text-decoration: none; margin-bottom: 1.5rem; transition: all 0.2s ease;">
+            <i class="fas fa-arrow-left"></i>
+            Kembali ke Daftar Review
+        </a>
+
+        <div class="tf-header">
+            <h1 class="tf-title">
+                <i class="fas fa-star"></i>
+                {{ title }}
+            </h1>
+            <p class="tf-subtitle">
+                {% if form.instance.pk %}
+                    Perbarui review wisata
+                {% else %}
+                    Buat review wisata baru
+                {% endif %}
+            </p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="reviewForm">
+            {% csrf_token %}
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informasi Review
+                </h2>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.tourism_location.id_for_label }}" class="tf-label tf-label-required">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Lokasi Wisata
+                        </label>
+                        {{ form.tourism_location }}
+                        {% if form.tourism_location.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.tourism_location.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.rating.id_for_label }}" class="tf-label tf-label-required">
+                            <i class="fas fa-star"></i>
+                            Rating
+                        </label>
+                        {{ form.rating }}
+                        {% if form.rating.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.rating.errors.0 }}
+                            </span>
+                        {% endif %}
+                        <small class="tf-help-text">
+                            <i class="fas fa-lightbulb"></i>
+                            Pilih rating dari 1-5 bintang
+                        </small>
+                    </div>
+                </div>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.reviewer_name.id_for_label }}" class="tf-label tf-label-required">
+                            <i class="fas fa-user"></i>
+                            Nama Reviewer
+                        </label>
+                        {{ form.reviewer_name }}
+                        {% if form.reviewer_name.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.reviewer_name.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.reviewer_email.id_for_label }}" class="tf-label">
+                            <i class="fas fa-envelope"></i>
+                            Email Reviewer
+                        </label>
+                        {{ form.reviewer_email }}
+                        {% if form.reviewer_email.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.reviewer_email.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.review_text.id_for_label }}" class="tf-label tf-label-required">
+                        <i class="fas fa-comment-alt"></i>
+                        Teks Review
+                    </label>
+                    {{ form.review_text }}
+                    {% if form.review_text.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ form.review_text.errors.0 }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-list-ul"></i>
+                    Detail Kunjungan
+                </h2>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.visit_date.id_for_label }}" class="tf-label">
+                            <i class="fas fa-calendar"></i>
+                            Tanggal Kunjungan
+                        </label>
+                        {{ form.visit_date }}
+                        {% if form.visit_date.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.visit_date.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.group_size.id_for_label }}" class="tf-label">
+                            <i class="fas fa-users"></i>
+                            Jumlah Orang
+                        </label>
+                        {{ form.group_size }}
+                        {% if form.group_size.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.group_size.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <label for="{{ form.travel_type.id_for_label }}" class="tf-label">
+                            <i class="fas fa-plane"></i>
+                            Jenis Perjalanan
+                        </label>
+                        {{ form.travel_type }}
+                        {% if form.travel_type.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.travel_type.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.visit_purpose.id_for_label }}" class="tf-label">
+                            <i class="fas fa-compass"></i>
+                            Tujuan Kunjungan
+                        </label>
+                        {{ form.visit_purpose }}
+                        {% if form.visit_purpose.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.visit_purpose.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-star-half-alt"></i>
+                    Detail Rating
+                </h2>
+
+                <div class="tf-row-3">
+                    <div class="tf-form-group">
+                        <label for="{{ form.cleanliness_rating.id_for_label }}" class="tf-label">
+                            <i class="fas fa-broom"></i>
+                            Kebersihan
+                        </label>
+                        {{ form.cleanliness_rating }}
+                        {% if form.cleanliness_rating.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.cleanliness_rating.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.service_rating.id_for_label }}" class="tf-label">
+                            <i class="fas fa-concierge-bell"></i>
+                            Pelayanan
+                        </label>
+                        {{ form.service_rating }}
+                        {% if form.service_rating.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.service_rating.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.value_rating.id_for_label }}" class="tf-label">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            Nilai Uang
+                        </label>
+                        {{ form.value_rating }}
+                        {% if form.value_rating.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.value_rating.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="tf-row-3">
+                    <div class="tf-form-group">
+                        <label for="{{ form.accessibility_rating.id_for_label }}" class="tf-label">
+                            <i class="fas fa-wheelchair"></i>
+                            Aksesibilitas
+                        </label>
+                        {{ form.accessibility_rating }}
+                        {% if form.accessibility_rating.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.accessibility_rating.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.safety_rating.id_for_label }}" class="tf-label">
+                            <i class="fas fa-shield-alt"></i>
+                            Keamanan
+                        </label>
+                        {{ form.safety_rating }}
+                        {% if form.safety_rating.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.safety_rating.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tf-form-group">
+                        <label for="{{ form.overall_rating.id_for_label }}" class="tf-label">
+                            <i class="fas fa-chart-line"></i>
+                            Rating Keseluruhan
+                        </label>
+                        {{ form.overall_rating }}
+                        {% if form.overall_rating.errors %}
+                            <span class="tf-error-message">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                {{ form.overall_rating.errors.0 }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-photo-video"></i>
+                    Media Review
+                </h2>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.images.id_for_label }}" class="tf-label">
+                        <i class="fas fa-images"></i>
+                        Gambar Review
+                    </label>
+                    {{ form.images }}
+                    {% if form.images.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ form.images.errors.0 }}
+                        </span>
+                    {% endif %}
+                    <small class="tf-help-text">
+                        <i class="fas fa-lightbulb"></i>
+                        Pilih beberapa gambar untuk review
+                    </small>
+                </div>
+
+                <div class="tf-form-group">
+                    <label for="{{ form.video.id_for_label }}" class="tf-label">
+                        <i class="fas fa-video"></i>
+                        Video Review
+                    </label>
+                    {{ form.video }}
+                    {% if form.video.errors %}
+                        <span class="tf-error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ form.video.errors.0 }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="tf-card-section">
+                <h2 class="tf-section-title">
+                    <i class="fas fa-toggle-on"></i>
+                    Status Review
+                </h2>
+
+                <div class="tf-row">
+                    <div class="tf-form-group">
+                        <div class="tf-checkbox-wrapper">
+                            {{ form.is_approved }}
+                            <label for="{{ form.is_approved.id_for_label }}" class="tf-checkbox-label">
+                                Review Disetujui
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="tf-form-group">
+                        <div class="tf-checkbox-wrapper">
+                            {{ form.is_featured }}
+                            <label for="{{ form.is_featured.id_for_label }}" class="tf-checkbox-label">
+                                Review Unggulan
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tf-form-actions">
+                <a href="{% url 'admin_panel:tourism_reviews_list' %}" class="tf-btn tf-btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Kembali
+                </a>
+                <button type="submit" class="tf-btn tf-btn-primary">
+                    <i class="fas fa-save"></i>
+                    Simpan Review
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+$(document).ready(function() {
+    const form = document.getElementById('reviewForm');
+    const inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="date"], input[type="number"]');
+    const textareas = form.querySelectorAll('textarea:not(.summernote-editor)');
+    const selects = form.querySelectorAll('select');
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+
+    inputs.forEach(input => input.classList.add('tf-input'));
+    textareas.forEach(textarea => textarea.classList.add('tf-textarea'));
+    selects.forEach(select => select.classList.add('tf-select'));
+    fileInputs.forEach(fileInput => fileInput.classList.add('tf-file-input'));
+    checkboxes.forEach(checkbox => checkbox.classList.add('tf-checkbox'));
+
+    // Initialize Summernote for review text
+
+    // Calculate overall rating
+    function calculateOverallRating() {
+        const cleanliness = parseInt(document.querySelector('select[name="cleanliness_rating"]').value) || 0;
+        const service = parseInt(document.querySelector('select[name="service_rating"]').value) || 0;
+        const value = parseInt(document.querySelector('select[name="value_rating"]').value) || 0;
+        const accessibility = parseInt(document.querySelector('select[name="accessibility_rating"]').value) || 0;
+        const safety = parseInt(document.querySelector('select[name="safety_rating"]').value) || 0;
+
+        const ratings = [cleanliness, service, value, accessibility, safety].filter(r => r > 0);
+
+        if (ratings.length > 0) {
+            const average = Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length);
+            const overallSelect = document.querySelector('select[name="overall_rating"]');
+            if (overallSelect) {
+                overallSelect.value = average;
+            }
+        }
+    }
+
+    const ratingSelects = ['cleanliness_rating', 'service_rating', 'value_rating', 'accessibility_rating', 'safety_rating'];
+    ratingSelects.forEach(name => {
+        const select = document.querySelector(`select[name="${name}"]`);
+        if (select) {
+            select.addEventListener('change', calculateOverallRating);
+        }
+    });
+});
+</script>
+{% endblock %}

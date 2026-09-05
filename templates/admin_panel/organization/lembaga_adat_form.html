@@ -1,0 +1,809 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Tambah{% endif %} Lembaga Adat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e3e6f0;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: #333;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-header h4 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e3e6f0;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #d1d3e2;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    .form-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .required {
+        color: #e74a3b;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .logo-upload {
+        border: 2px dashed #d1d3e2;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .logo-upload:hover {
+        border-color: #4e73df;
+        background-color: #f8f9fc;
+    }
+
+    .logo-upload.dragover {
+        border-color: #4e73df;
+        background-color: #e3f2fd;
+    }
+
+    .logo-preview {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e3e6f0;
+        margin: 0 auto 1rem;
+        display: block;
+    }
+
+    .logo-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: #f8f9fc;
+        border: 3px solid #e3e6f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #6c757d;
+        margin: 0 auto 1rem;
+    }
+
+    .validation-error {
+        color: #e74a3b;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .form-help {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .row {
+        margin-bottom: 1rem;
+    }
+
+    /* Search Container Styles */
+    .search-container {
+        position: relative;
+    }
+
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #d1d3e2;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .search-result-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f8f9fc;
+        transition: background-color 0.2s ease;
+    }
+
+    .search-result-item:hover {
+        background-color: #f8f9fc;
+    }
+
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .search-result-name {
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 0.25rem;
+    }
+
+    .search-result-details {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .search-result-nik {
+        font-family: monospace;
+        background-color: #f8f9fc;
+        padding: 0.125rem 0.375rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+
+    .selected-person {
+        background-color: #e3f2fd;
+        border: 1px solid #4e73df;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .selected-person-info {
+        flex: 1;
+    }
+
+    .selected-person-name {
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 0.25rem;
+    }
+
+    .selected-person-details {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .remove-selection {
+        background: none;
+        border: none;
+        color: #e74a3b;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+
+    .remove-selection:hover {
+        background-color: #f8d7da;
+    }
+
+    /* Hide original select and file input */
+    #id_ketua, #id_sekretaris, #id_bendahara {
+        display: none;
+    }
+    
+    #id_foto_kegiatan {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 1rem;
+        }
+
+        .btn-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .logo-upload {
+            padding: 1rem;
+        }
+
+        .logo-preview,
+        .logo-placeholder {
+            width: 120px;
+            height: 120px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="form-header">
+        <h4>
+            <i class="fas fa-university me-2"></i>
+            {% if form.instance.pk %}Edit{% else %}Tambah{% endif %} Lembaga Adat
+        </h4>
+    </div>
+
+    <div class="form-container">
+        <form method="post" enctype="multipart/form-data" id="lembagaAdatForm">
+            {% csrf_token %}
+
+            <div class="form-section">
+                <h5 class="section-title">Informasi Dasar</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.nama_lembaga.id_for_label }}" class="form-label">
+                                Nama Lembaga <span class="required">*</span>
+                            </label>
+                            {{ form.nama_lembaga }}
+                            {% if form.nama_lembaga.errors %}
+                                <div class="validation-error">{{ form.nama_lembaga.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.jenis_lembaga.id_for_label }}" class="form-label">
+                                Jenis Lembaga <span class="required">*</span>
+                            </label>
+                            {{ form.jenis_lembaga }}
+                            {% if form.jenis_lembaga.errors %}
+                                <div class="validation-error">{{ form.jenis_lembaga.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="ketua_search" class="form-label">
+                                Ketua <span class="required">*</span>
+                            </label>
+                            <div class="search-container">
+                                <input type="text" id="ketua_search" class="form-control" placeholder="Cari nama ketua..." autocomplete="off">
+                                <div class="search-results" id="ketua_results" style="display: none;"></div>
+                                {{ form.ketua }}
+                                {% if form.ketua.errors %}
+                                    <div class="validation-error">{{ form.ketua.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                Status <span class="required">*</span>
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="validation-error">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="sekretaris_search" class="form-label">
+                                Sekretaris
+                            </label>
+                            <div class="search-container">
+                                <input type="text" id="sekretaris_search" class="form-control" placeholder="Cari nama sekretaris..." autocomplete="off">
+                                <div class="search-results" id="sekretaris_results" style="display: none;"></div>
+                                {{ form.sekretaris }}
+                                {% if form.sekretaris.errors %}
+                                    <div class="validation-error">{{ form.sekretaris.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="bendahara_search" class="form-label">
+                                Bendahara
+                            </label>
+                            <div class="search-container">
+                                <input type="text" id="bendahara_search" class="form-control" placeholder="Cari nama bendahara..." autocomplete="off">
+                                <div class="search-results" id="bendahara_results" style="display: none;"></div>
+                                {{ form.bendahara }}
+                                {% if form.bendahara.errors %}
+                                    <div class="validation-error">{{ form.bendahara.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.tanggal_terbentuk.id_for_label }}" class="form-label">
+                                Tanggal Terbentuk
+                            </label>
+                            {{ form.tanggal_terbentuk }}
+                            {% if form.tanggal_terbentuk.errors %}
+                                <div class="validation-error">{{ form.tanggal_terbentuk.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.alamat_sekretariat.id_for_label }}" class="form-label">
+                                Alamat Sekretariat
+                            </label>
+                            {{ form.alamat_sekretariat }}
+                            {% if form.alamat_sekretariat.errors %}
+                                <div class="validation-error">{{ form.alamat_sekretariat.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h5 class="section-title">Informasi Kontak</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.kontak_phone.id_for_label }}" class="form-label">
+                                Telepon
+                            </label>
+                            {{ form.kontak_phone }}
+                            {% if form.kontak_phone.errors %}
+                                <div class="validation-error">{{ form.kontak_phone.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.jumlah_anggota.id_for_label }}" class="form-label">
+                                Jumlah Anggota
+                            </label>
+                            {{ form.jumlah_anggota }}
+                            {% if form.jumlah_anggota.errors %}
+                                <div class="validation-error">{{ form.jumlah_anggota.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h5 class="section-title">Deskripsi & Visi Misi</h5>
+                <div class="form-group">
+                    <label for="{{ form.deskripsi.id_for_label }}" class="form-label">
+                        Deskripsi
+                    </label>
+                    {{ form.deskripsi }}
+                    {% if form.deskripsi.errors %}
+                        <div class="validation-error">{{ form.deskripsi.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.kegiatan_rutin.id_for_label }}" class="form-label">
+                        Kegiatan Rutin
+                    </label>
+                    {{ form.kegiatan_rutin }}
+                    {% if form.kegiatan_rutin.errors %}
+                        <div class="validation-error">{{ form.kegiatan_rutin.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h5 class="section-title">Logo Lembaga</h5>
+                <div class="form-group">
+                    <div class="logo-upload" onclick="document.getElementById('id_foto_kegiatan').click()">
+                        {% if form.instance.foto_kegiatan %}
+                            <img src="{{ form.instance.foto_kegiatan.url }}" alt="Foto Kegiatan" class="logo-preview" id="logoPreview">
+                        {% else %}
+                            <div class="logo-placeholder" id="logoPlaceholder">
+                                <i class="fas fa-university"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <i class="fas fa-cloud-upload-alt fa-2x mb-2"></i>
+                            <p class="mb-1">Klik untuk upload foto kegiatan</p>
+                            <small class="text-muted">Format: JPG, PNG, WEBP (Max 2MB)</small>
+                        </div>
+                    </div>
+                    {{ form.foto_kegiatan }}
+                    {% if form.foto_kegiatan.errors %}
+                        <div class="validation-error">{{ form.foto_kegiatan.errors.0 }}</div>
+                    {% endif %}
+                    <div id="file-info" style="margin-top: 10px; font-size: 0.875rem; color: #6c757d;"></div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <a href="{% url 'admin_panel:organization:admin_lembaga_adat_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Search functionality for penduduk
+let searchTimeout = {};
+
+function searchPenduduk(query, targetField, resultsContainer) {
+    if (query.length < 2) {
+        $(resultsContainer).hide();
+        return;
+    }
+
+    clearTimeout(searchTimeout[targetField]);
+    searchTimeout[targetField] = setTimeout(() => {
+        $.ajax({
+            url: '/admin-panel/organization/api/search-penduduk/',
+            method: 'GET',
+            data: { q: query },
+            success: function(response) {
+                if (response.success && response.data.length > 0) {
+                    displaySearchResults(response.data, targetField, resultsContainer);
+                } else {
+                    $(resultsContainer).html('<div class="search-result-item">Tidak ada data ditemukan</div>').show();
+                }
+            },
+            error: function() {
+                $(resultsContainer).html('<div class="search-result-item">Error dalam pencarian</div>').show();
+            }
+        });
+    }, 300);
+}
+
+function displaySearchResults(data, targetField, resultsContainer) {
+    let html = '';
+    data.forEach(function(person) {
+        const name = person.nama || person.name || 'Nama tidak tersedia';
+        const nik = person.nik || 'NIK tidak tersedia';
+        const age = person.age || 0;
+        const gender = person.gender || '';
+        
+        html += `
+            <div class="search-result-item" data-id="${person.id}" data-name="${name}">
+                <div class="search-result-name">${name}</div>
+                <div class="search-result-details">
+                    NIK: <span class="search-result-nik">${nik}</span>
+                    ${age > 0 ? ` | Umur: ${age} tahun` : ''}
+                    ${gender ? ` | ${gender}` : ''}
+                </div>
+            </div>
+        `;
+    });
+    $(resultsContainer).html(html).show();
+}
+
+function selectPerson(personId, personName, targetField, searchInput, resultsContainer) {
+    // Set the hidden select value
+    $(targetField).val(personId);
+    
+    // Show selected person info
+    const selectedHtml = `
+        <div class="selected-person">
+            <div class="selected-person-info">
+                <div class="selected-person-name">${personName}</div>
+                <div class="selected-person-details">Dipilih sebagai ${getRoleName(targetField)}</div>
+            </div>
+            <button type="button" class="remove-selection" onclick="clearSelection('${targetField}', '${searchInput}', '${resultsContainer}')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    $(searchInput).parent().find('.selected-person').remove();
+    $(searchInput).parent().append(selectedHtml);
+    $(searchInput).val('');
+    $(resultsContainer).hide();
+}
+
+function clearSelection(targetField, searchInput, resultsContainer) {
+    $(targetField).val('');
+    $(searchInput).val('');
+    $(searchInput).parent().find('.selected-person').remove();
+    $(resultsContainer).hide();
+}
+
+function getRoleName(targetField) {
+    if (targetField === '#id_ketua') return 'Ketua';
+    if (targetField === '#id_sekretaris') return 'Sekretaris';
+    if (targetField === '#id_bendahara') return 'Bendahara';
+    return 'Anggota';
+}
+</script>
+<script>$(document).ready(function() {
+
+    // Initialize search functionality
+    $('#ketua_search').on('input', function() {
+        const query = $(this).val();
+        searchPenduduk(query, '#id_ketua', '#ketua_results');
+    });
+
+    $('#sekretaris_search').on('input', function() {
+        const query = $(this).val();
+        searchPenduduk(query, '#id_sekretaris', '#sekretaris_results');
+    });
+
+    $('#bendahara_search').on('input', function() {
+        const query = $(this).val();
+        searchPenduduk(query, '#id_bendahara', '#bendahara_results');
+    });
+
+    // Handle search result clicks
+    $(document).on('click', '#ketua_results .search-result-item', function() {
+        const personId = $(this).data('id');
+        const personName = $(this).data('name');
+        selectPerson(personId, personName, '#id_ketua', '#ketua_search', '#ketua_results');
+    });
+
+    $(document).on('click', '#sekretaris_results .search-result-item', function() {
+        const personId = $(this).data('id');
+        const personName = $(this).data('name');
+        selectPerson(personId, personName, '#id_sekretaris', '#sekretaris_search', '#sekretaris_results');
+    });
+
+    $(document).on('click', '#bendahara_results .search-result-item', function() {
+        const personId = $(this).data('id');
+        const personName = $(this).data('name');
+        selectPerson(personId, personName, '#id_bendahara', '#bendahara_search', '#bendahara_results');
+    });
+
+    // Hide search results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.search-container').length) {
+            $('.search-results').hide();
+        }
+    });
+
+    // Load existing selections on page load (for edit mode)
+    function loadExistingSelections() {
+        // Load ketua
+        const ketuaId = $('#id_ketua').val();
+        if (ketuaId) {
+            $.ajax({
+                url: '/admin-panel/organization/api/search-penduduk/',
+                method: 'GET',
+                data: { q: '', limit: 1, id: ketuaId },
+                success: function(response) {
+                    if (response.success && response.data.length > 0) {
+                        const person = response.data[0];
+                        const name = person.nama || person.name || 'Nama tidak tersedia';
+                        selectPerson(ketuaId, name, '#id_ketua', '#ketua_search', '#ketua_results');
+                    }
+                }
+            });
+        }
+
+        // Load sekretaris
+        const sekretarisId = $('#id_sekretaris').val();
+        if (sekretarisId) {
+            $.ajax({
+                url: '/admin-panel/organization/api/search-penduduk/',
+                method: 'GET',
+                data: { q: '', limit: 1, id: sekretarisId },
+                success: function(response) {
+                    if (response.success && response.data.length > 0) {
+                        const person = response.data[0];
+                        const name = person.nama || person.name || 'Nama tidak tersedia';
+                        selectPerson(sekretarisId, name, '#id_sekretaris', '#sekretaris_search', '#sekretaris_results');
+                    }
+                }
+            });
+        }
+
+        // Load bendahara
+        const bendaharaId = $('#id_bendahara').val();
+        if (bendaharaId) {
+            $.ajax({
+                url: '/admin-panel/organization/api/search-penduduk/',
+                method: 'GET',
+                data: { q: '', limit: 1, id: bendaharaId },
+                success: function(response) {
+                    if (response.success && response.data.length > 0) {
+                        const person = response.data[0];
+                        const name = person.nama || person.name || 'Nama tidak tersedia';
+                        selectPerson(bendaharaId, name, '#id_bendahara', '#bendahara_search', '#bendahara_results');
+                    }
+                }
+            });
+        }
+    }
+
+    // Load existing selections
+    loadExistingSelections();
+
+    $('#id_foto_kegiatan').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Format file tidak didukung. Gunakan JPG, PNG, atau WEBP.');
+                return;
+            }
+            
+            // Validate file size (2MB = 2 * 1024 * 1024 bytes)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ukuran file terlalu besar. Maksimal 2MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Create preview if it doesn't exist
+                if ($('#logoPreview').length === 0) {
+                    $('#logoPlaceholder').after('<img src="" alt="Preview" class="logo-preview" id="logoPreview" style="display: none;">');
+                }
+                $('#logoPreview').attr('src', e.target.result).show();
+                $('#logoPlaceholder').hide();
+                
+                // Show file info
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                $('#file-info').html(`File dipilih: ${file.name} (${fileSize} MB)`);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    $('.logo-upload').on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+
+    $('.logo-upload').on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+
+    $('.logo-upload').on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Format file tidak didukung. Gunakan JPG, PNG, atau WEBP.');
+                return;
+            }
+            
+            // Validate file size
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ukuran file terlalu besar. Maksimal 2MB.');
+                return;
+            }
+            
+            // Create a new FileList with the dropped file
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            $('#id_foto_kegiatan')[0].files = dt.files;
+            $('#id_foto_kegiatan').trigger('change');
+        }
+    });
+
+    $('#lembagaAdatForm').on('submit', function(e) {
+        let isValid = true;
+
+        $('.validation-error').remove();
+
+        // Check required fields - but don't interfere with Django form validation
+        $('input[required], select[required], textarea[required]').each(function() {
+            if (!$(this).val()) {
+                isValid = false;
+                $(this).addClass('is-invalid');
+                $(this).after('<div class="validation-error">Field ini wajib diisi</div>');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Check if file is selected for upload (only if file is actually selected)
+        const fileInput = $('#id_foto_kegiatan')[0];
+        if (fileInput && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            console.log('File selected:', file.name, file.size, file.type);
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                isValid = false;
+                alert('Format file tidak didukung. Gunakan JPG, PNG, atau WEBP.');
+                e.preventDefault();
+                return false;
+            }
+            
+            // Validate file size
+            if (file.size > 2 * 1024 * 1024) {
+                isValid = false;
+                alert('Ukuran file terlalu besar. Maksimal 2MB.');
+                e.preventDefault();
+                return false;
+            }
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Mohon lengkapi semua field yang wajib diisi');
+        } else {
+            console.log('Form is valid, submitting...');
+        }
+    });
+});
+</script>
+{% endblock %}

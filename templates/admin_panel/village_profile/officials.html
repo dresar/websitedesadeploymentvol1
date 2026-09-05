@@ -1,0 +1,788 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Struktur Organisasi Desa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/organization/organization-list.css' %}">
+<style>
+    /* HILANGKAN horizontal scrollbar yang bikin kedip-kedip */
+    .table-responsive {
+        overflow-x: hidden !important;
+        overflow-y: visible;
+    }
+
+    .table {
+        width: 100%;
+        table-layout: fixed;
+    }
+    
+    .table-responsive::-webkit-scrollbar-horizontal {
+        display: none !important;
+        height: 0 !important;
+    }
+    
+    .table-responsive {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    body {
+        overflow-x: hidden !important;
+    }
+    
+    .container-fluid {
+        overflow-x: hidden !important;
+        max-width: 100%;
+    }
+    
+    .table-container {
+        overflow: visible;
+        max-width: 100%;
+    }
+    
+    .table td, .table th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .table td:nth-child(3) {
+        white-space: normal;
+        word-break: break-word;
+    }
+    
+    /* Mobile Card Layout */
+    .mobile-cards {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .table-responsive {
+            display: none !important;
+        }
+        
+        .mobile-cards {
+            display: block !important;
+        }
+        
+        .mobile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #1cc88a;
+        }
+        
+        .mobile-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .mobile-card-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .mobile-card-title {
+            flex: 1;
+        }
+        
+        .mobile-card-title h6 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .mobile-card-title small {
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .mobile-card-body {
+            margin-bottom: 12px;
+        }
+        
+        .mobile-card-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fc;
+        }
+        
+        .mobile-card-item:last-child {
+            border-bottom: none;
+        }
+        
+        .mobile-card-label {
+            font-weight: 600;
+            color: #5a6c7d;
+            font-size: 13px;
+        }
+        
+        .mobile-card-value {
+            color: #2c3e50;
+            font-size: 13px;
+            text-align: right;
+        }
+        
+        .mobile-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .mobile-card-actions .btn {
+            flex: 1;
+            font-size: 13px;
+            padding: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-sitemap mr-2"></i>Struktur Organisasi Desa
+            </h1>
+            <p class="text-muted mb-0">Kelola data perangkat desa</p>
+    </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="previewOfficials()">
+                <i class="fas fa-eye"></i> Preview
+            </button>
+            <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+            <a href="{% url 'village_profile:admin_official_add' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Tambah Perangkat
+        </a>
+    </div>
+</div>
+
+    <div class="filter-section">
+        <div class="filter-compact">
+            <div class="form-group">
+                <label for="search" class="form-label">Cari</label>
+                <input type="text" id="search" class="form-control search-input" placeholder="Nama, NIK, atau jabatan...">
+    </div>
+            <div class="form-group">
+                <label for="jabatan" class="form-label">Jabatan</label>
+                <select id="jabatan" class="form-select">
+                    <option value="">Semua Jabatan</option>
+                    <option value="KEPALA_DESA">Kepala Desa</option>
+                    <option value="SEKRETARIS">Sekretaris</option>
+                    <option value="BENDAHARA">Bendahara</option>
+                    <option value="KAUR_PEMERINTAHAN">Kaur Pemerintahan</option>
+                    <option value="KAUR_PEMBANGUNAN">Kaur Pembangunan</option>
+                    <option value="KAUR_KESRA">Kaur Kesra</option>
+                    <option value="KAUR_KEUANGAN">Kaur Keuangan</option>
+                    <option value="KAUR_UMUM">Kaur Umum</option>
+                    <option value="KADUS">Kepala Dusun</option>
+                    <option value="RT">Ketua RT</option>
+                    <option value="RW">Ketua RW</option>
+                    <option value="LAINNYA">Lainnya</option>
+                </select>
+                                        </div>
+            <div class="form-group">
+                <label for="status" class="form-label">Status</label>
+                <select id="status" class="form-select">
+                    <option value="aktif">Aktif</option>
+                    <option value="non_aktif">Non Aktif</option>
+                </select>
+                                </div>
+                    </div>
+                </div>
+
+    <div class="table-container">
+        <div class="table-header perangkat">
+            <div class="header-content">
+                <h5 class="mb-0">Data Perangkat Desa</h5>
+                <div class="header-actions">
+                    <button class="btn btn-light btn-sm" onclick="exportData()">
+                        <i class="fas fa-download"></i> Export
+                                    </button>
+                    <button class="btn btn-light btn-sm" onclick="printData()">
+                        <i class="fas fa-print"></i> Print
+                                    </button>
+                </div>
+                                </div>
+                            </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="5%">No</th>
+                        <th width="10%">Foto</th>
+                        <th width="25%">Nama</th>
+                        <th width="15%">Jabatan</th>
+                        <th width="10%">NIP</th>
+                        <th width="10%">Mulai Tugas</th>
+                        <th width="10%">Status</th>
+                        <th width="15%">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="officialsTableBody">
+                    <tr>
+                        <td colspan="8" class="loading-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <div>Memuat data...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+                </div>
+
+        <!-- Mobile Cards (Hidden on Desktop) -->
+        <div class="mobile-cards" id="mobileCardsContainer">
+            <!-- Mobile cards will be inserted here by JavaScript -->
+                </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted" id="paginationInfo">
+                Menampilkan <span id="showingFrom">0</span> - <span id="showingTo">0</span> dari <span id="totalItems">0</span> data
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                    <!-- Pagination buttons will be inserted here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus data perangkat desa <strong id="officialToDelete"></strong>?</p>
+                <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Global AJAX setup for CSRF token
+const csrftoken = getCookie('csrftoken');
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+
+// Officials Handler
+class OfficialsHandler {
+    constructor() {
+        this.apiUrl = '/village-profile/admin/api/officials/';
+        this.deleteUrl = '/village-profile/admin/delete-official/';
+        this.isLoading = false;
+        this.currentPage = 1;
+        this.perPage = 10;
+        this.totalItems = 0;
+        this.totalPages = 0;
+    }
+
+    // Get position label
+    getPositionLabel(position) {
+        const positions = {
+            'KEPALA_DESA': 'Kepala Desa',
+            'SEKRETARIS': 'Sekretaris Desa',
+            'BENDAHARA': 'Bendahara Desa',
+            'KAUR_PEMERINTAHAN': 'Kaur Pemerintahan',
+            'KAUR_PEMBANGUNAN': 'Kaur Pembangunan',
+            'KAUR_KESRA': 'Kaur Kesejahteraan Rakyat',
+            'KAUR_UMUM': 'Kaur Umum',
+            'KAUR_KEUANGAN': 'Kaur Keuangan',
+            'KADUS': 'Kepala Dusun',
+            'RT': 'Ketua RT',
+            'RW': 'Ketua RW',
+            'LAINNYA': 'Lainnya'
+        };
+        return positions[position] || position;
+    }
+
+    // Load officials data
+    async loadOfficials(page = 1) {
+        if (this.isLoading) {
+            console.log('[Officials] ⏸️ Already loading, skipping...');
+            return;
+        }
+        
+        this.isLoading = true;
+        this.currentPage = page;
+        
+        const search = $('#search').val();
+        const position = $('#jabatan').val();
+        const status = $('#status').val();
+
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (position) params.append('position', position);
+        if (status) params.append('status', status);
+        params.append('page', page);
+        params.append('per_page', this.perPage);
+
+        // Show loading only if table is empty
+        if ($('#officialsTableBody tr').length === 1) {
+            $('#officialsTableBody').html(
+                '<tr>' +
+                    '<td colspan="8" class="loading-state">' +
+                        '<i class="fas fa-spinner fa-spin"></i>' +
+                        '<div>Memuat data...</div>' +
+                    '</td>' +
+                '</tr>'
+            );
+        }
+
+        try {
+            console.log('[Officials] 📡 Loading from:', this.apiUrl + '?' + params.toString());
+            
+            const response = await $.ajax({
+                url: this.apiUrl + '?' + params.toString(),
+                method: 'GET',
+                dataType: 'json',
+                timeout: 10000
+            });
+
+            console.log('[Officials] ✅ API Response:', response);
+
+                if (response.success) {
+                const officials = response.officials || response.data || [];
+                this.totalItems = response.total || officials.length;
+                this.totalPages = Math.ceil(this.totalItems / this.perPage);
+                console.log('[Officials] 👥 Rendering', officials.length, 'officials, total:', this.totalItems);
+                this.renderOfficials(officials);
+                this.renderPagination();
+            } else {
+                console.error('[Officials] ❌ Response not successful:', response.message);
+                this.showError(response.message || 'Gagal memuat data');
+            }
+        } catch (error) {
+            console.error('[Officials] ❌ Load Error:', error);
+            
+            let errorMsg = 'Gagal memuat data perangkat desa';
+            if (error.status === 404) {
+                errorMsg = 'Endpoint API tidak ditemukan (404)';
+            } else if (error.status === 401 || error.status === 403) {
+                errorMsg = 'Anda tidak memiliki akses (' + error.status + ')';
+            } else if (error.status === 500) {
+                errorMsg = 'Server error (500): ' + (error.responseJSON?.message || error.statusText);
+            } else if (error.statusText === 'timeout') {
+                errorMsg = 'Request timeout - server terlalu lama merespon';
+            } else if (error.status === 0) {
+                errorMsg = 'Tidak dapat terhubung ke server';
+            }
+            
+            this.showError(errorMsg + '<br><small class="text-muted">Debug: Check console (F12) for details</small>');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    // Render officials table
+    renderOfficials(officials) {
+        const tbody = $('#officialsTableBody');
+        
+        console.log('[Officials] 🎨 renderOfficials called with:', officials);
+        
+        if (!officials || officials.length === 0) {
+            console.log('[Officials] ℹ️ No data to display');
+            tbody.html(
+                '<tr>' +
+                    '<td colspan="8" class="empty-state">' +
+                        '<i class="fas fa-info-circle"></i>' +
+                        '<h5>Belum ada data</h5>' +
+                        '<p>Data perangkat desa akan muncul di sini</p>' +
+                    '</td>' +
+                '</tr>'
+            );
+            return;
+        }
+
+        console.log('[Officials] 🔨 Building rows for', officials.length, 'officials');
+
+        const rows = officials.map((official, index) => {
+            const rowNumber = ((this.currentPage - 1) * this.perPage) + index + 1;
+            // Photo with FontAwesome default
+            let photoHtml = '';
+            if (official.photo) {
+                photoHtml = '<img src="' + official.photo + '" alt="' + official.name + '" class="official-photo" ' +
+                           'style="width: 50px; height: 50px; object-fit: cover; border-radius: 50%; border: 2px solid #e3e6f0;" ' +
+                           'onerror="this.onerror=null; this.style.display=' + "'none'" + '; this.nextElementSibling.style.display=' + "'flex'" + ';">' +
+                           '<div class="avatar-placeholder" style="display: none; width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold; border: 2px solid #e3e6f0;">' +
+                               '<i class="fas fa-user"></i>' +
+                           '</div>';
+            } else {
+                photoHtml = '<div class="avatar-placeholder" style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold; border: 2px solid #e3e6f0;">' +
+                               '<i class="fas fa-user"></i>' +
+                           '</div>';
+            }
+            
+            const statusBadge = official.is_active 
+                ? '<span class="badge badge-success">Aktif</span>'
+                : '<span class="badge badge-secondary">Non Aktif</span>';
+            
+            return '<tr>' +
+                '<td>' + rowNumber + '</td>' +
+                '<td>' + photoHtml + '</td>' +
+                '<td>' +
+                    '<strong>' + official.name + '</strong><br>' +
+                    '<small class="text-muted">NIK: ' + (official.nik || '-') + '</small>' +
+                '</td>' +
+                '<td>' + this.getPositionLabel(official.position) + '</td>' +
+                '<td>' + (official.nip || '-') + '</td>' +
+                '<td>' + (official.start_date || '-') + '</td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td>' +
+                    '<div class="btn-group btn-group-sm">' +
+                        '<a href="/village-profile/official/' + official.id + '/" ' +
+                           'class="btn btn-primary btn-sm" title="Detail" target="_blank">' +
+                            '<i class="fas fa-eye"></i>' +
+                        '</a>' +
+                        '<a href="/village-profile/admin/officials/edit/' + official.id + '/" ' +
+                           'class="btn btn-warning btn-sm" title="Edit">' +
+                            '<i class="fas fa-edit"></i>' +
+                        '</a>' +
+                        '<button onclick="confirmDelete(' + official.id + ', ' + "'" + official.name.replace(/'/g, "\\'") + "'" + ')" ' +
+                                'class="btn btn-danger btn-sm" title="Hapus">' +
+                            '<i class="fas fa-trash"></i>' +
+                        '</button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+        }).join('');
+
+        tbody.html(rows);
+        
+        // Render mobile cards
+        this.renderMobileCards(officials);
+        
+        console.log('[Officials] ✅ Render complete');
+    }
+    
+    // Render mobile cards
+    renderMobileCards(officials) {
+        const container = $('#mobileCardsContainer');
+        
+        if (!officials || officials.length === 0) {
+            container.html(
+                '<div class="text-center py-5">' +
+                    '<i class="fas fa-info-circle fa-3x text-muted mb-3"></i>' +
+                    '<h5 class="text-muted">Belum ada data</h5>' +
+                    '<p class="text-muted">Data perangkat desa akan muncul di sini</p>' +
+                '</div>'
+            );
+            return;
+        }
+        
+        const cards = officials.map((official, index) => {
+            const rowNumber = ((this.currentPage - 1) * this.perPage) + index + 1;
+            const statusBadge = official.is_active 
+                ? '<span class="badge badge-success">Aktif</span>'
+                : '<span class="badge badge-secondary">Non Aktif</span>';
+            
+            let photoHtml = '';
+            if (official.photo) {
+                photoHtml = '<img src="' + official.photo + '" alt="' + official.name + '" class="mobile-card-avatar" ' +
+                           'onerror="this.onerror=null; this.style.display=' + "'none'" + '; this.nextElementSibling.style.display=' + "'flex'" + ';">' +
+                           '<div class="avatar-placeholder mobile-card-avatar" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">' +
+                               '<i class="fas fa-user"></i>' +
+                           '</div>';
+            } else {
+                photoHtml = '<div class="avatar-placeholder mobile-card-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">' +
+                               '<i class="fas fa-user"></i>' +
+                           '</div>';
+            }
+            
+            return '<div class="mobile-card">' +
+                '<div class="mobile-card-header">' +
+                    photoHtml +
+                    '<div class="mobile-card-title">' +
+                        '<h6>' + official.name + '</h6>' +
+                        '<small>NIK: ' + (official.nik || '-') + '</small>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="mobile-card-body">' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">No.</span>' +
+                        '<span class="mobile-card-value">' + rowNumber + '</span>' +
+                    '</div>' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">Jabatan</span>' +
+                        '<span class="mobile-card-value">' + this.getPositionLabel(official.position) + '</span>' +
+                    '</div>' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">NIP</span>' +
+                        '<span class="mobile-card-value">' + (official.nip || '-') + '</span>' +
+                    '</div>' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">Mulai Tugas</span>' +
+                        '<span class="mobile-card-value">' + (official.start_date || '-') + '</span>' +
+                    '</div>' +
+                    '<div class="mobile-card-item">' +
+                        '<span class="mobile-card-label">Status</span>' +
+                        '<span class="mobile-card-value">' + statusBadge + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="mobile-card-actions">' +
+                    '<a href="/village-profile/official/' + official.id + '/" class="btn btn-primary btn-sm" target="_blank">' +
+                        '<i class="fas fa-eye"></i> Detail' +
+                    '</a>' +
+                    '<a href="/village-profile/admin/officials/edit/' + official.id + '/" class="btn btn-warning btn-sm">' +
+                        '<i class="fas fa-edit"></i> Edit' +
+                    '</a>' +
+                    '<button onclick="confirmDelete(' + official.id + ', ' + "'" + official.name.replace(/'/g, "\\'") + "'" + ')" class="btn btn-danger btn-sm">' +
+                        '<i class="fas fa-trash"></i> Hapus' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+        
+        container.html(cards);
+    }
+
+    // Render pagination
+    renderPagination() {
+        const showingFrom = ((this.currentPage - 1) * this.perPage) + 1;
+        const showingTo = Math.min(this.currentPage * this.perPage, this.totalItems);
+        
+        $('#showingFrom').text(showingFrom);
+        $('#showingTo').text(showingTo);
+        $('#totalItems').text(this.totalItems);
+        
+        let paginationHtml = '';
+        
+        // Previous button
+        if (this.currentPage > 1) {
+            paginationHtml += '<li class="page-item">' +
+                '<a class="page-link" href="#" onclick="handler.loadOfficials(' + (this.currentPage - 1) + '); return false;">' +
+                    '<i class="fas fa-chevron-left"></i>' +
+                '</a>' +
+            '</li>';
+        } else {
+            paginationHtml += '<li class="page-item disabled">' +
+                '<span class="page-link"><i class="fas fa-chevron-left"></i></span>' +
+            '</li>';
+        }
+        
+        // Page numbers
+        const maxButtons = 5;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(this.totalPages, startPage + maxButtons - 1);
+        
+        if (endPage - startPage < maxButtons - 1) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+        
+        if (startPage > 1) {
+            paginationHtml += '<li class="page-item">' +
+                '<a class="page-link" href="#" onclick="handler.loadOfficials(1); return false;">1</a>' +
+            '</li>';
+            if (startPage > 2) {
+                paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === this.currentPage) {
+                paginationHtml += '<li class="page-item active">' +
+                    '<span class="page-link">' + i + '</span>' +
+                '</li>';
+                } else {
+                paginationHtml += '<li class="page-item">' +
+                    '<a class="page-link" href="#" onclick="handler.loadOfficials(' + i + '); return false;">' + i + '</a>' +
+                '</li>';
+            }
+        }
+        
+        if (endPage < this.totalPages) {
+            if (endPage < this.totalPages - 1) {
+                paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            paginationHtml += '<li class="page-item">' +
+                '<a class="page-link" href="#" onclick="handler.loadOfficials(' + this.totalPages + '); return false;">' + this.totalPages + '</a>' +
+            '</li>';
+        }
+        
+        // Next button
+        if (this.currentPage < this.totalPages) {
+            paginationHtml += '<li class="page-item">' +
+                '<a class="page-link" href="#" onclick="handler.loadOfficials(' + (this.currentPage + 1) + '); return false;">' +
+                    '<i class="fas fa-chevron-right"></i>' +
+                '</a>' +
+            '</li>';
+        } else {
+            paginationHtml += '<li class="page-item disabled">' +
+                '<span class="page-link"><i class="fas fa-chevron-right"></i></span>' +
+            '</li>';
+        }
+        
+        $('#paginationControls').html(paginationHtml);
+    }
+
+    // Show error
+    showError(message) {
+        console.error('[Officials] 💥 showError:', message);
+        $('#officialsTableBody').html(
+            '<tr>' +
+                '<td colspan="8" class="error-state">' +
+                    '<i class="fas fa-exclamation-triangle"></i>' +
+                    '<div class="text-danger">' +
+                        '<strong>ERROR:</strong><br>' +
+                        message +
+                    '</div>' +
+                    '<button class="btn btn-primary btn-sm mt-3" onclick="handler.loadOfficials()">' +
+                        '<i class="fas fa-sync-alt"></i> Coba Lagi' +
+                    '</button>' +
+                '</td>' +
+            '</tr>'
+        );
+    }
+
+    // Delete official
+    async deleteOfficial(id) {
+        try {
+            const response = await $.ajax({
+                url: this.deleteUrl,
+                method: 'POST',
+                data: { id: id },
+                dataType: 'json'
+            });
+
+            if (response.success) {
+                showSuccess('Data berhasil dihapus!');
+                this.loadOfficials();
+            } else {
+                showError(response.message || 'Gagal menghapus data');
+            }
+        } catch (error) {
+            console.error('Delete Error:', error);
+            showError('Gagal menghapus data');
+        }
+    }
+}
+
+// Initialize handler
+const handler = new OfficialsHandler();
+
+// Global functions
+function refreshData() {
+    handler.loadOfficials();
+}
+
+function previewOfficials() {
+    window.open('{% url "village_profile:officials" %}', '_blank');
+}
+
+function exportData() {
+    alert('Fitur export dalam pengembangan');
+}
+
+function printData() {
+    window.print();
+}
+
+let officialToDelete = null;
+function confirmDelete(id, name) {
+    officialToDelete = id;
+    $('#officialToDelete').text(name);
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// Document ready
+$(document).ready(function() {
+    console.log('[Officials] 🚀 Page Initializing...');
+    
+    // Load initial data
+    handler.loadOfficials(1);
+    
+    // Search with debounce
+    let searchTimeout = null;
+    let lastSearchValue = '';
+    
+    $('#search').on('input', function() {
+        const currentValue = $(this).val();
+        if (currentValue === lastSearchValue) return;
+        lastSearchValue = currentValue;
+        
+        if (searchTimeout) clearTimeout(searchTimeout);
+        
+        searchTimeout = setTimeout(() => {
+            console.log('[Officials] 🔍 Search triggered:', currentValue);
+            handler.currentPage = 1;
+            handler.loadOfficials(1);
+            searchTimeout = null;
+        }, 800);
+    });
+    
+    // Filter with debounce
+    let filterTimeout = null;
+    $('#jabatan, #status').on('change', function() {
+        if (filterTimeout) clearTimeout(filterTimeout);
+        
+        filterTimeout = setTimeout(() => {
+            console.log('[Officials] 🎯 Filter changed');
+            handler.currentPage = 1;
+            handler.loadOfficials(1);
+            filterTimeout = null;
+        }, 300);
+    });
+    
+    // Delete confirmation
+    $('#confirmDeleteBtn').on('click', function() {
+        if (officialToDelete) {
+            handler.deleteOfficial(officialToDelete);
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            modal.hide();
+            officialToDelete = null;
+        }
+    });
+    
+    console.log('[Officials] ✅ Page Initialized!');
+});
+</script>
+{% endblock %}

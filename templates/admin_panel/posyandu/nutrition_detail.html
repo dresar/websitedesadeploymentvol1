@@ -1,0 +1,191 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Detail Data Gizi{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_detail.css' %}">
+<style>
+
+    .nutrition-status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+    .status-baik { background: #e8f5e8; color: #2e7d32; }
+    .status-kurang { background: #fff3e0; color: #f57c00; }
+    .status-buruk { background: #ffcdd2; color: #d32f2f; }
+    .status-lebih { background: #e3f2fd; color: #1976d2; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Debug Info (Remove after testing) -->
+    {% if nutrition %}
+        <div style="display:none;" id="debug-info">
+            Debug: Nutrition ID = {{ nutrition.id }}, 
+            Patient = {{ nutrition.patient.name }}, 
+            NIK = {{ nutrition.patient.nik }}
+        </div>
+    {% else %}
+        <div class="alert alert-danger">ERROR: No nutrition object in context!</div>
+    {% endif %}
+
+    <div class="detail-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-2">
+                    <a href="{% url 'admin_panel:posyandu:nutrition_data' %}" class="btn btn-outline-light btn-sm me-3">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Kembali
+                    </a>
+                    <h2 class="mb-0">
+                        <i class="fas fa-apple-alt mr-3"></i>
+                        Detail Data Gizi
+                    </h2>
+                </div>
+                <p class="mb-0 opacity-75">{% if nutrition.patient %}{{ nutrition.patient.name }}{% else %}Unknown{% endif %} - {{ nutrition.get_nutrition_status_display }}</p>
+            </div>
+            <div class="col-md-4 text-right">
+                <a href="{% url 'admin_panel:posyandu:nutrition_data_update' nutrition.id %}" class="btn btn-light">
+                    <i class="fas fa-edit mr-2"></i>
+                    Edit
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h5 class="section-title">
+            <i class="fas fa-child mr-2"></i>
+            Informasi Anak
+        </h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="info-label">Nama Anak</div>
+                    <div class="info-value">{% if nutrition.patient %}{{ nutrition.patient.name }}{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">NIK</div>
+                    <div class="info-value">{% if nutrition.patient %}{{ nutrition.patient.nik }}{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tanggal Lahir</div>
+                    <div class="info-value">{% if nutrition.patient and nutrition.patient.birth_date %}{{ nutrition.patient.birth_date|date:"d F Y" }}{% else %}-{% endif %}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="info-label">Usia</div>
+                    <div class="info-value">{% if nutrition.patient and nutrition.patient.birth_date %}{{ nutrition.patient.age }} tahun{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Jenis Kelamin</div>
+                    <div class="info-value">{% if nutrition.patient %}{% if nutrition.patient.gender == 'L' %}Laki-laki{% else %}Perempuan{% endif %}{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Posyandu</div>
+                    <div class="info-value">{% if nutrition.posyandu %}{{ nutrition.posyandu.name }}{% else %}-{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h5 class="section-title">
+            <i class="fas fa-ruler-combined mr-2"></i>
+            Data Pengukuran
+        </h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="info-label">Tanggal Pengukuran</div>
+                    <div class="info-value">{% if nutrition.measurement_date %}{{ nutrition.measurement_date|date:"d F Y" }}{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Berat Badan (kg)</div>
+                    <div class="info-value">{% if nutrition.weight %}{{ nutrition.weight }} kg{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tinggi Badan (cm)</div>
+                    <div class="info-value">{% if nutrition.height %}{{ nutrition.height }} cm{% else %}-{% endif %}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="info-label">Lingkar Lengan Atas (cm)</div>
+                    <div class="info-value">{% if nutrition.arm_circumference %}{{ nutrition.arm_circumference }} cm{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Status Gizi</div>
+                    <div class="info-value">
+                        <span class="nutrition-status status-{{ nutrition.nutrition_status }}">
+                            {{ nutrition.get_nutrition_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Petugas Kesehatan</div>
+                    <div class="info-value">{% if nutrition.health_worker %}{{ nutrition.health_worker }}{% else %}-{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h5 class="section-title">
+            <i class="fas fa-chart-line mr-2"></i>
+            Analisis Gizi
+        </h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="info-label">Indeks BB/U (Berat Badan/Umur)</div>
+                    <div class="info-value">{% if nutrition.weight_for_age %}{{ nutrition.weight_for_age }}{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Indeks TB/U (Tinggi Badan/Umur)</div>
+                    <div class="info-value">{% if nutrition.height_for_age %}{{ nutrition.height_for_age }}{% else %}-{% endif %}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="info-label">Indeks BB/TB (Berat Badan/Tinggi Badan)</div>
+                    <div class="info-value">{% if nutrition.weight_for_height %}{{ nutrition.weight_for_height }}{% else %}-{% endif %}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">BMI</div>
+                    <div class="info-value">{% if nutrition.bmi %}{{ nutrition.bmi }}{% else %}-{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h5 class="section-title">
+            <i class="fas fa-lightbulb mr-2"></i>
+            Rekomendasi
+        </h5>
+        <div class="info-value">{% if nutrition.recommendations %}{{ nutrition.recommendations }}{% else %}-{% endif %}</div>
+    </div>
+
+    <div class="info-card">
+        <h5 class="section-title">
+            <i class="fas fa-sticky-note mr-2"></i>
+            Catatan
+        </h5>
+        <div class="info-value">{% if nutrition.notes %}{{ nutrition.notes }}{% else %}-{% endif %}</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// No JavaScript needed - data is rendered server-side
+</script>
+{% endblock %}
+

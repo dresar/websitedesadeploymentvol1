@@ -1,0 +1,531 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load beneficiary_filters %}
+
+{% block title %}Dashboard Penerima Bantuan{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="container-fluid">
+
+        <div class="dashboard-header">
+            <div class="header-content">
+                <div class="header-info">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-hands-helping"></i>
+                        Dashboard Penerima Bantuan
+                    </h1>
+                    <p class="dashboard-subtitle">Ringkasan data penerima bantuan di Desa Pulosari</p>
+                </div>
+                <div class="header-meta">
+                    <div class="date-info">
+                        <i class="fas fa-calendar"></i>
+                        <span id="currentDate"></span>
+                    </div>
+                    <div class="time-info">
+                        <i class="fas fa-clock"></i>
+                        <span id="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-cart-container">
+            <div class="cart-header">
+                <h2 class="cart-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Statistik Penerima Bantuan
+                </h2>
+                <p class="cart-subtitle">Ringkasan data penerima bantuan aktif</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-cart stat-cart-primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ total_beneficiaries|default:0 }}</div>
+                        <div class="stat-label">Total Penerima</div>
+                        <div class="stat-description">Jumlah total penerima bantuan terdaftar</div>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Aktif</span>
+                    </div>
+                </div>
+
+                <div class="stat-cart stat-cart-success">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ active_beneficiaries|default:0 }}</div>
+                        <div class="stat-label">Penerima Aktif</div>
+                        <div class="stat-description">Penerima yang sedang aktif menerima bantuan</div>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Verified</span>
+                    </div>
+                </div>
+
+                <div class="stat-cart stat-cart-warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ pending_verifications|default:0 }}</div>
+                        <div class="stat-label">Menunggu Verifikasi</div>
+                        <div class="stat-description">Penerima yang menunggu proses verifikasi</div>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-hourglass-half"></i>
+                        <span>Pending</span>
+                    </div>
+                </div>
+
+                <div class="stat-cart stat-cart-info">
+                    <div class="stat-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ total_categories|default:0 }}</div>
+                        <div class="stat-label">Kategori Bantuan</div>
+                        <div class="stat-description">Total kategori bantuan yang tersedia</div>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-list"></i>
+                        <span>Categories</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-cart-container">
+            <div class="cart-header">
+                <h2 class="cart-title">
+                    <i class="fas fa-chart-line"></i>
+                    Analisis & Statistik
+                </h2>
+                <p class="cart-subtitle">Visualisasi data penerima bantuan dan distribusi</p>
+            </div>
+            <div class="analytics-grid">
+
+                <div class="chart-cart">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Penerima per Kategori
+                        </h3>
+                        <p class="chart-subtitle">Distribusi penerima berdasarkan kategori bantuan</p>
+                    </div>
+                    <div class="chart-body">
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-cart">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Distribusi Status
+                        </h3>
+                        <p class="chart-subtitle">Perbandingan status penerima bantuan</p>
+                    </div>
+                    <div class="chart-body">
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-cart" style="margin-top: 1.5rem;">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-area"></i>
+                        Distribusi Bantuan Bulanan
+                    </h3>
+                    <p class="chart-subtitle">Tren distribusi bantuan 6 bulan terakhir</p>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activities-cart-container">
+            <div class="cart-header">
+                <h2 class="cart-title">
+                    <i class="fas fa-history"></i>
+                    Aktivitas Terbaru
+                </h2>
+                <p class="cart-subtitle">10 aktivitas terakhir penerima bantuan</p>
+            </div>
+            <div class="activities-grid">
+
+                <div class="activity-cart">
+                    <div class="activity-header">
+                        <h3 class="activity-title">
+                            <i class="fas fa-user-plus"></i>
+                            Penerima Terbaru
+                        </h3>
+                        <p class="activity-subtitle">Pendaftaran penerima bantuan terbaru</p>
+                    </div>
+                    <div class="activity-body">
+                        {% if recent_beneficiaries %}
+                            {% for beneficiary in recent_beneficiaries %}
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title-text">{{ beneficiary.person.name }}</div>
+                                    <div class="activity-time">
+                                        {{ beneficiary.category.name }} • {{ beneficiary.created_at|timesince }} lalu
+                                    </div>
+                                </div>
+                                <div class="activity-status">
+                                    <span class="status-badge status-{% if beneficiary.status == 'aktif' %}success{% elif beneficiary.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                        {{ beneficiary.get_status_display|upper }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>Belum ada penerima terbaru</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="activity-cart">
+                    <div class="activity-header">
+                        <h3 class="activity-title">
+                            <i class="fas fa-gift"></i>
+                            Distribusi Terbaru
+                        </h3>
+                        <p class="activity-subtitle">Bantuan yang baru didistribusikan</p>
+                    </div>
+                    <div class="activity-body">
+                        {% if recent_distributions %}
+                            {% for distribution in recent_distributions %}
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-box-open"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title-text">{{ distribution.aid.name }}</div>
+                                    <div class="activity-time">
+                                        {{ distribution.beneficiary.person.name }} • {{ distribution.created_at|timesince }} lalu
+                                    </div>
+                                </div>
+                                <div class="activity-status">
+                                    <span class="status-badge status-success">
+                                        {{ distribution.quantity }} {{ distribution.aid.unit }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>Belum ada distribusi terbaru</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-cart-container">
+            <div class="cart-header">
+                <h2 class="cart-title">
+                    <i class="fas fa-table"></i>
+                    Ringkasan Data per Kategori
+                </h2>
+                <p class="cart-subtitle">Top 10 kategori bantuan dengan jumlah penerima terbanyak</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover" style="margin-bottom: 0;">
+                    <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <tr>
+                            <th style="border: none; padding: 1rem;">No</th>
+                            <th style="border: none; padding: 1rem;">Kategori</th>
+                            <th style="border: none; padding: 1rem; text-align: center;">Total Penerima</th>
+                            <th style="border: none; padding: 1rem; text-align: center;">Aktif</th>
+                            <th style="border: none; padding: 1rem; text-align: center;">Non-Aktif</th>
+                            <th style="border: none; padding: 1rem; text-align: center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in category_stats %}
+                        <tr>
+                            <td style="padding: 1rem; vertical-align: middle;">{{ forloop.counter }}</td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <i class="fas fa-tag" style="color: #667eea; margin-right: 0.5rem;"></i>
+                                <strong>{{ category.name }}</strong>
+                            </td>
+                            <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                                <span class="status-badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.375rem 0.75rem; border-radius: 15px; font-weight: 600;">
+                                    {{ category.total_beneficiaries }}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                                <span class="status-badge status-success" style="padding: 0.375rem 0.75rem; border-radius: 15px; font-weight: 600;">
+                                    {{ category.active_beneficiaries }}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                                <span class="status-badge status-secondary" style="padding: 0.375rem 0.75rem; border-radius: 15px; font-weight: 600;">
+                                    {{ category.inactive_beneficiaries }}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center; vertical-align: middle;">
+                                <a href="{% url 'admin_panel:beneficiaries_list' %}?category={{ category.id }}"
+                                   class="btn btn-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.375rem 0.875rem; border-radius: 6px; font-weight: 600;">
+                                    <i class="fas fa-eye"></i> Lihat
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="padding: 2rem; text-align: center;">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>Tidak ada data kategori</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>document.addEventListener('DOMContentLoaded', function() {
+
+    function updateDateTime() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dateStr = now.toLocaleDateString('id-ID', options);
+        const timeStr = now.toLocaleTimeString('id-ID');
+
+        document.getElementById('currentDate').textContent = dateStr;
+        document.getElementById('currentTime').textContent = timeStr;
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    if (typeof Chart === 'undefined') { 
+        console.error('Chart.js is not loaded');
+        return; 
+    }
+
+    var categoryCanvas = document.getElementById('categoryChart');
+    if (categoryCanvas) {
+        try {
+            var categoryCtx = categoryCanvas.getContext('2d');
+            
+            // Prepare data
+            var categoryLabels = [{% for cat in category_stats %}'{{ cat.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+            var categoryData = [{% for cat in category_stats %}{{ cat.total_beneficiaries|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+            
+            // Fallback if no data
+            if (categoryLabels.length === 0) {
+                categoryLabels = ['Tidak ada data'];
+                categoryData = [0];
+            }
+            
+            var categoryChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        label: 'Jumlah Penerima',
+                        data: categoryData,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }]
+                },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                        },
+                        gridLines: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                        },
+                        gridLines: {
+                            display: false
+                        }
+                    }]
+                },
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    bodyFontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    cornerRadius: 6
+                }
+            }
+        });
+        } catch (error) {
+            console.error('Error creating category chart:', error);
+        }
+    }
+
+    var statusCanvas = document.getElementById('statusChart');
+    if (statusCanvas) {
+        try {
+            var statusCtx = statusCanvas.getContext('2d');
+            var statusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Aktif', 'Tidak Aktif', 'Pending'],
+                datasets: [{
+                    data: [{{ active_beneficiaries|default:0 }}, {{ inactive_beneficiaries|default:0 }}, {{ pending_verifications|default:0 }}],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(108, 117, 125, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
+                    ],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                        padding: 15,
+                        boxWidth: 15
+                    }
+                },
+                tooltips: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    bodyFontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    cornerRadius: 6
+                }
+            }
+        });
+        } catch (error) {
+            console.error('Error creating status chart:', error);
+        }
+    }
+
+    var distributionCanvas = document.getElementById('distributionChart');
+    if (distributionCanvas) {
+        try {
+            var distributionCtx = distributionCanvas.getContext('2d');
+        var monthLabels = [{% for label in month_labels %}'{{ label }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+        var monthValues = [{% for value in month_values %}{{ value }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+        if (monthLabels.length === 0) {
+            monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'];
+            monthValues = [0, 0, 0, 0, 0, 0];
+        }
+
+        var distributionChart = new Chart(distributionCtx, {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Distribusi Bantuan',
+                    data: monthValues,
+                    borderColor: 'rgba(23, 162, 184, 1)',
+                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(23, 162, 184, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                        },
+                        gridLines: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }],
+                    xAxes: [{
+                        ticks: {
+                            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                        },
+                        gridLines: {
+                            display: false
+                        }
+                    }]
+                },
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    bodyFontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    cornerRadius: 6
+                }
+            }
+        });
+        } catch (error) {
+            console.error('Error creating distribution chart:', error);
+        }
+    }
+});
+</script>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script></script>
+<script>$(document).ready(function() {
+    $('[data-toggle="tooltip"]').tooltip();
+    $('[title]').tooltip({
+        placement: 'top',
+        trigger: 'hover'
+    });
+});
+</script>
+{% endblock extra_js %}

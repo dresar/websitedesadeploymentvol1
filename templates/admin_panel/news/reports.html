@@ -1,0 +1,321 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Laporan Berita{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/news/news_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="news-list-page">
+    <div class="container-fluid">
+        
+        <!-- Page Header -->
+        <div class="news-list-header">
+            <div class="news-list-header-content">
+                <div class="news-list-title-wrapper">
+                    <h1 class="news-list-main-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Laporan Berita
+                    </h1>
+                    <p class="news-list-subtitle">Analisis dan statistik lengkap berita website</p>
+                </div>
+                <div class="news-list-actions">
+                    <a href="{% url 'admin_panel:news_export' %}?format=excel" class="news-list-header-btn news-list-header-btn-primary">
+                        <i class="fas fa-file-excel"></i>Export Excel
+                    </a>
+                    <a href="{% url 'admin_panel:news_list' %}" class="news-list-header-btn news-list-header-btn-outline">
+                        <i class="fas fa-arrow-left"></i>Kembali
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Date -->
+        <div class="news-filter-section">
+            <h5 class="news-filter-title">
+                <i class="fas fa-calendar-alt"></i>
+                Filter Tanggal
+            </h5>
+            <form method="GET" class="news-filter-form">
+                <div class="news-filter-group">
+                    <label for="start_date" class="news-filter-label">Tanggal Mulai</label>
+                    <input type="date" class="news-filter-input" id="start_date" name="start_date"
+                           value="{{ date_filters.start_date|default:'' }}">
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="end_date" class="news-filter-label">Tanggal Akhir</label>
+                    <input type="date" class="news-filter-input" id="end_date" name="end_date"
+                           value="{{ date_filters.end_date|default:'' }}">
+                </div>
+
+                <div class="news-filter-actions">
+                    <button type="submit" class="news-filter-btn news-filter-btn-primary">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                    <a href="{% url 'admin_panel:news_reports' %}" class="news-filter-btn news-filter-btn-reset">
+                        <i class="fas fa-redo"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Export Options -->
+        <div class="news-filter-section" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+            <h5 class="news-filter-title">
+                <i class="fas fa-download"></i>
+                Ekspor Laporan
+            </h5>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">
+                <a href="{% url 'admin_panel:news_export' %}?format=csv{% if date_filters.start_date %}&start_date={{ date_filters.start_date }}{% endif %}{% if date_filters.end_date %}&end_date={{ date_filters.end_date }}{% endif %}" 
+                   class="news-filter-btn" style="background: linear-gradient(135deg, #28a745, #218838); color: white;">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </a>
+                <a href="{% url 'admin_panel:news_export' %}?format=excel{% if date_filters.start_date %}&start_date={{ date_filters.start_date }}{% endif %}{% if date_filters.end_date %}&end_date={{ date_filters.end_date }}{% endif %}" 
+                   class="news-filter-btn" style="background: linear-gradient(135deg, #28a745, #218838); color: white;">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </a>
+                <a href="{% url 'admin_panel:news_export' %}?format=pdf{% if date_filters.start_date %}&start_date={{ date_filters.start_date }}{% endif %}{% if date_filters.end_date %}&end_date={{ date_filters.end_date }}{% endif %}" 
+                   class="news-filter-btn" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Stats -->
+        <div class="news-stats-bar" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #28a745, #218838);">
+                <span style="font-size: 2.5rem; font-weight: 700;">{{ total_news|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Total Berita</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #17a2b8, #138496);">
+                <span style="font-size: 2.5rem; font-weight: 700;">{{ published_news|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Dipublikasi</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #ffc107, #e0a800);">
+                <span style="font-size: 2.5rem; font-weight: 700;">{{ draft_news|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Draft</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #dc3545, #c82333);">
+                <span style="font-size: 2.5rem; font-weight: 700;">{{ featured_news|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Unggulan</span>
+            </div>
+        </div>
+
+        <!-- Engagement Stats -->
+        <div class="news-filter-section" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
+            <h5 class="news-filter-title">
+                <i class="fas fa-chart-line"></i>
+                Statistik Engagement
+            </h5>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <div style="text-align: center; padding: 1.5rem; background: white; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <div style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #007bff, #0056b3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+                        {{ view_stats.total_views|default:0 }}
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.9rem; font-weight: 500;">Total Views</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: white; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <div style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #17a2b8, #138496); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+                        {{ view_stats.unique_visitors|default:0 }}
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.9rem; font-weight: 500;">Unique Visitors</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: white; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <div style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #dc3545, #c82333); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+                        {{ engagement_stats.total_likes|default:0 }}
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.9rem; font-weight: 500;">Total Likes</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: white; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    <div style="font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #28a745, #218838); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+                        {{ engagement_stats.total_comments|default:0 }}
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.9rem; font-weight: 500;">Total Komentar</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Charts -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: var(--news-spacing-xl); margin-bottom: var(--news-spacing-xl);">
+            
+            <!-- Category Distribution -->
+            <div class="news-filter-section">
+                <h5 class="news-filter-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Distribusi Kategori
+                </h5>
+                {% if category_breakdown %}
+                <div style="margin-top: 1.5rem;">
+                    {% for item in category_breakdown %}
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 600; color: #495057;">{{ item.category__name|default:"Tidak Ada Kategori" }}</span>
+                            <span style="background: linear-gradient(135deg, var(--news-primary), #0056b3); color: white; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.875rem; font-weight: 600;">{{ item.count }}</span>
+                        </div>
+                        <div style="height: 8px; background: #e9ecef; border-radius: 50px; overflow: hidden;">
+                            <div style="height: 100%; background: linear-gradient(90deg, var(--news-primary), #0056b3); border-radius: 50px; transition: width 0.5s ease; width: {% widthratio item.count total_news 100 %}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #adb5bd; padding: 2rem;">Tidak ada data kategori</p>
+                {% endif %}
+            </div>
+
+            <!-- Author Distribution -->
+            <div class="news-filter-section">
+                <h5 class="news-filter-title">
+                    <i class="fas fa-users"></i>
+                    Distribusi Penulis
+                </h5>
+                {% if author_breakdown %}
+                <div style="margin-top: 1.5rem;">
+                    {% for item in author_breakdown %}
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 600; color: #495057;">{{ item.author__username|default:"Tidak Diketahui" }}</span>
+                            <span style="background: linear-gradient(135deg, #17a2b8, #138496); color: white; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.875rem; font-weight: 600;">{{ item.count }}</span>
+                        </div>
+                        <div style="height: 8px; background: #e9ecef; border-radius: 50px; overflow: hidden;">
+                            <div style="height: 100%; background: linear-gradient(90deg, #17a2b8, #138496); border-radius: 50px; transition: width 0.5s ease; width: {% widthratio item.count total_news 100 %}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #adb5bd; padding: 2rem;">Tidak ada data penulis</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Top News Table -->
+        <div class="news-filter-section">
+            <h5 class="news-filter-title">
+                <i class="fas fa-trophy"></i>
+                Berita Terpopuler
+            </h5>
+            {% if top_news %}
+            <div class="table-responsive" style="margin-top: 1.5rem;">
+                <table class="news-list-table">
+                    <thead>
+                        <tr>
+                            <th width="50">Rank</th>
+                            <th>Judul</th>
+                            <th>Kategori</th>
+                            <th>Penulis</th>
+                            <th>Views</th>
+                            <th>Likes</th>
+                            <th>Komentar</th>
+                            <th>Status</th>
+                            <th width="80">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for news in top_news %}
+                        <tr>
+                            <td>
+                                <span style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529; padding: 0.4rem 0.75rem; border-radius: 50px; font-weight: 700; font-size: 0.875rem;">{{ forloop.counter }}</span>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: #2c3e50; margin-bottom: 0.25rem;">
+                                    {{ news.title|truncatechars:60 }}
+                                </div>
+                                <small style="color: #6c757d;">{{ news.created_at|date:"d M Y" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge badge-primary">{{ news.category.name|default:"-" }}</span>
+                            </td>
+                            <td>{{ news.author.username|default:"-" }}</td>
+                            <td>
+                                <span style="background: rgba(23, 162, 184, 0.1); color: #17a2b8; padding: 0.35rem 0.75rem; border-radius: 50px; font-weight: 600; font-size: 0.875rem;">
+                                    <i class="fas fa-eye"></i> {{ news.view_count|default:0 }}
+                                </span>
+                            </td>
+                            <td>
+                                <span style="background: rgba(220, 53, 69, 0.1); color: #dc3545; padding: 0.35rem 0.75rem; border-radius: 50px; font-weight: 600; font-size: 0.875rem;">
+                                    <i class="fas fa-heart"></i> {{ news.like_count|default:0 }}
+                                </span>
+                            </td>
+                            <td>
+                                <span style="background: rgba(40, 167, 69, 0.1); color: #28a745; padding: 0.35rem 0.75rem; border-radius: 50px; font-weight: 600; font-size: 0.875rem;">
+                                    <i class="fas fa-comment"></i> {{ news.comment_count|default:0 }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="news-item-status-badge news-item-status-{% if news.status == 'published' %}published{% elif news.status == 'draft' %}draft{% else %}archived{% endif %}">
+                                    {% if news.status == 'published' %}Published{% elif news.status == 'draft' %}Draft{% elif news.status == 'scheduled' %}Scheduled{% else %}{{ news.status|title }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'admin_panel:news_detail' news.pk %}" 
+                                   class="news-item-action-btn news-item-action-view">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="text-align: center; color: #adb5bd; padding: 3rem;">Tidak ada data berita</p>
+            {% endif %}
+        </div>
+
+        <!-- Additional Stats -->
+        <div class="news-filter-section" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+            <h5 class="news-filter-title">
+                <i class="fas fa-chart-bar"></i>
+                Statistik Tambahan
+            </h5>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <div style="text-align: center; padding: 1.5rem; background: white; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-top: 4px solid #17a2b8;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #17a2b8; margin-bottom: 0.5rem;">
+                        {{ engagement_stats.total_shares|default:0 }}
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.9rem; font-weight: 500;">Total Shares</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: white; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-top: 4px solid #28a745;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #28a745; margin-bottom: 0.5rem;">
+                        {{ engagement_stats.approved_comments|default:0 }}
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.9rem; font-weight: 500;">Komentar Disetujui</div>
+                </div>
+                <div style="text-align: center; padding: 1.5rem; background: white; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-top: 4px solid #007bff;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #007bff; margin-bottom: 0.5rem;">
+                        {% if total_news > 0 %}
+                            {% widthratio published_news total_news 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div style="color: #6c757d; font-size: 0.9rem; font-weight: 500;">Tingkat Publikasi</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress bars
+    setTimeout(function() {
+        const progressBars = document.querySelectorAll('[style*="width:"]');
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 100);
+        });
+    }, 300);
+});
+</script>
+{% endblock %}

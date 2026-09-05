@@ -1,0 +1,258 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}{% if document %}Edit Dokumen{% else %}Tambah Dokumen{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-form.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-mobile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="documents-form-container">
+
+    <div class="mb-3">
+        <a href="{% url 'admin_panel:documents_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali ke Daftar
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-file-alt me-2"></i>
+                {% if document %}Edit Dokumen Transparansi{% else %}Tambah Dokumen Transparansi Baru{% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-info-circle text-primary me-2"></i>
+                            Informasi Dasar
+                        </h6>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            Judul Dokumen <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small mt-1">{{ form.title.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Judul lengkap dokumen transparansi</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">
+                            Kategori <span class="text-danger">*</span>
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Kategori transparansi dokumen</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.document_year.id_for_label }}" class="form-label">
+                            Tahun Dokumen <span class="text-danger">*</span>
+                        </label>
+                        {{ form.document_year }}
+                        {% if form.document_year.errors %}
+                            <div class="text-danger small mt-1">{{ form.document_year.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Tahun terbit dokumen</small>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.document_number.id_for_label }}" class="form-label">
+                            Nomor Dokumen
+                        </label>
+                        {{ form.document_number }}
+                        {% if form.document_number.errors %}
+                            <div class="text-danger small mt-1">{{ form.document_number.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Nomor resmi dokumen (jika ada)</small>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-file-text text-primary me-2"></i>
+                            Konten Dokumen
+                        </h6>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            Deskripsi <span class="text-danger">*</span>
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Penjelasan lengkap mengenai dokumen</small>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.summary.id_for_label }}" class="form-label">
+                            Ringkasan
+                        </label>
+                        {{ form.summary }}
+                        {% if form.summary.errors %}
+                            <div class="text-danger small mt-1">{{ form.summary.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Ringkasan singkat yang akan ditampilkan di halaman publik</small>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.tags.id_for_label }}" class="form-label">
+                            Tag
+                        </label>
+                        {{ form.tags }}
+                        {% if form.tags.errors %}
+                            <div class="text-danger small mt-1">{{ form.tags.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Tag untuk memudahkan pencarian</small>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-upload text-primary me-2"></i>
+                            Upload File
+                        </h6>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.file.id_for_label }}" class="form-label">
+                            File Dokumen <span class="text-danger">*</span>
+                        </label>
+                        {{ form.file }}
+                        {% if form.file.errors %}
+                            <div class="text-danger small mt-1">{{ form.file.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Format: PDF, DOC, DOCX, XLSX, XLS
+                            {% if document and document.file %}
+                            <br>File saat ini: <a href="{{ document.file.url }}" target="_blank">{{ document.file.name|slice:"10:" }}</a> ({{ document.file_size_display }})
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.thumbnail.id_for_label }}" class="form-label">
+                            Thumbnail/Cover (Opsional)
+                        </label>
+                        {{ form.thumbnail }}
+                        {% if form.thumbnail.errors %}
+                            <div class="text-danger small mt-1">{{ form.thumbnail.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Gambar cover untuk dokumen (opsional)
+                            {% if document and document.thumbnail %}
+                            <br>
+                            <img src="{{ document.thumbnail.url }}" alt="Thumbnail" style="max-width: 100px; max-height: 100px; margin-top: 5px;">
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-cog text-primary me-2"></i>
+                            Status & Publikasi
+                        </h6>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                            Status <span class="text-danger">*</span>
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="text-danger small mt-1">{{ form.status.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label d-block">Tampilkan di Public</label>
+                        <div class="form-check form-switch">
+                            {{ form.is_public }}
+                            <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                                Ya, tampilkan di halaman publik
+                            </label>
+                        </div>
+                        {% if form.is_public.errors %}
+                            <div class="text-danger small mt-1">{{ form.is_public.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label d-block">Dokumen Unggulan</label>
+                        <div class="form-check form-switch">
+                            {{ form.is_featured }}
+                            <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                                Tampilkan di halaman utama
+                            </label>
+                        </div>
+                        {% if form.is_featured.errors %}
+                            <div class="text-danger small mt-1">{{ form.is_featured.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {% if document %}Update Dokumen{% else %}Simpan Dokumen{% endif %}
+                            </button>
+                            <a href="{% url 'admin_panel:documents_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Batal
+                            </a>
+                            {% if document %}
+                            <a href="{% url 'admin_panel:document_preview' document.pk %}"
+                               class="btn btn-outline-info ms-auto"
+                               target="_blank">
+                                <i class="fas fa-eye me-2"></i>
+                                Preview
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>document.getElementById('title').addEventListener('input', function() {
+
+});
+
+document.getElementById('file').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        const fileSize = file.size / 1024 / 1024;
+        if (fileSize > 50) {
+            showWarning('Ukuran file terlalu besar! Maksimal 50 MB.');
+            this.value = '';
+        }
+    }
+});
+</script>
+{% endblock %}
+

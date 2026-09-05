@@ -1,0 +1,1164 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load role_permissions %}
+
+{% block page_title %}Data Keluarga{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/references/references-general.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/references/references-keluarga.css' %}">
+{% endblock %}
+
+{% block content %}
+<form id="csrfForm" style="display:none;">
+    {% csrf_token %}
+</form>
+<div class="container-fluid keluarga-list-wrapper">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <div class="mb-2 mb-md-0">
+                    <h1 class="h3 mb-1 text-dark font-weight-bold">
+                        <i class="fas fa-home text-primary me-2"></i>
+                        Data Keluarga
+                    </h1>
+                    <p class="text-muted mb-0 small">Kelola data keluarga di wilayah desa</p>
+                </div>
+                <div class="header-buttons-wrapper">
+                    {% if user|can_add:"references" %}
+                    <a href="{% url 'admin_panel:references_keluarga_add' %}" class="btn btn-primary btn-header-action">
+                        <i class="fas fa-plus"></i>
+                        <span class="d-none d-sm-inline ms-1">Tambah</span>
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'references:global_import' %}" class="btn btn-info btn-header-action">
+                        <i class="fas fa-file-import"></i>
+                        <span class="d-none d-sm-inline ms-1">Global Import</span>
+                    </a>
+                    
+                    <a href="{% url 'references:import_export_dashboard' %}" class="btn btn-success btn-header-action">
+                        <i class="fas fa-download"></i>
+                        <span class="d-none d-sm-inline ms-1">Export Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow filter-card">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-filter mr-2"></i>
+                        Filter & Pencarian
+                    </h6>
+                                        </div>
+                <div class="card-body">
+                    <form method="get" id="filterForm">
+                        <div class="row">
+                            <div class="col-lg-3 col-md-4 col-6 mb-2">
+                                <label for="search" class="form-label">Cari</label>
+                                <input type="text" class="form-control" id="search" name="search"
+                                       value="{{ request.GET.search }}" placeholder="No. KK / Nama...">
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-6 mb-2">
+                                <label for="dusun" class="form-label">Dusun</label>
+                                <select class="form-control" id="dusun" name="dusun">
+                                    <option value="">Semua</option>
+
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6 mb-2">
+                                <label for="rt" class="form-label">RT</label>
+                                <input type="number" class="form-control" id="rt" name="rt"
+                                       value="{{ request.GET.rt }}" placeholder="RT">
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-6 mb-2">
+                                <label for="rw" class="form-label">RW</label>
+                                <input type="number" class="form-control" id="rw" name="rw"
+                                       value="{{ request.GET.rw }}" placeholder="RW">
+                            </div>
+                            <div class="col-12 col-md-auto mb-2 d-flex align-items-end gap-2">
+                                <button type="submit" class="btn btn-sm btn-primary flex-fill">
+                                    <i class="fas fa-search"></i>
+                                    <span class="d-none d-md-inline ms-1">Cari</span>
+                                </button>
+                                <a href="{% url 'admin_panel:references_keluarga_list' %}" class="btn btn-sm btn-outline-secondary flex-fill">
+                                    <i class="fas fa-times"></i>
+                                    <span class="d-none d-md-inline ms-1">Reset</span>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-table mr-2"></i>
+                        Daftar Keluarga
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 keluarga-table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th width="40">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="selectAll">
+                                            <label class="custom-control-label" for="selectAll"></label>
+                                        </div>
+                                    </th>
+                                    <th width="45">No</th>
+                                    <th width="140">No. KK</th>
+                                    <th>Kepala Keluarga</th>
+                                    <th>Alamat</th>
+                                    <th width="130">Jumlah Anggota</th>
+                                    <th width="120">Aksi</th>
+                    </tr>
+                            </thead>
+                            <tbody id="keluargaTableBody">
+
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 text-muted">Memuat data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+                    </div>
+                </div>
+
+                <div class="card-footer py-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="bulk-actions-inline">
+                            <span class="bulk-count-badge" id="bulkActionsCount">0</span>
+                            <button class="bulk-btn bulk-btn-activate" type="button" data-action="activate" title="Aktifkan">
+                                <i class="fas fa-check"></i>
+                                <span class="bulk-btn-text">Aktifkan</span>
+                            </button>
+                            <button class="bulk-btn bulk-btn-deactivate" type="button" data-action="deactivate" title="Nonaktifkan">
+                                <i class="fas fa-pause"></i>
+                                <span class="bulk-btn-text">Nonaktif</span>
+                            </button>
+                            <button class="bulk-btn bulk-btn-delete" type="button" data-action="delete" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                                <span class="bulk-btn-text">Hapus</span>
+                            </button>
+                        </div>
+                        <div class="text-muted">
+                            <span id="showingCount">0</span> dari <span id="totalCount">0</span> data
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer py-3">
+                    <nav aria-label="Pagination">
+                        <ul class="pagination justify-content-center mb-0" id="pagination">
+
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bulkActionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Aksi Massal</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Pilih aksi yang akan dilakukan pada <span id="selectedCount">0</span> data terpilih:</p>
+                <div class="form-group">
+                    <select class="form-control" id="bulkAction">
+                        <option value="">Pilih Aksi</option>
+                        <option value="export">Export Data</option>
+                        <option value="activate">Aktifkan</option>
+                        <option value="deactivate">Nonaktifkan</option>
+                        <option value="delete">Hapus Data</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="executeBulkAction()">Eksekusi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title mb-0" id="deleteModalLabel">
+                    <i class="fas fa-trash mr-1"></i>
+                    Hapus Data
+                </h6>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="margin: 0; padding: 0; font-size: 1.5rem; line-height: 1;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center py-3">
+                <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                <h6 class="mt-3 mb-2"><strong id="deleteKepalaKeluarga">-</strong></h6>
+                <small class="text-muted d-block mb-3">
+                    <span id="deleteNoKk">-</span><br>
+                    <span id="deleteDusun">-</span> RT <span id="deleteRtRw">-</span>
+                </small>
+
+                <form id="deleteForm" method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="keluarga_id" id="deleteKeluargaId">
+                    <input type="hidden" name="reason" value="Dihapus melalui sistem">
+
+                    <div class="custom-control custom-checkbox text-left">
+                        <input type="checkbox" class="custom-control-input" id="deleteConfirm" required>
+                        <label class="custom-control-label small" for="deleteConfirm">
+                            Yakin hapus data ini?
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-sm btn-danger px-3" id="confirmDeleteBtn" disabled>
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>$(document).ready(function() {
+    loadKeluargaData();
+    loadDusunOptions();
+
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault();
+        loadKeluargaData();
+    });
+
+    $('#filterForm select, #filterForm input').change(function() {
+        loadKeluargaData();
+    });
+
+    $('#selectAll').change(function() {
+        $('.item-checkbox').prop('checked', this.checked);
+        updateBulkActions();
+    });
+
+    $(document).on('change', '.item-checkbox', function() {
+        updateBulkActions();
+    });
+
+    $('#deleteConfirm').on('change', function() {
+        validateDeleteForm();
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+        if (validateDeleteForm()) {
+            submitDeleteForm();
+        }
+    });
+
+    $('#deleteModal .close, #deleteModal [data-dismiss="modal"]').on('click', function() {
+        $('#deleteModal').modal('hide');
+    });
+
+    $('#deleteModal').on('hidden.bs.modal', function() {
+        $('#deleteConfirm').prop('checked', false);
+        $('#confirmDeleteBtn').prop('disabled', true);
+    });
+
+    $('.bulk-btn').on('click', function(e) {
+        e.preventDefault();
+        var action = $(this).data('action');
+        console.log('✓ Bulk action clicked:', action);
+        executeBulkAction(action);
+    });
+
+    console.log('✓ Bulk actions inline initialized');
+});
+
+function loadKeluargaData(page = 1) {
+    const search = $('#search').val();
+    const dusun = $('#dusun').val();
+    const rt = $('#rt').val();
+    const rw = $('#rw').val();
+
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (dusun) params.append('dusun', dusun);
+    if (rt) params.append('rt', rt);
+    if (rw) params.append('rw', rw);
+    params.append('page', page);
+
+    fetch(`/admin-panel/api/references/keluarga/?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const keluargaData = data.data.map(keluarga => ({
+                    id: keluarga.id,
+                    no_kk: keluarga.nomor_kk,
+                    kepala_keluarga: keluarga.nama_kepala_keluarga,
+                    alamat: keluarga.alamat,
+                    dusun: keluarga.dusun_name,
+                    rt: keluarga.rt,
+                    rw: keluarga.rw,
+                    jumlah_anggota: keluarga.jumlah_anggota || 0,
+                    status: keluarga.is_active ? 'aktif' : 'tidak_aktif'
+                }));
+
+                renderTableView(keluargaData, data.pagination);
+                updateCounts(keluargaData.length, data.pagination.total_items);
+                updatePagination(data.pagination);
+            } else {
+                showErrorState();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading keluarga data:', error);
+            showErrorState();
+        });
+}
+
+function renderTableView(data, pagination = null) {
+    const tbody = $('#keluargaTableBody');
+    tbody.empty();
+
+    if (data.length === 0) {
+        tbody.append(`
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Tidak ada data keluarga</p>
+                </td>
+            </tr>
+        `);
+        return;
+    }
+
+    data.forEach(function(item, index) {
+
+        let rowNumber = index + 1;
+
+        if (pagination && pagination.current_page && pagination.per_page) {
+            const currentPage = parseInt(pagination.current_page) || 1;
+            const perPage = parseInt(pagination.per_page) || 20;
+            rowNumber = ((currentPage - 1) * perPage) + index + 1;
+        }
+        const row = `
+            <tr>
+                <td>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input item-checkbox"
+                               id="keluarga_${item.id}" value="${item.id}">
+                        <label class="custom-control-label" for="keluarga_${item.id}"></label>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-light">${rowNumber}</span>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-id-card text-primary mr-2"></i>
+                        <strong>${item.no_kk}</strong>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user text-success mr-2"></i>
+                        <strong>${item.kepala_keluarga}</strong>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-info mr-2"></i>
+                        <span class="text-truncate" style="max-width: 200px;" title="${item.alamat || '-'}">
+                            ${item.alamat || '-'}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-success">${item.jumlah_anggota} Orang</span>
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="/admin-panel/references/keluarga/detail/${item.id}/" 
+                           class="btn btn-sm btn-outline-primary action-btn" 
+                           title="Lihat Detail">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        ${'{% if user|can_change:"references" %}'}
+                        <a href="/admin-panel/references/keluarga/edit/${item.id}/" 
+                           class="btn btn-sm btn-outline-warning action-btn" 
+                           title="Edit Data">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        ${'{% endif %}'}
+                        ${'{% if user|can_delete:"references" %}'}
+                        <button class="btn btn-sm btn-outline-danger action-btn" 
+                                onclick="showDeleteModal(${item.id}, '${item.kepala_keluarga}', '${item.no_kk}', '${item.alamat}', '${item.dusun}', '${item.rt}', '${item.rw}', '${item.jumlah_anggota}', '${item.status}')"
+                                title="Hapus Data">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        ${'{% endif %}'}
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.append(row);
+    });
+
+    $('.item-checkbox').change(function() {
+        updateBulkActions();
+    });
+}
+
+function updateCounts(showing, total) {
+    $('#showingCount').text(showing);
+    $('#totalCount').text(total);
+}
+
+function updatePagination(pagination) {
+    const paginationNav = $('#pagination');
+    const paginationInfo = $('#showingCount').parent();
+
+    const startItem = (pagination.current_page - 1) * pagination.per_page + 1;
+    const endItem = Math.min(pagination.current_page * pagination.per_page, pagination.total_items);
+    paginationInfo.html(`Menampilkan <span id="showingCount">${startItem}-${endItem}</span> dari <span id="totalCount">${pagination.total_items}</span> data`);
+
+    let paginationHtml = '';
+
+    if (pagination.has_previous) {
+        paginationHtml += `<li class="page-item">
+            <a class="page-link" href="#" onclick="loadKeluargaData(${pagination.previous_page}); return false;">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>`;
+    } else {
+        paginationHtml += `<li class="page-item disabled">
+            <span class="page-link">
+                <i class="fas fa-chevron-left"></i>
+            </span>
+        </li>`;
+    }
+
+    const startPage = Math.max(1, pagination.current_page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === pagination.current_page) {
+            paginationHtml += `<li class="page-item active">
+                <span class="page-link">${i}</span>
+            </li>`;
+        } else {
+            paginationHtml += `<li class="page-item">
+                <a class="page-link" href="#" onclick="loadKeluargaData(${i}); return false;">${i}</a>
+            </li>`;
+        }
+    }
+
+    if (pagination.has_next) {
+        paginationHtml += `<li class="page-item">
+            <a class="page-link" href="#" onclick="loadKeluargaData(${pagination.next_page}); return false;">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>`;
+    } else {
+        paginationHtml += `<li class="page-item disabled">
+            <span class="page-link">
+                <i class="fas fa-chevron-right"></i>
+            </span>
+        </li>`;
+    }
+
+    paginationNav.html(paginationHtml);
+}
+
+function updateBulkActions() {
+    const selected = $('.item-checkbox:checked').length;
+    const count = $('#bulkActionsCount');
+    const container = $('.bulk-actions-inline');
+
+    count.text(selected);
+
+    if (selected > 0) {
+        container.addClass('has-selection');
+        $('.bulk-btn').prop('disabled', false).removeClass('disabled');
+    } else {
+        container.removeClass('has-selection');
+        $('.bulk-btn').prop('disabled', true).addClass('disabled');
+    }
+
+    const totalCheckboxes = $('.item-checkbox').length;
+    const selectAll = $('#selectAll');
+
+    if (selected === 0) {
+        selectAll.prop('indeterminate', false).prop('checked', false);
+    } else if (selected === totalCheckboxes) {
+        selectAll.prop('indeterminate', false).prop('checked', true);
+    } else {
+        selectAll.prop('indeterminate', true);
+    }
+}
+
+function loadDusunOptions() {
+
+    fetch('{% url "admin_panel:api_references_dusun_list" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data && Array.isArray(data.data)) {
+                const select = $('#dusun');
+                data.data.forEach(function(dusun) {
+                    const dusunName = dusun.name || dusun.nama || dusun.nama_dusun || 'Tidak ada nama';
+                    select.append(`<option value="${dusun.id}">${dusunName}</option>`);
+                });
+            } else {
+                console.error('API returned error or invalid data structure:', data);
+                console.error('Error message:', data.message || 'Unknown error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dusun options:', error);
+        });
+}
+
+function exportData() {
+    showLoading('Mengekspor data...');
+    const exportUrl = '{% url "admin_panel:references_keluarga_export_csv" %}';
+
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'data_keluarga_' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('Data CSV berhasil diekspor');
+    }, 1000);
+}
+
+function exportExcel() {
+    showLoading('Mengekspor ke Excel...');
+    const exportUrl = '{% url "admin_panel:references_keluarga_export_excel" %}';
+
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'data_keluarga_' + new Date().toISOString().split('T')[0] + '.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('File Excel berhasil dibuat');
+    }, 1000);
+}
+
+function exportPDF() {
+    showLoading('Mengekspor ke PDF...');
+    const exportUrl = '{% url "admin_panel:references_keluarga_export_pdf" %}';
+
+    window.open(exportUrl, '_blank');
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('File PDF berhasil dibuat');
+    }, 1000);
+}
+
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls,.csv';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            showLoading('Mengimpor data...');
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Data berhasil diimpor');
+            }, 3000);
+        }
+    };
+    input.click();
+}
+
+function downloadTemplate() {
+    showLoading('Mengunduh template...');
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('Template berhasil diunduh');
+    }, 1000);
+}
+
+function showLoading(message) {
+    const overlay = $('<div class="loading-overlay"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>' + message + '</p></div></div>');
+    $('body').append(overlay);
+}
+
+function hideLoading() {
+    $('.loading-overlay').remove();
+}
+
+function showSuccess(message) {
+    const notification = $(`
+        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
+            <i class="fas fa-check-circle mr-2"></i>${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    $('body').append(notification);
+
+    setTimeout(() => {
+        notification.showWarning('close');
+    }, 3000);
+}
+
+function showDeleteModal(id, kepalaKeluarga, noKk, alamat, dusun, rt, rw, jumlahAnggota, status) {
+
+    $('#deleteForm').attr('action', `/admin-panel/references/keluarga/delete/${id}/`);
+    $('#deleteKeluargaId').val(id);
+
+    $('#deleteKepalaKeluarga').text(kepalaKeluarga);
+    $('#deleteNoKk').text(noKk);
+    $('#deleteDusun').text(dusun);
+    $('#deleteRtRw').text(rt + '/' + rw);
+
+    $('#deleteConfirm').prop('checked', false);
+    $('#confirmDeleteBtn').prop('disabled', true);
+
+    $('#deleteModal').modal('show');
+}
+
+function validateDeleteForm() {
+    const confirmed = $('#deleteConfirm').is(':checked');
+
+    if (confirmed) {
+        $('#confirmDeleteBtn').prop('disabled', false);
+        return true;
+    } else {
+        $('#confirmDeleteBtn').prop('disabled', true);
+        return false;
+    }
+}
+
+function submitDeleteForm() {
+    if (!validateDeleteForm()) {
+        return;
+    }
+
+    const form = $('#deleteForm');
+    const btn = $('#confirmDeleteBtn');
+    const originalText = btn.html();
+
+    let csrftoken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+    if (!csrftoken) {
+        csrftoken = form.find('[name=csrfmiddlewaretoken]').val();
+    }
+    if (!csrftoken) {
+        csrftoken = $('[name=csrfmiddlewaretoken]').first().val();
+    }
+
+    if (!csrftoken) {
+        showAlert('CSRF token tidak ditemukan. Refresh halaman dan coba lagi.', 'error');
+        return;
+    }
+
+    console.log('Submit delete form:', {
+        url: form.attr('action'),
+        keluarga_id: $('#deleteKeluargaId').val(),
+        csrf: csrftoken ? 'found' : 'not found'
+    });
+
+    const formData = new FormData(form[0]);
+
+    btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Menghapus...');
+    btn.prop('disabled', true);
+
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            console.log('Delete response:', response);
+            if (response && response.success) {
+
+                $('#deleteModal').modal('hide');
+
+                showAlert(response.message || 'Data berhasil dihapus', 'success');
+
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+
+                showAlert(response.message || 'Terjadi kesalahan saat menghapus data', 'error');
+                btn.prop('disabled', false).html(originalText);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Delete error:', {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                responseText: xhr.responseText,
+                error: error
+            });
+
+            let message = 'Terjadi kesalahan saat menghapus data';
+
+            if (xhr.status === 403) {
+                message = 'Anda tidak memiliki izin untuk menghapus data ini';
+            } else if (xhr.status === 404) {
+                message = 'Data tidak ditemukan';
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    message = response.message || message;
+                } catch(e) {
+                    console.error('Error parsing response:', e);
+                    if (xhr.responseText.includes('CSRF')) {
+                        message = 'Verifikasi CSRF gagal. Refresh halaman dan coba lagi.';
+                    }
+                }
+            }
+
+            showAlert(message, 'error');
+            btn.prop('disabled', false).html(originalText);
+        }
+    });
+}
+
+function showErrorState() {
+    const tbody = $('#keluargaTableBody');
+    tbody.empty();
+    tbody.append(`
+        <tr>
+            <td colspan="7" class="text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <p class="text-muted">Terjadi kesalahan saat memuat data</p>
+                <button class="btn btn-outline-primary" onclick="loadKeluargaData()">
+                    <i class="fas fa-refresh mr-1"></i>
+                    Coba Lagi
+                </button>
+            </td>
+        </tr>
+    `);
+}
+
+function executeBulkAction(action) {
+    const selected = $('.item-checkbox:checked');
+
+    if (selected.length === 0) {
+        showError('Pilih minimal satu data');
+        return;
+    }
+
+    const selectedIds = [];
+    selected.each(function() {
+        selectedIds.push($(this).val());
+    });
+
+    const actionLabels = {
+        'activate': 'mengaktifkan',
+        'deactivate': 'menonaktifkan',
+        'delete': 'menghapus'
+    };
+
+    if (action === 'delete') {
+        if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} data keluarga?\n\nTindakan ini tidak dapat dibatalkan!`)) {
+            return;
+        }
+    } else {
+        if (!confirm(`Apakah Anda yakin ingin ${actionLabels[action]} ${selectedIds.length} data keluarga?`)) {
+            return;
+        }
+    }
+
+    showLoading(`Menjalankan aksi ${actionLabels[action]} pada ${selectedIds.length} data...`);
+
+    if (action === 'delete') {
+        bulkDeleteKeluarga(selectedIds);
+    } else if (action === 'activate') {
+        bulkActivateKeluarga(selectedIds);
+    } else if (action === 'deactivate') {
+        bulkDeactivateKeluarga(selectedIds);
+    }
+}
+
+function bulkDeleteKeluarga(ids) {
+    const csrftoken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    if (!csrftoken) {
+        showAlert('CSRF token tidak ditemukan. Refresh halaman dan coba lagi.', 'error');
+        return;
+    }
+
+    console.log('Bulk delete - IDs:', ids);
+    console.log('CSRF Token:', csrftoken);
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    ids.forEach(id => {
+        formData.append('keluarga_ids', id);
+    });
+
+    $.ajax({
+        url: '{% url "admin_panel:references_keluarga_bulk_delete" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil menghapus ${response.deleted_count} data keluarga`, 'success');
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                let errorMessage = response.message || 'Gagal menghapus data keluarga';
+                if (response.errors && response.errors.length > 0) {
+                    errorMessage += '\n\nDetail error:\n' + response.errors.join('\n');
+                }
+                showAlert(errorMessage, 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            console.error('Bulk delete error:', xhr.responseText);
+            let errorMsg = 'Terjadi kesalahan saat menghapus data';
+            try {
+                const jsonResponse = JSON.parse(xhr.responseText);
+                errorMsg = jsonResponse.message || errorMsg;
+            } catch(e) {
+                errorMsg += ': ' + (xhr.responseText || error);
+            }
+            showAlert(errorMsg, 'error');
+        }
+    });
+}
+
+function bulkActivateKeluarga(ids) {
+    const csrftoken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    if (!csrftoken) {
+        showAlert('CSRF token tidak ditemukan. Refresh halaman dan coba lagi.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    ids.forEach(id => {
+        formData.append('keluarga_ids', id);
+    });
+
+    $.ajax({
+        url: '{% url "admin_panel:references_keluarga_bulk_activate" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil mengaktifkan ${response.activated_count} data keluarga`, 'success');
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(response.message || 'Gagal mengaktifkan data keluarga', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            let errorMsg = 'Terjadi kesalahan saat mengaktifkan data';
+            try {
+                const jsonResponse = JSON.parse(xhr.responseText);
+                errorMsg = jsonResponse.message || errorMsg;
+            } catch(e) {
+                errorMsg += ': ' + (xhr.responseText || error);
+            }
+            showAlert(errorMsg, 'error');
+        }
+    });
+}
+
+function bulkDeactivateKeluarga(ids) {
+    const csrftoken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    if (!csrftoken) {
+        showAlert('CSRF token tidak ditemukan. Refresh halaman dan coba lagi.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    ids.forEach(id => {
+        formData.append('keluarga_ids', id);
+    });
+
+    $.ajax({
+        url: '{% url "admin_panel:references_keluarga_bulk_deactivate" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil menonaktifkan ${response.deactivated_count} data keluarga`, 'success');
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(response.message || 'Gagal menonaktifkan data keluarga', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            let errorMsg = 'Terjadi kesalahan saat menonaktifkan data';
+            try {
+                const jsonResponse = JSON.parse(xhr.responseText);
+                errorMsg = jsonResponse.message || errorMsg;
+            } catch(e) {
+                errorMsg += ': ' + (xhr.responseText || error);
+            }
+            showAlert(errorMsg, 'error');
+        }
+    });
+}
+
+function showError(message) {
+    showAlert(message, 'error');
+}
+</script>
+
+<div class="modal fade" id="bulkActionModal" tabindex="-1" role="dialog" aria-labelledby="bulkActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkActionModalLabel">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Konfirmasi Aksi Bulk
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning mr-2"></i>
+                    <strong>Peringatan:</strong> Aksi ini akan diterapkan pada <span id="bulkActionCount">0</span> item yang dipilih.
+                </div>
+                <p id="bulkActionMessage">Apakah Anda yakin ingin melanjutkan?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="confirmBulkAction">
+                    <i class="fas fa-check mr-1"></i>
+                    Ya, Lanjutkan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>window.currentModelName = 'keluarga';
+
+let selectedItems = [];
+let currentBulkAction = '';
+
+$('#selectAll').change(function() {
+    const isChecked = $(this).is(':checked');
+    $('.item-checkbox').prop('checked', isChecked);
+    updateBulkActions();
+});
+
+$(document).on('change', '.item-checkbox', function() {
+    updateBulkActions();
+});
+
+$('#bulkDeleteBtn').click(function() {
+    currentBulkAction = 'delete';
+    $('#bulkActionModalLabel').html('<i class="fas fa-trash mr-2"></i>Konfirmasi Hapus Bulk');
+    $('#bulkActionMessage').text('Apakah Anda yakin ingin menghapus item-item yang dipilih?');
+    $('#bulkActionModal').modal('show');
+});
+
+$('#bulkDeactivateBtn').click(function() {
+    currentBulkAction = 'deactivate';
+    $('#bulkActionModalLabel').html('<i class="fas fa-eye-slash mr-2"></i>Konfirmasi Nonaktifkan Bulk');
+    $('#bulkActionMessage').text('Apakah Anda yakin ingin menonaktifkan item-item yang dipilih?');
+    $('#bulkActionModal').modal('show');
+});
+
+$('#bulkActivateBtn').click(function() {
+    currentBulkAction = 'activate';
+    $('#bulkActionModalLabel').html('<i class="fas fa-eye mr-2"></i>Konfirmasi Aktifkan Bulk');
+    $('#bulkActionMessage').text('Apakah Anda yakin ingin mengaktifkan item-item yang dipilih?');
+    $('#bulkActionModal').modal('show');
+});
+
+$('#clearSelectionBtn').click(function() {
+    $('.item-checkbox').prop('checked', false);
+    $('#selectAll').prop('checked', false).prop('indeterminate', false);
+    updateBulkActions();
+});
+
+$('#confirmBulkAction').click(function() {
+    if (selectedItems.length === 0) {
+        showWarning('Tidak ada item yang dipilih.');
+        return;
+    }
+
+    $.ajax({
+        url: '{% url "admin_panel:references_bulk_action" %}',
+        type: 'POST',
+        data: {
+            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val(),
+            'model': 'keluarga',
+            'action': currentBulkAction,
+            'items': selectedItems.join(',')
+        },
+        success: function(response) {
+            if (response.success) {
+                showWarning(response.message);
+                $('#bulkActionModal').modal('hide');
+                location.reload();
+            } else {
+                showWarning('Error: ' + response.message);
+            }
+        },
+        error: function() {
+            showWarning('Terjadi kesalahan saat memproses aksi bulk.');
+        }
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+/* Action buttons styling */
+.action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.action-btn i {
+    font-size: 12px;
+}
+
+/* Specific button colors */
+.btn-outline-primary.action-btn {
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.btn-outline-primary.action-btn:hover {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.btn-outline-warning.action-btn {
+    border-color: #ffc107;
+    color: #ffc107;
+}
+
+.btn-outline-warning.action-btn:hover {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+.btn-outline-danger.action-btn {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.btn-outline-danger.action-btn:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+/* Gap between buttons */
+.gap-1 {
+    gap: 4px;
+}
+</style>
+
+{% endblock %}

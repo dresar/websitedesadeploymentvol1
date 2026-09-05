@@ -1,0 +1,956 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %}Detail Surat - {{ letter.subject }}{% endblock %}
+{% block page_description %}Informasi lengkap dan pengelolaan surat{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Letter Detail Page Styles */
+.letter-detail-page {
+    padding: 2rem 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+.letter-detail-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.letter-detail-header h1 {
+    color: #495057;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.letter-detail-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.letter-detail-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Main Cards */
+.letter-info-main,
+.letter-content-main,
+.letter-attachments,
+.letter-status-update,
+.letter-recipients,
+.letter-tracking {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.letter-info-header,
+.letter-content-header,
+.letter-attachments-header,
+.letter-status-header,
+.letter-recipients-header,
+.letter-tracking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.letter-info-header h5,
+.letter-content-header h5,
+.letter-attachments-header h5,
+.letter-status-header h6,
+.letter-recipients-header h6,
+.letter-tracking-header h6 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Info Grid */
+.letter-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.letter-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    border-left: 4px solid #007bff;
+}
+
+.letter-info-label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.letter-info-value {
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Content Styling */
+.letter-content-text {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid #28a745;
+    line-height: 1.6;
+    color: #495057;
+}
+
+.letter-content-text h1,
+.letter-content-text h2,
+.letter-content-text h3,
+.letter-content-text h4,
+.letter-content-text h5,
+.letter-content-text h6 {
+    color: #495057;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.letter-content-text h1:first-child,
+.letter-content-text h2:first-child,
+.letter-content-text h3:first-child {
+    margin-top: 0;
+}
+
+/* Attachments */
+.letter-attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    transition: background 0.3s ease;
+}
+
+.letter-attachment-item:hover {
+    background: #e9ecef;
+}
+
+.letter-attachment-item:last-child {
+    margin-bottom: 0;
+}
+
+.letter-attachment-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.letter-attachment-content {
+    flex: 1;
+}
+
+.letter-attachment-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.letter-attachment-meta {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.letter-attachment-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Recipients */
+.letter-recipient-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.letter-recipient-item:last-child {
+    margin-bottom: 0;
+}
+
+.letter-recipient-name {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.letter-recipient-meta {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Timeline */
+.letter-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.letter-timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.letter-timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.letter-timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.letter-timeline-icon {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.5rem;
+}
+
+.letter-timeline-content {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid #007bff;
+}
+
+.letter-timeline-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.letter-timeline-meta {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.letter-timeline-notes {
+    color: #495057;
+    font-style: italic;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Status Badges */
+.letters-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.letters-badge-primary {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.letters-badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.letters-badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.letters-badge-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.letters-badge-secondary {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* Form Controls */
+.letters-form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.letters-form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+/* Buttons */
+.letters-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.letters-btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.letters-btn-primary:hover {
+    background: #0056b3;
+    color: white;
+}
+
+.letters-btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.letters-btn-secondary:hover {
+    background: #545b62;
+    color: white;
+}
+
+.letters-btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.letters-btn-danger:hover {
+    background: #c82333;
+    color: white;
+}
+
+.letters-btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.letters-btn-info:hover {
+    background: #138496;
+    color: white;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .letter-detail-page {
+        padding: 1rem 0;
+    }
+    
+    .letter-detail-header {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+    }
+    
+    .letter-detail-content {
+        padding: 0 0.5rem;
+    }
+    
+    .letter-info-main,
+    .letter-content-main,
+    .letter-attachments,
+    .letter-status-update,
+    .letter-recipients,
+    .letter-tracking {
+        padding: 1.5rem;
+    }
+    
+    .letter-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .letter-attachment-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .letter-attachment-content {
+        order: 2;
+    }
+    
+    .letter-attachment-actions {
+        order: 3;
+        justify-content: center;
+    }
+    
+    .letter-timeline {
+        padding-left: 1.5rem;
+    }
+    
+    .letter-timeline-icon {
+        left: -1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .letter-detail-header {
+        padding: 1rem;
+    }
+    
+    .letter-info-main,
+    .letter-content-main,
+    .letter-attachments,
+    .letter-status-update,
+    .letter-recipients,
+    .letter-tracking {
+        padding: 1rem;
+    }
+    
+    .letter-info-item {
+        padding: 0.75rem;
+    }
+    
+    .letter-content-text {
+        padding: 1rem;
+    }
+    
+    .letter-attachment-item {
+        padding: 0.75rem;
+    }
+    
+    .letter-timeline-content {
+        padding: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Letter Detail Page Container -->
+<div class="letter-detail-page">
+    <!-- Letter Detail Header -->
+    <div class="letter-detail-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1>Detail Surat</h1>
+                    <p>{{ letter.subject }}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'admin_panel:letters:admin_letter_preview' letter.id %}" 
+                           class="btn btn-info" target="_blank">
+                            <i class="fas fa-eye me-1"></i>Preview
+                        </a>
+                        <button onclick="printLetter()" class="btn btn-primary">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
+                        <a href="{% url 'admin_panel:letters:admin_letter_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Kembali
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Letter Detail Content -->
+    <div class="letter-detail-content">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Letter Information Card -->
+                <div class="letter-info-main">
+                    <div class="letter-info-header">
+                        <h5>
+                            <i class="fas fa-envelope me-2"></i>
+                            Informasi Surat
+                        </h5>
+                        <div class="dropdown">
+                            <button class="letters-btn letters-btn-info btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog me-1"></i>Aksi
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:letters:admin_letter_edit' letter.id %}">
+                                    <i class="fas fa-edit me-2"></i>Edit Surat
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:letters:admin_letter_print' letter.id 'pdf' %}">
+                                    <i class="fas fa-file-pdf me-2"></i>Print PDF
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:letters:admin_letter_print' letter.id 'word' %}">
+                                    <i class="fas fa-file-word me-2"></i>Print Word
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteLetter('{{ letter.id }}', '{{ letter.subject|truncatechars:30 }}')">
+                                    <i class="fas fa-trash me-2"></i>Hapus Surat
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="letter-info-body">
+                        <div class="letter-info-grid">
+                            <div class="letter-info-item">
+                                <div class="letter-info-label">Nomor Surat</div>
+                                <div class="letter-info-value">
+                                    <strong>{{ letter.letter_number|default:"Draft" }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="letter-info-item">
+                                <div class="letter-info-label">Jenis Surat</div>
+                                <div class="letter-info-value">
+                                    <span class="letters-badge letters-badge-primary">{{ letter.letter_type.code }}</span>
+                                    {{ letter.letter_type.name }}
+                                </div>
+                            </div>
+
+                            <div class="letter-info-item">
+                                <div class="letter-info-label">Pemohon</div>
+                                <div class="letter-info-value">
+                                    <div>{{ letter.applicant.nama }}</div>
+                                    <small class="text-muted">NIK: {{ letter.applicant.nik }}</small>
+                                </div>
+                            </div>
+
+                            <div class="letter-info-item">
+                                <div class="letter-info-label">Status</div>
+                                <div class="letter-info-value">
+                                    <span class="letters-badge letters-badge-{{ letter.status|default:'secondary' }}">
+                                        {{ letter.get_status_display }}
+                                    </span>
+                                    {% if letter.priority == 'urgent' %}
+                                    <span class="letters-badge letters-badge-danger ms-1">
+                                        <i class="fas fa-exclamation"></i> Mendesak
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="letter-info-item">
+                                <div class="letter-info-label">Tanggal Dibuat</div>
+                                <div class="letter-info-value">{{ letter.created_at|date:"d M Y H:i" }}</div>
+                            </div>
+
+                            <div class="letter-info-item">
+                                <div class="letter-info-label">Terakhir Update</div>
+                                <div class="letter-info-value">{{ letter.updated_at|date:"d M Y H:i" }}</div>
+                            </div>
+
+                            <div class="letter-info-item">
+                                <div class="letter-info-label">Dibuat Oleh</div>
+                                <div class="letter-info-value">
+                                    {% if letter.created_by %}
+                                    {{ letter.created_by.get_full_name|default:letter.created_by.username }}
+                                    {% else %}
+                                    <span class="text-muted">Tidak diketahui</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="letter-info-item">
+                                <div class="letter-info-label">Jumlah Kata</div>
+                                <div class="letter-info-value">{{ letter.word_count|intcomma }}</div>
+                            </div>
+                        </div>
+            </div>
+        </div>
+
+                <!-- Content Card -->
+                <div class="letter-content-main">
+                    <div class="letter-content-header">
+                        <h5>
+                            <i class="fas fa-file-alt me-2"></i>
+                            Isi Surat
+                        </h5>
+                    </div>
+                    <div class="letter-content-body">
+                        <div class="letter-content-text">
+                            {{ letter.content|linebreaks }}
+                        </div>
+
+                {% if letter.purpose %}
+                <hr>
+                <div class="mt-3">
+                    <h6>Tujuan Penggunaan:</h6>
+                    <p class="mb-0">{{ letter.purpose }}</p>
+                </div>
+                {% endif %}
+
+                {% if letter.notes %}
+                <hr>
+                <div class="mt-3">
+                    <h6>Catatan:</h6>
+                    <p class="mb-0">{{ letter.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+                <!-- Attachments Card -->
+                {% if letter.attachments.all %}
+                <div class="letter-attachments">
+                    <div class="letter-attachments-header">
+                        <h5>
+                            <i class="fas fa-paperclip me-2"></i>
+                            Lampiran ({{ letter.attachments.count }})
+                        </h5>
+                    </div>
+                    <div class="letter-attachments-body">
+                        {% for attachment in letter.attachments.all %}
+                        <div class="letter-attachment-item">
+                            <div class="letter-attachment-icon">
+                                <i class="fas fa-file-{{ attachment.attachment_type|default:'alt' }}"></i>
+                            </div>
+                            <div class="letter-attachment-content">
+                                <div class="letter-attachment-title">{{ attachment.title }}</div>
+                                {% if attachment.description %}
+                                <div class="letter-attachment-meta">{{ attachment.description }}</div>
+                                {% endif %}
+                                <div class="letter-attachment-meta">
+                                    {{ attachment.file_size|filesizeformat }} •
+                                    Diunggah oleh {{ attachment.uploaded_by.get_full_name|default:attachment.uploaded_by.username }}
+                                    pada {{ attachment.uploaded_at|date:"d M Y" }}
+                                </div>
+                            </div>
+                            <div class="letter-attachment-actions">
+                                <a href="{{ attachment.file.url }}" class="letters-btn letters-btn-primary btn-sm" target="_blank">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </a>
+                                {% if can_edit_all %}
+                                <button class="letters-btn letters-btn-danger btn-sm"
+                                        onclick="deleteAttachment('{{ attachment.id }}', '{{ attachment.title }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+    </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Status Update Card -->
+                {% if can_edit_all %}
+                <div class="letter-status-update">
+                    <div class="letter-status-header">
+                        <h6>
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            Update Status
+                        </h6>
+                    </div>
+                    <div class="letter-status-body">
+                <form method="post" action="{% url 'admin_panel:letters:admin_letter_detail' letter.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_status">
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status Baru</label>
+                            <select class="letters-form-control" name="status" required>
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if letter.status == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Catatan</label>
+                            <textarea class="letters-form-control" name="notes" rows="3"
+                                      placeholder="Catatan perubahan status..."></textarea>
+                        </div>
+
+                        <button type="submit" class="letters-btn letters-btn-primary w-100">
+                            <i class="fas fa-save me-1"></i>Update Status
+                        </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+                <!-- Recipients Card -->
+                {% if letter.recipients.all %}
+                <div class="letter-recipients">
+                    <div class="letter-recipients-header">
+                        <h6>
+                            <i class="fas fa-users me-2"></i>
+                            Penerima ({{ letter.recipients.count }})
+                        </h6>
+                    </div>
+                    <div class="letter-recipients-body">
+                        {% for recipient in letter.recipients.all %}
+                        <div class="letter-recipient-item">
+                            <div class="letter-recipient-content">
+                                <div class="letter-recipient-name">{{ recipient.name }}</div>
+                                {% if recipient.position %}
+                                <div class="letter-recipient-meta">{{ recipient.position }}</div>
+                                {% endif %}
+                                {% if recipient.organization %}
+                                <div class="letter-recipient-meta">{{ recipient.organization }}</div>
+                                {% endif %}
+                                <div class="letter-recipient-meta">{{ recipient.address }}</div>
+                                {% if recipient.email %}
+                                <div class="letter-recipient-meta">{{ recipient.email }}</div>
+                                {% endif %}
+                            </div>
+                            {% if recipient.is_primary %}
+                            <span class="letters-badge letters-badge-primary">Utama</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Tracking History Card -->
+                <div class="letter-tracking">
+                    <div class="letter-tracking-header">
+                        <h6>
+                            <i class="fas fa-history me-2"></i>
+                            Riwayat Aktivitas
+                        </h6>
+                    </div>
+                    <div class="letter-tracking-body">
+                        {% if tracking_history %}
+                        <div class="letter-timeline">
+                            {% for tracking in tracking_history %}
+                            <div class="letter-timeline-item">
+                                <div class="letter-timeline-icon">
+                                    <i class="fas fa-circle"></i>
+                                </div>
+                                <div class="letter-timeline-content">
+                                    <div class="letter-timeline-title">{{ tracking.get_action_display }}</div>
+                                    <div class="letter-timeline-meta">{{ tracking.description }}</div>
+                                    <div class="letter-timeline-meta">
+                                        <i class="fas fa-user me-1"></i>{{ tracking.performed_by.get_full_name|default:tracking.performed_by.username }}
+                                        <i class="fas fa-clock ms-2 me-1"></i>{{ tracking.performed_at|timesince }} lalu
+                                    </div>
+                                    {% if tracking.notes %}
+                                    <div class="letter-timeline-notes">{{ tracking.notes }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Belum ada riwayat aktivitas</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Change Confirmation Modal -->
+<div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusChangeModalLabel">
+                    <i class="fas fa-exchange-alt text-warning me-2"></i>
+                    Konfirmasi Perubahan Status
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="statusChangeMessage">Apakah Anda yakin ingin mengubah status surat ini?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="letters-btn letters-btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Batal
+                </button>
+                <button type="button" class="letters-btn letters-btn-primary" id="confirmStatusChange">
+                    <i class="fas fa-check me-1"></i>Konfirmasi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attachment Delete Modal -->
+<div class="modal fade" id="deleteAttachmentModal" tabindex="-1" aria-labelledby="deleteAttachmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAttachmentModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Hapus Lampiran
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteAttachmentMessage">Apakah Anda yakin ingin menghapus lampiran ini?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="letters-btn letters-btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Batal
+                </button>
+                <form id="deleteAttachmentForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="letters-btn letters-btn-danger">
+                        <i class="fas fa-trash me-1"></i>Hapus
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin/letters-admin.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Delete confirmation
+    window.deleteLetter = function(letterId, letterSubject) {
+        if (confirm('Apakah Anda yakin ingin menghapus surat: ' + letterSubject + '?')) {
+            const form = $('<form method="post"></form>');
+            form.attr('action', '{% url "admin_panel:letters:admin_letter_delete" 0 %}'.replace('0', letterId));
+            form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+            $('body').append(form);
+            form.submit();
+        }
+    };
+
+    // Delete attachment confirmation
+    window.deleteAttachment = function(attachmentId, attachmentTitle) {
+        $('#deleteAttachmentMessage').text('Apakah Anda yakin ingin menghapus lampiran: ' + attachmentTitle + '?');
+        $('#deleteAttachmentForm').attr('action', '/admin-panel/letters/attachments/' + attachmentId + '/delete/');
+        $('#deleteAttachmentModal').modal('show');
+    };
+
+    // Status change validation
+    $('select[name="status"]').change(function() {
+        const newStatus = $(this).val();
+        const currentStatus = '{{ letter.status }}';
+
+        if (newStatus === 'rejected' && !confirm('Apakah Anda yakin ingin menolak surat ini?')) {
+            $(this).val(currentStatus);
+            return;
+        }
+
+        if (newStatus === 'approved' && !confirm('Apakah Anda yakin ingin menyetujui surat ini?')) {
+            $(this).val(currentStatus);
+            return;
+        }
+
+        if (newStatus === 'cancelled' && !confirm('Apakah Anda yakin ingin membatalkan surat ini?')) {
+            $(this).val(currentStatus);
+            return;
+        }
+    });
+
+    // Print functionality
+    window.printLetter = function() {
+        const printUrl = '{% url "admin_panel:letters:admin_letter_preview" letter.id %}?print=1';
+        window.open(printUrl, '_blank');
+    };
+
+    // Print functionality for specific format
+    window.printLetterFormat = function(format) {
+        const printUrl = '{% url "admin_panel:letters:admin_letter_print" letter.id "FORMAT" %}'.replace('FORMAT', format);
+        window.open(printUrl, '_blank');
+    };
+
+    // Copy letter number
+    window.copyLetterNumber = function() {
+        const letterNumber = '{{ letter.letter_number|default:"" }}';
+        if (letterNumber) {
+            navigator.clipboard.writeText(letterNumber).then(function() {
+                showAlert('Nomor surat berhasil disalin', 'success');
+            }).catch(function() {
+                showAlert('Gagal menyalin nomor surat', 'error');
+            });
+        }
+    };
+
+    // Share letter (if public URL exists)
+    {% if letter.public_url %}
+    window.shareLetter = function() {
+        const shareUrl = '{% url "letters:letter_detail" letter.id %}';
+        if (navigator.share) {
+            navigator.share({
+                title: 'Surat {{ letter.subject }}',
+                url: shareUrl
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(shareUrl).then(function() {
+                showAlert('Link surat berhasil disalin', 'success');
+            }).catch(function() {
+                showAlert('Gagal menyalin link surat', 'error');
+            });
+        }
+    };
+    {% endif %}
+
+    // Auto-refresh for pending letters
+    {% if letter.status in 'submitted,in_review' %}
+    setInterval(function() {
+        // Check for status updates every 30 seconds
+        $.get('{% url "admin_panel:letters:admin_letter_detail" letter.id %}/status/')
+            .done(function(data) {
+                if (data.status !== '{{ letter.status }}') {
+                    location.reload();
+                }
+            });
+    }, 30000);
+    {% endif %}
+});
+</script>
+{% endblock %}
+

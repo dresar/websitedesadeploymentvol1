@@ -1,0 +1,654 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %}Jenis Surat{% endblock %}
+{% block page_description %}Kelola jenis dan kategori surat yang tersedia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Letter Type List Specific Styles */
+.letter-type-list-page {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+.letter-type-list-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.letter-type-list-header h1 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.letter-type-list-header p {
+    opacity: 0.9;
+    margin: 0;
+}
+
+.letter-type-list-content {
+    padding: 0 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Statistics Cards */
+.letter-type-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.letter-type-stat-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.letter-type-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.letter-type-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--bs-primary), var(--bs-info));
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.letter-type-stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+}
+
+/* Bulk Actions */
+.letter-type-bulk-actions {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.letter-type-bulk-actions.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.letter-type-bulk-actions-content {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    border: 2px solid var(--bs-primary);
+}
+
+.letter-type-bulk-actions-info {
+    font-weight: 600;
+    color: var(--bs-primary);
+}
+
+.letter-type-bulk-actions-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Pagination */
+.letter-type-pagination {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.letter-type-pagination .pagination {
+    margin: 0;
+}
+
+.letter-type-pagination .page-link {
+    border-radius: 8px;
+    margin: 0 0.125rem;
+    border: 1px solid #dee2e6;
+    color: var(--bs-primary);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.letter-type-pagination .page-link:hover {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.letter-type-pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--bs-primary), #0056b3);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+/* Mobile Responsive */
+@media (max-width: 767.98px) {
+    .letter-type-list-header {
+        padding: 1rem 0;
+        margin-bottom: 1rem;
+    }
+    
+    .letter-type-list-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .letter-type-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .letter-type-stat-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .letter-type-bulk-actions-content {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+        margin: 0 1rem;
+    }
+    
+    .letter-type-bulk-actions-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .letter-type-bulk-actions-buttons .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .letter-type-list-content {
+        padding: 0 0.5rem;
+    }
+    
+    .letter-type-stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.75rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Letter Type List Page Container -->
+<div class="letter-type-list-page">
+    <!-- Letter Type List Header -->
+    <div class="letter-type-list-header">
+        <h1>Jenis Surat</h1>
+        <p>Kelola jenis dan kategori surat yang tersedia</p>
+    </div>
+    
+    <!-- Letter Type List Content -->
+    <div class="letter-type-list-content">
+        <!-- Statistics Cards -->
+        <div class="letter-type-stats-grid">
+            <div class="letter-type-stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="stat-number">{{ letter_types.paginator.count|default:0|intcomma }}</div>
+                <div class="stat-label">Total Jenis</div>
+            </div>
+
+            <div class="letter-type-stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ active_types|intcomma }}</div>
+                <div class="stat-label">Aktif</div>
+            </div>
+
+            <div class="letter-type-stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-pause-circle"></i>
+                </div>
+                <div class="stat-number">{{ inactive_types|intcomma }}</div>
+                <div class="stat-label">Tidak Aktif</div>
+            </div>
+
+            <div class="letter-type-stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="stat-number">+</div>
+                <div class="stat-label">
+                    <a href="{% url 'admin_panel:letters:admin_letter_type_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Tambah Jenis
+                    </a>
+                </div>
+            </div>
+        </div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="searchInput" placeholder="Cari jenis surat...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="statusFilter">
+                    <option value="">Semua Status</option>
+                    <option value="active">Aktif</option>
+                    <option value="inactive">Tidak Aktif</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+            <div class="col-md-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="showInactive">
+                    <label class="form-check-label" for="showInactive">
+                        Tampilkan Non-Aktif
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Letter Types Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Daftar Jenis Surat
+        </h5>
+        <a href="{% url 'admin_panel:letters:admin_letter_type_create' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Tambah Baru
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover" id="letterTypesTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <input type="checkbox" class="form-check-input" id="selectAllTypes">
+                        </th>
+                        <th>Kode</th>
+                        <th>Nama</th>
+                        <th>Deskripsi</th>
+                        <th class="text-center">Biaya</th>
+                        <th class="text-center">Waktu Proses</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for letter_type in letter_types %}
+                    <tr data-status="{{ letter_type.is_active|yesno:'active,inactive' }}">
+                        <td>
+                            <input type="checkbox" class="form-check-input type-checkbox"
+                                   value="{{ letter_type.id }}" name="selected_types[]">
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ letter_type.code }}</span>
+                        </td>
+                        <td>
+                            <div class="fw-medium">{{ letter_type.name }}</div>
+                        </td>
+                        <td>
+                            <div>{{ letter_type.description|truncatechars:100|default:"-" }}</div>
+                        </td>
+                        <td class="text-center">
+                            {% if letter_type.fee_amount > 0 %}
+                            Rp {{ letter_type.fee_amount|intcomma }}
+                            {% else %}
+                            <span class="text-muted">Gratis</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {{ letter_type.processing_time_days }} hari
+                        </td>
+                        <td class="text-center">
+                            {% if letter_type.is_active %}
+                            <span class="badge bg-success">Aktif</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Tidak Aktif</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'admin_panel:letters:admin_letter_type_edit' letter_type.id %}"
+                                   class="btn btn-sm btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-warning"
+                                        onclick="toggleStatus('{{ letter_type.id }}', {% if letter_type.is_active %}false{% else %}true{% endif %})"
+                                        title="{% if letter_type.is_active %}Nonaktifkan{% else %}Aktifkan{% endif %}">
+                                    <i class="fas fa-{% if letter_type.is_active %}pause{% else %}play{% endif %}"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger"
+                                        onclick="deleteLetterType('{{ letter_type.id }}', '{{ letter_type.name }}')"
+                                        title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not letter_types %}
+        <div class="text-center py-5">
+            <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Tidak ada jenis surat ditemukan</h5>
+            <p class="text-muted">Buat jenis surat baru untuk memulai</p>
+            <a href="{% url 'admin_panel:letters:admin_letter_type_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Tambah Jenis Surat Pertama
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+        <!-- Bulk Actions -->
+        <div class="letter-type-bulk-actions">
+            <div id="bulkActions" class="letter-type-bulk-actions-content">
+                <div class="letter-type-bulk-actions-info">
+                    <span class="text-muted">Dipilih: <span id="selectedCount">0</span></span>
+                </div>
+                <div class="letter-type-bulk-actions-buttons">
+                    <button class="btn btn-danger btn-sm" onclick="bulkDelete()">
+                        <i class="fas fa-trash me-1"></i>Hapus Terpilih
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="bulkToggleStatus(false)">
+                        <i class="fas fa-pause me-1"></i>Nonaktifkan Terpilih
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="bulkToggleStatus(true)">
+                        <i class="fas fa-play me-1"></i>Aktifkan Terpilih
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if letter_types.has_other_pages %}
+        <div class="letter-type-pagination">
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm">
+                    {% if letter_types.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">‹‹</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ letter_types.previous_page_number }}">‹</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in letter_types.paginator.page_range %}
+                    {% if num == letter_types.number %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > letter_types.number|add:'-3' and num < letter_types.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if letter_types.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ letter_types.next_page_number }}">›</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ letter_types.paginator.num_pages }}">››</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin/letters-admin.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $('#searchInput').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        filterTable(searchTerm);
+    });
+
+    // Status filter
+    $('#statusFilter').change(function() {
+        const status = $(this).val();
+        filterByStatus(status);
+    });
+
+    // Show inactive toggle
+    $('#showInactive').change(function() {
+        if ($(this).is(':checked')) {
+            $('tr[data-status="inactive"]').show();
+        } else {
+            $('tr[data-status="inactive"]').hide();
+        }
+    });
+
+    // Select all checkbox
+    $('#selectAllTypes').change(function() {
+        $('.type-checkbox').prop('checked', $(this).prop('checked'));
+        updateBulkActions();
+    });
+
+    // Individual checkboxes
+    $('.type-checkbox').change(function() {
+        updateBulkActions();
+        $('#selectAllTypes').prop('checked', $('.type-checkbox:checked').length === $('.type-checkbox').length);
+    });
+
+    // Filter functions
+    function filterTable(searchTerm) {
+        $('#letterTypesTable tbody tr').each(function() {
+            const row = $(this);
+            const text = row.text().toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.show();
+            } else {
+                row.hide();
+            }
+        });
+    }
+
+    function filterByStatus(status) {
+        if (status === '') {
+            $('#letterTypesTable tbody tr').show();
+        } else {
+            $('#letterTypesTable tbody tr').each(function() {
+                const rowStatus = $(this).data('status');
+                if (rowStatus === status) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+    }
+
+    // Update bulk actions visibility
+    function updateBulkActions() {
+        const checkedCount = $('.type-checkbox:checked').length;
+        $('#selectedCount').text(checkedCount);
+
+        if (checkedCount > 0) {
+            $('.letter-type-bulk-actions').addClass('show');
+        } else {
+            $('.letter-type-bulk-actions').removeClass('show');
+        }
+    }
+
+    // Delete confirmation
+    window.deleteLetterType = function(typeId, typeName) {
+        if (confirm('Apakah Anda yakin ingin menghapus jenis surat: ' + typeName + '?')) {
+            const form = $('<form method="post"></form>');
+            form.attr('action', '{% url "admin_panel:letters:admin_letter_type_edit" 0 %}delete/'.replace('0', typeId));
+            form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+            $('body').append(form);
+            form.submit();
+        }
+    };
+
+    // Toggle status
+    window.toggleStatus = function(typeId, activate) {
+        const actionText = activate ? 'mengaktifkan' : 'menonaktifkan';
+        if (confirm('Apakah Anda yakin ingin ' + actionText + ' jenis surat ini?')) {
+            const form = $('<form method="post"></form>');
+            form.attr('action', '{% url "admin_panel:letters:admin_letter_type_edit" 0 %}toggle-status/'.replace('0', typeId));
+            form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+            form.append('<input type="hidden" name="activate" value="' + activate + '">');
+            $('body').append(form);
+            form.submit();
+        }
+    };
+
+    // Bulk operations
+    window.bulkDelete = function() {
+        const selectedIds = $('.type-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (selectedIds.length === 0) {
+            alert('Pilih jenis surat yang akan dihapus');
+            return;
+        }
+
+        if (confirm('Apakah Anda yakin ingin menghapus ' + selectedIds.length + ' jenis surat terpilih?')) {
+            const form = $('<form method="post"></form>');
+            form.attr('action', '{% url "admin_panel:letters:admin_letter_type_list" %}');
+            form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+            form.append('<input type="hidden" name="action" value="bulk_delete">');
+            selectedIds.forEach(id => {
+                form.append('<input type="hidden" name="type_ids" value="' + id + '">');
+            });
+            $('body').append(form);
+            form.submit();
+        }
+    };
+
+    window.bulkToggleStatus = function(activate) {
+        const selectedIds = $('.type-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (selectedIds.length === 0) {
+            alert('Pilih jenis surat yang akan diubah statusnya');
+            return;
+        }
+
+        const actionText = activate ? 'mengaktifkan' : 'menonaktifkan';
+        if (confirm('Apakah Anda yakin ingin ' + actionText + ' ' + selectedIds.length + ' jenis surat terpilih?')) {
+            const form = $('<form method="post"></form>');
+            form.attr('action', '{% url "admin_panel:letters:admin_letter_type_list" %}');
+            form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+            form.append('<input type="hidden" name="action" value="bulk_toggle_status">');
+            form.append('<input type="hidden" name="activate" value="' + activate + '">');
+            selectedIds.forEach(id => {
+                form.append('<input type="hidden" name="type_ids" value="' + id + '">');
+            });
+            $('body').append(form);
+            form.submit();
+        }
+    };
+
+    // Refresh data
+    window.refreshData = function() {
+        window.location.reload();
+    };
+});
+</script>
+{% endblock %}
+

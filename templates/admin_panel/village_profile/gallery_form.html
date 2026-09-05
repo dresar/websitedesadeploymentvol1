@@ -1,0 +1,303 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/village_profile_global.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/gallery.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/forms.css' %}">
+
+{% endblock extra_css %}
+
+{% block content %}
+<!-- Tombol Kembali -->
+<div class="back-button-container">
+    <a href="{% url 'village_profile:admin_gallery' %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Galeri
+    </a>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="form-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-{% if photo %}edit{% else %}camera{% endif %} mr-2"></i>
+                        {% if photo %}Edit Foto Galeri{% else %}Tambah Foto Baru{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="photoForm" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" id="photoId" name="photo_id" value="{{ photo.id|default:'' }}">
+
+                        <!-- Upload Foto -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-image mr-2"></i>Upload Foto</h6>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Foto {% if not photo %}<span class="required">*</span>{% endif %}</label>
+                                <div class="image-upload-area" id="uploadArea">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Klik untuk memilih foto atau drag & drop</p>
+                                    <small>Format: JPG, PNG, GIF (Max: 5MB)</small>
+                                </div>
+                                <input type="file" id="photoFile" name="photo" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                                {% if photo.image %}
+                                <img id="imagePreview" class="image-preview mt-3" src="{{ photo.image.url }}" style="display: block;" alt="Preview">
+                                {% else %}
+                                <img id="imagePreview" class="image-preview mt-3" alt="Preview" style="display: none;">
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Informasi Dasar -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-info-circle mr-2"></i>Informasi Dasar</h6>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="photoTitle" class="form-label">Judul Foto <span class="required">*</span></label>
+                                        <input type="text" class="form-control" id="photoTitle" name="title" 
+                                               value="{{ photo.title|default:'' }}" required placeholder="Masukkan judul foto">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="photoCategory" class="form-label">Kategori <span class="required">*</span></label>
+                                        <select class="form-control" id="photoCategory" name="category" required>
+                                            <option value="">Pilih Kategori</option>
+                                            <option value="LANDSCAPE" {% if photo.photo_type == 'LANDSCAPE' %}selected{% endif %}>Pemandangan</option>
+                                            <option value="BUILDING" {% if photo.photo_type == 'BUILDING' %}selected{% endif %}>Bangunan</option>
+                                            <option value="ACTIVITY" {% if photo.photo_type == 'ACTIVITY' %}selected{% endif %}>Kegiatan</option>
+                                            <option value="CULTURE" {% if photo.photo_type == 'CULTURE' %}selected{% endif %}>Budaya</option>
+                                            <option value="FACILITY" {% if photo.photo_type == 'FACILITY' %}selected{% endif %}>Fasilitas</option>
+                                            <option value="EVENT" {% if photo.photo_type == 'EVENT' %}selected{% endif %}>Acara</option>
+                                            <option value="PEOPLE" {% if photo.photo_type == 'PEOPLE' %}selected{% endif %}>Masyarakat</option>
+                                            <option value="NATURE" {% if photo.photo_type == 'NATURE' %}selected{% endif %}>Alam</option>
+                                            <option value="OTHER" {% if photo.photo_type == 'OTHER' %}selected{% endif %}>Lainnya</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="photoDescription" class="form-label">Deskripsi</label>
+                                <textarea class="form-control" id="photoDescription" name="description" rows="4">{{ photo.description|default:'' }}</textarea>
+                                <small class="form-text text-muted">Deskripsi foto (opsional, support HTML)</small>
+                            </div>
+                        </div>
+
+                        <!-- Detail Tambahan -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-list-ul mr-2"></i>Detail Tambahan</h6>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="photoDate" class="form-label">Tanggal Diambil</label>
+                                        <input type="date" class="form-control" id="photoDate" name="date_taken" 
+                                               value="{{ photo.photo_date|date:'Y-m-d'|default:'' }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="photoLocation" class="form-label">Lokasi</label>
+                                        <input type="text" class="form-control" id="photoLocation" name="location" 
+                                               value="{{ photo.location|default:'' }}" placeholder="Lokasi foto diambil">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="photoPhotographer" class="form-label">Fotografer</label>
+                                        <input type="text" class="form-control" id="photoPhotographer" name="photographer" 
+                                               value="{{ photo.photographer|default:'' }}" placeholder="Nama fotografer">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="photoTags" class="form-label">Tag</label>
+                                        <input type="text" class="form-control" id="photoTags" name="tags" 
+                                               value="{{ photo.tags|default:'' }}" placeholder="Pisahkan dengan koma">
+                                        <small class="form-text text-muted">Contoh: desa, alam, kegiatan</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'village_profile:admin_gallery' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times mr-1"></i>Batal
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save mr-1"></i>
+                                    {% if photo %}Update Foto{% else %}Simpan Foto{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+
+<script>
+$(document).ready(function() {
+    // Initialize Summernote
+
+    // Setup image upload with drag & drop
+    setupImageUpload();
+
+    // Form submission
+    $('#photoForm').on('submit', function(e) {
+        e.preventDefault();
+        savePhoto();
+    });
+});
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showError('File harus berupa gambar!');
+            return;
+        }
+        
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showError('Ukuran file maksimal 5MB!');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#imagePreview').attr('src', e.target.result).show();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function setupImageUpload() {
+    const uploadArea = $('#uploadArea');
+    const fileInput = $('#photoFile');
+
+    // Click to upload
+    uploadArea.on('click', function() {
+        fileInput.click();
+    });
+
+    uploadArea.on('dragover dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('dragover');
+    });
+
+    uploadArea.on('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('dragover');
+    });
+
+    uploadArea.on('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('dragover');
+
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(files[0]);
+            fileInput[0].files = dataTransfer.files;
+            previewImage(fileInput[0]);
+        }
+    });
+}
+
+function savePhoto() {
+    const form = $('#photoForm')[0];
+    const formData = new FormData(form);
+
+    // Get description from Summernote
+    const description = $('#photoDescription');
+    formData.set('description', description);
+
+    // Validate required fields
+    const title = $('#photoTitle').val().trim();
+    const category = $('#photoCategory').val();
+    const photoFile = $('#photoFile')[0].files[0];
+    const photoId = $('#photoId').val();
+
+    if (!title) {
+        showError('Judul foto harus diisi!');
+        $('#photoTitle').focus();
+        return;
+    }
+
+    if (!category) {
+        showError('Kategori harus dipilih!');
+        $('#photoCategory').focus();
+        return;
+    }
+
+    if (!photoId && !photoFile) {
+        showError('Foto harus diupload!');
+        return;
+    }
+
+    const submitBtn = $('button[type="submit"]');
+    const originalText = submitBtn.html();
+    submitBtn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Menyimpan...').prop('disabled', true);
+
+    $.ajax({
+        url: '{% url "village_profile:gallery_api" %}',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                showSuccess(photoId ? 'Foto berhasil diperbarui!' : 'Foto berhasil ditambahkan!');
+                setTimeout(() => {
+                    window.location.href = '{% url "village_profile:admin_gallery" %}';
+                }, 1500);
+            } else {
+                showError(response.message || 'Gagal menyimpan foto!');
+            }
+        },
+        error: function(xhr) {
+            // Upload error
+            let errorMessage = 'Gagal menyimpan foto!';
+
+            if (xhr.responseJSON) {
+                if (xhr.responseJSON.errors) {
+                    errorMessage = 'Gagal: ' + Object.values(xhr.responseJSON.errors).flat().join(', ');
+                } else if (xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+            }
+
+            showError(errorMessage);
+        },
+        complete: function() {
+            submitBtn.html(originalText).prop('disabled', false);
+        }
+    });
+}
+
+// Notifikasi menggunakan sistem global dari base.html
+</script>
+{% endblock extra_js %}
+

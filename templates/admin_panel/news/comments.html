@@ -1,0 +1,397 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Manajemen Komentar Berita{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/news/news_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="news-list-page">
+    <div class="container-fluid">
+        
+        <!-- Page Header -->
+        <div class="news-list-header">
+            <div class="news-list-header-content">
+                <div class="news-list-title-wrapper">
+                    <h1 class="news-list-main-title">
+                        <i class="fas fa-comments"></i>
+                        Manajemen Komentar Berita
+                    </h1>
+                    <p class="news-list-subtitle">Kelola dan moderasi komentar dari pengunjung</p>
+                </div>
+                <div class="news-list-actions">
+                    <a href="{% url 'admin_panel:news_dashboard' %}" class="news-list-header-btn news-list-header-btn-outline">
+                        <i class="fas fa-chart-pie"></i>Dashboard
+                    </a>
+                    <a href="{% url 'admin_panel:news_list' %}" class="news-list-header-btn news-list-header-btn-outline">
+                        <i class="fas fa-newspaper"></i>Berita
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="news-stats-bar" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center;">
+                <span style="font-size: 2rem; font-weight: 700;">{{ total_comments|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Total Komentar</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #28a745, #20c997);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ approved_comments|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Disetujui</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #ffc107, #e0a800);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ pending_comments|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Pending</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #dc3545, #c82333);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ rejected_comments|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Ditolak</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #6c757d, #495057);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ spam_comments|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Spam</span>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="news-filter-section">
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                <a href="{% url 'admin_panel:news_comments' %}" 
+                   class="news-filter-btn {% if not current_filters.status %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-list"></i> Semua
+                </a>
+                <a href="{% url 'admin_panel:news_comments' %}?status=approved" 
+                   class="news-filter-btn {% if current_filters.status == 'approved' %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-check"></i> Disetujui
+                </a>
+                <a href="{% url 'admin_panel:news_comments' %}?status=pending" 
+                   class="news-filter-btn {% if current_filters.status == 'pending' %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-clock"></i> Pending
+                </a>
+                <a href="{% url 'admin_panel:news_comments' %}?status=rejected" 
+                   class="news-filter-btn {% if current_filters.status == 'rejected' %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-times"></i> Ditolak
+                </a>
+                <a href="{% url 'admin_panel:news_comments' %}?status=spam" 
+                   class="news-filter-btn {% if current_filters.status == 'spam' %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-ban"></i> Spam
+                </a>
+            </div>
+        </div>
+
+        <!-- Search & Filter Form -->
+        <div class="news-filter-section">
+            <h5 class="news-filter-title">
+                <i class="fas fa-filter"></i>
+                Pencarian & Filter
+            </h5>
+            <form method="GET" id="searchForm" class="news-filter-form">
+                <div class="news-filter-group">
+                    <label for="search" class="news-filter-label">
+                        <i class="fas fa-search"></i> Pencarian
+                    </label>
+                    <div class="news-filter-input-icon-wrapper">
+                        <i class="fas fa-search news-filter-input-icon"></i>
+                        <input type="text" class="news-filter-input news-filter-input-with-icon" 
+                               id="search" name="search" value="{{ current_filters.search }}" 
+                               placeholder="Cari nama, email, atau komentar...">
+                    </div>
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="news" class="news-filter-label">Filter Berita</label>
+                    <select class="news-filter-select" id="news" name="news">
+                        <option value="">Semua Berita</option>
+                        {% for news_item in news_list %}
+                        <option value="{{ news_item.id }}" {% if current_filters.news == news_item.id|stringformat:"s" %}selected{% endif %}>
+                            {{ news_item.title|truncatechars:50 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="date_from" class="news-filter-label">Tanggal Mulai</label>
+                    <input type="date" class="news-filter-input" id="date_from" name="date_from" 
+                           value="{{ current_filters.date_from }}">
+                </div>
+
+                <div class="news-filter-actions">
+                    <button type="submit" class="news-filter-btn news-filter-btn-primary">
+                        <i class="fas fa-search"></i> Cari
+                    </button>
+                    <a href="{% url 'admin_panel:news_comments' %}" class="news-filter-btn news-filter-btn-reset">
+                        <i class="fas fa-redo"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Comments Grid -->
+        <div class="news-grid-view">
+            {% for comment in comments %}
+            <div class="news-item-card {% if comment.status == 'pending' %}news-item-status-draft{% elif comment.status == 'approved' %}news-item-status-published{% else %}news-item-status-archived{% endif %}">
+                
+                <div class="news-item-content" style="padding-top: 1.5rem;">
+                    
+                    <!-- Author Info -->
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--news-primary), #0056b3); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 12px rgba(0,123,255,0.3);">
+                            {{ comment.author_name|first|upper }}
+                        </div>
+                        <div style="flex: 1;">
+                            <h6 style="margin: 0; font-weight: 600; color: #2c3e50;">{{ comment.author_name }}</h6>
+                            <small style="color: #6c757d;">{{ comment.author_email }}</small>
+                        </div>
+                        <span class="news-item-status-badge news-item-status-{% if comment.status == 'approved' %}published{% elif comment.status == 'pending' %}draft{% else %}archived{% endif %}">
+                            {{ comment.get_status_display }}
+                        </span>
+                    </div>
+
+                    <!-- Comment Content -->
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid {% if comment.status == 'approved' %}#28a745{% elif comment.status == 'pending' %}#ffc107{% elif comment.status == 'rejected' %}#dc3545{% else %}#6c757d{% endif %}; margin-bottom: 1rem;">
+                        <p style="margin: 0; line-height: 1.6; color: #495057;">{{ comment.content|linebreaks }}</p>
+                    </div>
+
+                    <!-- Reply Info -->
+                    {% if comment.parent %}
+                    <div style="background: #e9ecef; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <h6 style="margin: 0 0 0.5rem 0; font-size: 0.875rem;">
+                            <i class="fas fa-reply"></i> Balasan untuk: {{ comment.parent.author_name }}
+                        </h6>
+                        <p style="margin: 0; color: #6c757d; font-size: 0.8rem;">{{ comment.parent.content|truncatechars:100 }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Meta -->
+                    <div class="news-item-meta">
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-newspaper news-item-meta-icon"></i>
+                            <a href="{% url 'admin_panel:news_detail' comment.news.pk %}" style="color: inherit; text-decoration: none;">
+                                {{ comment.news.title|truncatechars:40 }}
+                            </a>
+                        </div>
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-clock news-item-meta-icon"></i>
+                            <span>{{ comment.created_at|timesince }} yang lalu</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="news-item-actions" style="margin-top: 1rem;">
+                        <a href="{% url 'admin_panel:news_detail' comment.news.pk %}" 
+                           class="news-item-action-btn news-item-action-view">
+                            <i class="fas fa-eye"></i> Lihat Berita
+                        </a>
+                        {% if comment.status != 'approved' %}
+                        <button class="news-item-action-btn" style="background: linear-gradient(135deg, #28a745, #218838); color: white;" 
+                                onclick="approveComment({{ comment.id }})">
+                            <i class="fas fa-check"></i> Setujui
+                        </button>
+                        {% endif %}
+                        {% if comment.status != 'rejected' %}
+                        <button class="news-item-action-btn news-item-action-edit" 
+                                onclick="rejectComment({{ comment.id }})">
+                            <i class="fas fa-times"></i> Tolak
+                        </button>
+                        {% endif %}
+                        <button class="news-item-action-btn news-item-action-delete delete-btn" 
+                                data-id="{{ comment.id }}" data-title="{{ comment.author_name }}">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="news-empty-state">
+                    <i class="fas fa-comments news-empty-state-icon"></i>
+                    <h3 class="news-empty-state-title">Tidak ada komentar ditemukan</h3>
+                    <p class="news-empty-state-text">Belum ada komentar yang sesuai dengan filter yang dipilih.</p>
+                    <a href="{% url 'admin_panel:news_list' %}" class="news-empty-state-action">
+                        <i class="fas fa-newspaper"></i> Lihat Berita
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if comments.has_other_pages %}
+        <div class="news-pagination-wrapper">
+            <ul class="news-pagination">
+                {% if comments.has_previous %}
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page=1{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.news %}&news={{ current_filters.news }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ comments.previous_page_number }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.news %}&news={{ current_filters.news }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in comments.paginator.page_range %}
+                    {% if comments.number == num %}
+                    <li class="news-pagination-item active">
+                        <span class="news-pagination-link">{{ num }}</span>
+                    </li>
+                    {% elif num > comments.number|add:'-3' and num < comments.number|add:'3' %}
+                    <li class="news-pagination-item">
+                        <a class="news-pagination-link" href="?page={{ num }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.news %}&news={{ current_filters.news }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if comments.has_next %}
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ comments.next_page_number }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.news %}&news={{ current_filters.news }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ comments.paginator.num_pages }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.news %}&news={{ current_filters.news }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="news-delete-modal" id="deleteModal">
+    <div class="news-delete-modal-content">
+        <div class="news-delete-modal-header">
+            <h5 class="news-delete-modal-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                Konfirmasi Hapus
+            </h5>
+            <button type="button" class="news-delete-modal-close" onclick="closeDeleteModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="news-delete-modal-body">
+            <p class="news-delete-modal-text">
+                Apakah Anda yakin ingin menghapus komentar dari <strong id="deleteCommentAuthor"></strong>?
+            </p>
+            <div class="news-delete-modal-warning">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Tindakan ini tidak dapat dibatalkan.</span>
+            </div>
+        </div>
+        <div class="news-delete-modal-footer">
+            <button type="button" class="news-delete-modal-btn news-delete-modal-btn-cancel" onclick="closeDeleteModal()">
+                Batal
+            </button>
+            <button type="button" class="news-delete-modal-btn news-delete-modal-btn-delete" id="confirmDelete">
+                Hapus
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function approveComment(id) {
+    fetch(`{% url 'admin_panel:news_comment_approve' 0 %}`.replace('0', id), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menyetujui komentar');
+    });
+}
+
+function rejectComment(id) {
+    fetch(`{% url 'admin_panel:news_comment_reject' 0 %}`.replace('0', id), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menolak komentar');
+    });
+}
+
+// Delete buttons
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const author = this.getAttribute('data-title');
+            openDeleteModal(id, author);
+        });
+    });
+});
+
+function openDeleteModal(id, author) {
+    document.getElementById('deleteCommentAuthor').textContent = author;
+    document.getElementById('deleteModal').classList.add('show');
+    
+    document.getElementById('confirmDelete').onclick = function() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        
+        fetch(`{% url 'admin_panel:news_comment_delete' 0 %}`.replace('0', id), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken.value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menghapus komentar');
+        });
+    };
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('show');
+}
+
+// Close modal on outside click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

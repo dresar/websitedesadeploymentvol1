@@ -1,0 +1,166 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Detail Kategori Wisata{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="td-wrapper">
+
+    <a href="{% url 'admin_panel:tourism_categories_list' %}" class="td-back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Daftar Kategori
+    </a>
+
+    <div class="td-header">
+        <div class="td-header-content">
+            <div class="td-icon-wrapper" style="background: {{ category.color|default:'#3b82f6' }};">
+                {% if category.icon %}
+                    <i class="{{ category.icon }}"></i>
+                {% else %}
+                    <i class="fas fa-tags"></i>
+                {% endif %}
+            </div>
+
+            <div class="td-header-info">
+                <h1>{{ category.name }}</h1>
+                <p class="td-header-subtitle">{{ category.description|striptags|default:"Tidak ada deskripsi" }}</p>
+
+                <div class="td-meta-row">
+                    <div class="td-meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>Dibuat: {{ category.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <div class="td-meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Diupdate: {{ category.updated_at|date:"d M Y" }}</span>
+                    </div>
+                    <div class="td-meta-item">
+                        <i class="fas fa-{% if category.is_active %}check-circle{% else %}times-circle{% endif %}"></i>
+                        <span>Status: {% if category.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="td-actions">
+                <a href="{% url 'admin_panel:tourism_category_edit' category.id %}" class="td-btn td-btn-primary">
+                    <i class="fas fa-edit"></i>
+                    Edit
+                </a>
+                <button onclick="deleteCategory({{ category.id }})" class="td-btn td-btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="td-stats-grid">
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-primary">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="td-stat-value">{{ total_locations }}</div>
+            <div class="td-stat-label">Total Lokasi</div>
+        </div>
+
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="td-stat-value">{{ active_locations }}</div>
+            <div class="td-stat-label">Lokasi Aktif</div>
+        </div>
+
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-warning">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="td-stat-value">{{ featured_locations }}</div>
+            <div class="td-stat-label">Lokasi Unggulan</div>
+        </div>
+    </div>
+
+    <!-- Deskripsi Section -->
+    {% if category.description %}
+    <div class="td-section">
+        <div class="td-section-header">
+            <h3 class="td-section-title">
+                <i class="fas fa-align-left"></i>
+                Deskripsi Kategori
+            </h3>
+        </div>
+        <div class="td-content">
+            {{ category.description|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="td-section">
+        <div class="td-section-header">
+            <h3 class="td-section-title">
+                <i class="fas fa-map-marker-alt"></i>
+                Lokasi dalam Kategori Ini
+            </h3>
+        </div>
+
+        {% if locations %}
+            <div class="td-cards-grid">
+                {% for location in locations %}
+                <div class="td-card">
+                    <div class="td-card-title">{{ location.title }}</div>
+                    <div class="td-card-meta">
+                        <span>{{ location.address|truncatechars:30 }}</span>
+                        <div>
+                            {% if location.is_active %}
+                                <span class="td-badge td-badge-success">Aktif</span>
+                            {% else %}
+                                <span class="td-badge td-badge-gray">Tidak Aktif</span>
+                            {% endif %}
+                            {% if location.featured %}
+                                <span class="td-badge td-badge-warning">Unggulan</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="td-empty-state">
+                <i class="fas fa-map-marker-alt"></i>
+                <h5>Belum ada lokasi dalam kategori ini</h5>
+                <p>Lokasi wisata akan muncul di sini setelah ditambahkan ke kategori ini.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>function deleteCategory(categoryId) {
+    if (confirm('Apakah Anda yakin ingin menghapus kategori ini?\n\nTindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.')) {
+        fetch(`{% url 'admin_panel:tourism_category_delete' 0 %}`.replace('0', categoryId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = "{% url 'admin_panel:tourism_categories_list' %}";
+            } else {
+                showError('Gagal menghapus kategori: ' + (data.error || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Terjadi kesalahan saat menghapus kategori');
+        });
+    }
+}
+</script>
+{% endblock %}

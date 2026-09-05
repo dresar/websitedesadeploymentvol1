@@ -1,0 +1,144 @@
+{% extends 'public/base.html' %} 
+{% load static %} 
+
+{% block content %} 
+
+<!-- Bagian Hero Section Perangkat Desa -->
+<section class="relative py-8 sm:py-12 overflow-hidden"> 
+    
+    <!-- Latar Belakang Gambar atau Gradien -->
+    {% if village_profile.profile_image %} 
+    <div 
+        class="absolute inset-0 bg-cover bg-center bg-no-repeat" 
+        style="background-image: url('{{ village_profile.profile_image.url }}');">
+    </div> 
+    <div class="absolute inset-0 bg-gradient-to-br from-indigo-600/80 to-purple-700/80"></div> 
+    {% else %} 
+    <div class="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700"></div> 
+    {% endif %} 
+    
+    <!-- Judul Halaman -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"> 
+        <div class="text-center text-white"> 
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Perangkat Desa</h1> 
+            <p class="text-sm sm:text-base opacity-90">Struktur organisasi dan perangkat Desa Pulosarok</p> 
+        </div> 
+    </div> 
+</section> 
+<!-- Akhir Hero Section -->
+
+<!-- Bagian Daftar Perangkat Desa dan Paginasi -->
+<section class="py-4 sm:py-6 bg-white"> 
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+        
+        {% if officials %} 
+        
+        <!-- Grid Kartu Pejabat -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"> 
+            {% for official in officials %} 
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-2 sm:p-4 text-center hover:shadow-md transition-shadow duration-200"> 
+                
+                <!-- Foto Pejabat -->
+                {% if official.photo %} 
+                <img 
+                    src="{{ official.photo.url }}" 
+                    alt="{{ official.name }}" 
+                    class="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full object-cover border-2 border-indigo-500 mx-auto mb-2 sm:mb-3"
+                > 
+                {% else %} 
+                <div class="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full bg-indigo-500 flex items-center justify-center text-white mx-auto mb-2 sm:mb-3"> 
+                    <i class="fas fa-user text-sm sm:text-lg"></i> 
+                </div> 
+                {% endif %} 
+                
+                <!-- Detail Pejabat -->
+                <h4 class="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 mb-1">{{ official.name }}</h4> 
+                <p class="text-xs text-indigo-600 mb-1 sm:mb-2">{{ official.position_display }}</p> 
+                
+                {% if official.education %} 
+                <p class="text-xs text-gray-500 mb-1"> 
+                    <i class="fas fa-graduation-cap mr-1"></i>{{ official.education }} 
+                </p> 
+                {% endif %} 
+                
+                {% if official.phone %} 
+                <p class="text-xs text-gray-500 mb-1"> 
+                    <i class="fas fa-phone mr-1"></i>{{ official.phone }} 
+                </p> 
+                {% endif %} 
+                
+                {% if official.email %} 
+                <p class="text-xs text-gray-500 mb-1"> 
+                    <i class="fas fa-envelope mr-1"></i>{{ official.email }} 
+                </p> 
+                {% endif %} 
+                
+                {% if official.start_date %} 
+                <p class="text-xs text-gray-500"> 
+                    <i class="fas fa-calendar mr-1"></i>Mulai: {{ official.start_date|date:"M Y" }} 
+                </p> 
+                {% endif %} 
+                
+                <!-- Detail Button --> 
+                <div class="mt-2 sm:mt-3"> 
+                    <a href="{% url 'village_profile:official_detail' official.id %}" 
+                        class="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 sm:px-3 sm:py-2 rounded-lg font-semibold text-xs transition-colors"> 
+                        <i class="fas fa-eye text-xs"></i> 
+                        <span class="hidden sm:inline">Lihat Detail</span>
+                        <span class="sm:hidden">Detail</span>
+                    </a> 
+                </div> 
+            </div> 
+            {% endfor %} 
+        </div> 
+        
+        <!-- Pagination --> 
+        {% if page_obj.has_other_pages %} 
+        <div class="mt-6 flex justify-center"> 
+            <nav class="flex items-center space-x-1"> 
+                
+                {% if page_obj.has_previous %} 
+                <a href="?page={{ page_obj.previous_page_number }}" 
+                    class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"> 
+                    <i class="fas fa-chevron-left"></i> 
+                </a> 
+                {% endif %} 
+                
+                {% for num in page_obj.paginator.page_range %} 
+                    {% if page_obj.number == num %} 
+                        <span class="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg">{{ num }}</span> 
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} 
+                        <a href="?page={{ num }}" 
+                            class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"> 
+                            {{ num }} 
+                        </a> 
+                    {% endif %} 
+                {% endfor %} 
+                
+                {% if page_obj.has_next %} 
+                <a href="?page={{ page_obj.next_page_number }}" 
+                    class="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"> 
+                    <i class="fas fa-chevron-right"></i> 
+                </a> 
+                {% endif %} 
+                
+            </nav> 
+        </div> 
+        {% endif %} 
+        
+        {% else %} 
+        
+        <!-- Pesan Jika Tidak Ada Data -->
+        <div class="text-center py-8 sm:py-12"> 
+            <i class="fas fa-users text-4xl sm:text-5xl text-gray-400 mb-3"></i> 
+            <h3 class="text-lg sm:text-xl font-medium text-gray-600 mb-2">Data perangkat desa belum tersedia</h3> 
+            <p class="text-sm text-gray-500">Informasi perangkat desa akan segera ditambahkan</p> 
+        </div> 
+        
+        {% endif %} 
+        
+    </div> 
+</section> 
+<!-- Akhir Bagian Daftar Perangkat Desa dan Paginasi -->
+
+{% endblock content %}

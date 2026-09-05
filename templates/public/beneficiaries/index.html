@@ -1,0 +1,316 @@
+{% extends 'public/base.html' %} 
+{% load static %} 
+
+{% block extra_css %}
+<!-- Menghapus semua tag <style> dan memindahkan gaya ke Tailwind classes -->
+<style>
+    /* Styling khusus untuk memetakan nama kelas lama ke utilitas Tailwind */
+    .nav-tabs-mobile {
+        /* flex, overflow-x-auto, scrollbar-hidden */
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: 0.5rem 0;
+        margin-bottom: 1rem;
+    }
+    .nav-tabs-mobile::-webkit-scrollbar {
+        display: none;
+    }
+
+
+    /* Loading states */
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<section class="relative py-8 sm:py-12 lg:py-16 overflow-hidden">
+    {% if hero_image_url %}
+    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ hero_image_url }}');"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-600/80 to-blue-800/80"></div>
+    {% else %}
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-800"></div>
+    {% endif %}
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center text-white">
+            <h1 class="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4">Data Penerima Bantuan</h1>
+            <p class="text-sm md:text-xl text-blue-100 mb-4 md:mb-8 px-4">Informasi transparansi penyaluran bantuan kepada masyarakat Desa Pulosarok</p>
+            
+            <!-- .hero-stats (Tailwind Grid) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                <!-- .stat-card (Tailwind Styled) -->
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 text-center border border-white/20 shadow-xl transition-all hover:bg-white/20">
+                    <div class="text-2xl font-extrabold mb-1" id="total-beneficiaries">{{ total_beneficiaries|default:0 }}</div>
+                    <div class="text-xs opacity-90">Total Penerima</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 text-center border border-white/20 shadow-xl transition-all hover:bg-white/20">
+                    <div class="text-2xl font-extrabold mb-1" id="total-programs">{{ total_programs|default:0 }}</div>
+                    <div class="text-xs opacity-90">Program Bantuan</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 text-center border border-white/20 shadow-xl transition-all hover:bg-white/20">
+                    <div class="text-2xl font-extrabold mb-1" id="total-distributed">{{ total_distributed|default:0 }}</div>
+                    <div class="text-xs opacity-90">Bantuan Tersalur</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="bg-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Mobile Tabs (Custom CSS for overflow) -->
+        <div class="nav-tabs-mobile md:hidden">
+            <button class="nav-tab-mobile active flex-shrink-0 px-4 py-3 mr-2 bg-blue-600 text-white rounded-lg text-sm font-medium shadow-md transition-all duration-200 hover:bg-blue-700 hover:-translate-y-0.5" data-tab="beneficiaries">
+                <i class="fas fa-users mr-1"></i>Penerima
+            </button>
+            <button class="nav-tab-mobile flex-shrink-0 px-4 py-3 mr-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium shadow-sm transition-all duration-200 hover:bg-gray-200" data-tab="categories">
+                <i class="fas fa-tags mr-1"></i>Kategori
+            </button>
+            <button class="nav-tab-mobile flex-shrink-0 px-4 py-3 mr-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium shadow-sm transition-all duration-200 hover:bg-gray-200" data-tab="programs">
+                <i class="fas fa-clipboard-list mr-1"></i>Program
+            </button>
+            <button class="nav-tab-mobile flex-shrink-0 px-4 py-3 mr-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium shadow-sm transition-all duration-200 hover:bg-gray-200" data-tab="statistics">
+                <i class="fas fa-chart-bar mr-1"></i>Statistik
+            </button>
+        </div>
+        
+        <!-- Desktop Tabs -->
+        <div class="hidden md:flex flex-wrap border-b border-gray-200">
+            <button class="tab-btn active px-6 py-4 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors duration-200" data-tab="beneficiaries">
+                <i class="fas fa-users mr-2"></i>Penerima Bantuan
+            </button>
+            <button class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors duration-200" data-tab="categories">
+                <i class="fas fa-tags mr-2"></i>Kategori Bantuan
+            </button>
+            <button class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors duration-200" data-tab="programs">
+                <i class="fas fa-clipboard-list mr-2"></i>Program Bantuan
+            </button>
+            <button class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors duration-200" data-tab="statistics">
+                <i class="fas fa-chart-bar mr-2"></i>Statistik
+            </button>
+        </div>
+    </div>
+</section>
+
+<section class="py-6 md:py-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div id="beneficiaries-tab" class="tab-content">
+            <!-- Filter Section -->
+            <div class="bg-white rounded-xl p-4 shadow-lg mb-6 border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="flex flex-col space-y-1">
+                        <label class="text-sm font-medium text-gray-700">Cari Penerima</label>
+                        <input type="text" id="search-beneficiaries" placeholder="Nama penerima..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label class="text-sm font-medium text-gray-700">Kategori</label>
+                        <select id="filter-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                            <option value="">Semua Kategori</option>
+                            <!-- Options akan diisi oleh JS -->
+                        </select>
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label class="text-sm font-medium text-gray-700">Status Ekonomi</label>
+                        <select id="filter-economic-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                            <option value="">Semua Status</option>
+                            <option value="miskin">Miskin</option>
+                            <option value="kurang_mampu">Kurang Mampu</option>
+                            <option value="menengah">Menengah</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col justify-end">
+                        <button id="apply-filter" class="w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <i class="fas fa-search mr-2"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid (1 kolom mobile, 2 kolom tablet/desktop) -->
+            <div id="beneficiaries-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Data Penerima akan diisi oleh JS -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="beneficiaries-pagination" class="flex justify-center items-center gap-2 mt-6 flex-wrap">
+                <!-- Pagination akan diisi oleh JS -->
+            </div>
+        </div>
+
+        <div id="categories-tab" class="tab-content hidden">
+            <div id="categories-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Data Kategori akan diisi oleh JS -->
+            </div>
+        </div>
+
+        <div id="programs-tab" class="tab-content hidden">
+            <!-- Filter Program Section -->
+            <div class="bg-white rounded-xl p-4 shadow-lg mb-6 border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="flex flex-col space-y-1">
+                        <label class="text-sm font-medium text-gray-700">Cari Program</label>
+                        <input type="text" id="search-programs" placeholder="Nama program..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                    </div>
+                    <div class="flex flex-col space-y-1">
+                        <label class="text-sm font-medium text-gray-700">Jenis Bantuan</label>
+                        <select id="filter-aid-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                            <option value="">Semua Jenis</option>
+                            <!-- Options akan diisi oleh JS -->
+                        </select>
+                    </div>
+                    <div class="flex flex-col justify-end">
+                        <button id="apply-program-filter" class="w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <i class="fas fa-search mr-2"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="programs-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Data Program akan diisi oleh JS -->
+            </div>
+        </div>
+
+        <div id="statistics-tab" class="tab-content hidden">
+            <!-- Overview Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm font-medium">Total Penerima</p>
+                            <p class="text-3xl font-bold" id="stat-total-beneficiaries">425</p>
+                        </div>
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-users text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-100 text-sm font-medium">Kategori Bantuan</p>
+                            <p class="text-3xl font-bold" id="stat-total-categories">8</p>
+                        </div>
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-tags text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-100 text-sm font-medium">Program Aktif</p>
+                            <p class="text-3xl font-bold" id="stat-active-programs">12</p>
+                        </div>
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-clipboard-list text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-orange-100 text-sm font-medium">Total Bantuan</p>
+                            <p class="text-3xl font-bold" id="stat-total-amount">Rp 360M</p>
+                        </div>
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-money-bill-wave text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart 1: Kategori Distribution -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Distribusi per Kategori</h3>
+                        <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    </div>
+                    <div class="relative h-64">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Chart 2: Economic Status -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800">Status Ekonomi Penerima</h3>
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </div>
+                    <div class="relative h-64">
+                        <canvas id="economicChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Statistics -->
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-800">Penerima Miskin</h4>
+                    </div>
+                    <p class="text-3xl font-bold text-red-600 mb-2">200</p>
+                    <p class="text-sm text-gray-600">47% dari total penerima</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-users text-yellow-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-800">Kurang Mampu</h4>
+                    </div>
+                    <p class="text-3xl font-bold text-yellow-600 mb-2">150</p>
+                    <p class="text-sm text-gray-600">35% dari total penerima</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-check-circle text-green-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-800">Menengah</h4>
+                    </div>
+                    <p class="text-3xl font-bold text-green-600 mb-2">75</p>
+                    <p class="text-sm text-gray-600">18% dari total penerima</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+{% endblock content %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Pastikan script lokal tetap ada karena ini adalah bagian dari struktur data yang tidak boleh diubah -->
+<script src="{% static 'js/admin/beneficiaries/common.js' %}"></script>
+<script src="{% static 'js/admin/beneficiaries/index.js' %}"></script>
+{% endblock %}

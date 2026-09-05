@@ -1,0 +1,109 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Kepemudaan{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/organization/organization-list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Kepemudaan</h1>
+            <p class="text-muted mb-0">Kelola data organisasi kepemudaan</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <a href="{% url 'admin_panel:organization:admin_kepemudaan_create' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Tambah Organisasi
+            </a>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="filter-compact">
+            <div class="form-group">
+                <label for="search" class="form-label">Cari</label>
+                <input type="text" id="search" class="form-control search-input" placeholder="Nama organisasi atau ketua...">
+            </div>
+            <div class="form-group">
+                <label for="status" class="form-label">Status</label>
+                <select id="status" class="form-select">
+                    <option value="aktif">Aktif</option>
+                    <option value="non_aktif">Non Aktif</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header kepemudaan">
+            <div class="header-content">
+                <h5 class="mb-0">Data Organisasi Kepemudaan</h5>
+                <div class="header-actions">
+                    <button class="btn btn-light btn-sm" onclick="exportData()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-light btn-sm" onclick="printData()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th width="5%">No</th>
+                        <th width="10%">Logo</th>
+                        <th width="25%">Nama Organisasi</th>
+                        <th width="15%">Ketua</th>
+                        <th width="15%">Jenis</th>
+                        <th width="10%">Didirikan</th>
+                        <th width="10%">Status</th>
+                        <th width="10%">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="kepemudaanTableBody">
+                    <tr>
+                        <td colspan="8" class="loading-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <div>Memuat data...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus data organisasi kepemudaan <strong id="kepemudaanToDelete"></strong>?</p>
+                <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script></script>
+<script></script>
+{% endblock %}

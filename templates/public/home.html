@@ -1,0 +1,999 @@
+{% extends 'public/base.html' %}
+{% load static %}
+{% load string_filters %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<section class="hero-section relative" style="height: 60vh; min-height: 500px;">
+    {% if hero_image_url %}
+    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat"
+         style="background-image: url('{{ hero_image_url }}'); z-index: 1;">
+    </div>
+    {% else %}
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-900 to-blue-600" style="z-index: 1;">
+    </div>
+    {% endif %}
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-blue-600/40" style="z-index: 2;"></div>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20 text-center text-white pt-16 sm:pt-20 md:pt-24 pb-6 h-full flex flex-col justify-center">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6 lg:mb-8">
+            {% if hero_title %}{{ hero_title }}{% else %}{{ website_settings.site_name|default:"Selamat Datang di Website Desa" }}{% endif %}
+        </h1>
+        <p class="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 lg:mb-10 max-w-3xl mx-auto opacity-90 leading-relaxed">
+            {% if hero_subtitle %}{{ hero_subtitle }}{% else %}{{ website_settings.site_description|default:website_settings.meta_description|default:"Desa Pesisir yang Indah di Tepi Samudera" }}{% endif %}
+        </p>
+        <!-- Penyesuaian Grid Menu di Hero: Tetap 3 kolom untuk ikon agar padat di mobile -->
+        <div class="grid grid-cols-3 gap-1 sm:gap-2 md:gap-3 lg:gap-4 max-w-xl mx-auto" data-animate>
+            {% for item in hero_menu_items|default:"Profil Desa,Berita,Layanan,UMKM,Wisata,Posyandu,Organisasi,Pengaduan,Kontak"|split:"," %}
+            {% with forloop.counter0 as index %}
+            <div class="flex flex-col items-center justify-center group transition-all duration-300 hover:-translate-y-2 hover:scale-105">
+                <a href="{% if index == 0 %}{% url 'core:profile' %}
+                    {% elif index == 1 %}{% url 'news:list' %}
+                    {% elif index == 2 %}{% url 'layanan:document_services' %}
+                    {% elif index == 3 %}{% url 'business:business_list' %}
+                    {% elif index == 4 %}{% url 'tourism:dashboard' %}
+                    {% elif index == 5 %}{% url 'posyandu:public_posyandu_home' %}
+                    {% elif index == 6 %}{% url 'organization:organization_list' %}
+                    {% elif index == 7 %}{% url 'complaints:complaint_form' %}
+                    {% else %}{% url 'complaints:complaint_form' %}{% endif %}"
+                   class="flex flex-col items-center justify-center w-full p-2 relative overflow-hidden active:scale-95 transition-all duration-200">
+                    <div class="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg group-hover:shadow-2xl transition-all duration-300 border border-white/30"></div>
+                    <div class="relative w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white mb-2 group-hover:from-blue-400 group-hover:to-blue-500 group-hover:scale-105 transition-all duration-300 shadow-md group-hover:shadow-xl">
+                        <i class="fas {% if index == 0 %}fa-building
+                            {% elif index == 1 %}fa-newspaper
+                            {% elif index == 2 %}fa-file-alt
+                            {% elif index == 3 %}fa-store
+                            {% elif index == 4 %}fa-mountain
+                            {% elif index == 5 %}fa-heartbeat
+                            {% elif index == 6 %}fa-users
+                            {% elif index == 7 %}fa-comments
+                            {% else %}fa-phone{% endif %} text-xs sm:text-sm md:text-base group-hover:scale-110 transition-transform duration-300"></i>
+                    </div>
+                    <span class="text-xs sm:text-xs md:text-sm font-bold text-white text-center leading-tight group-hover:text-blue-200 transition-colors duration-300 drop-shadow-lg">
+                        {{ item }}
+                    </span>
+                </a>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+
+        <!-- Pengumuman di atas hero image (di bawah menu) -->
+        {% if announcements %}
+        <div class="mt-4 sm:mt-6 max-w-3xl mx-auto">
+            <div class="flex items-center justify-center mb-3 sm:mb-4">
+                <div class="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5">
+                    <div class="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-bullhorn text-white text-xs"></i>
+                    </div>
+                    <h3 class="text-xs sm:text-sm font-bold text-white">
+                        <span class="hidden sm:inline">Pengumuman Penting</span>
+                        <span class="sm:hidden">Pengumuman</span>
+                    </h3>
+                </div>
+            </div>
+            <div class="relative overflow-hidden rounded-lg">
+                <div id="announcementsSlider" class="flex transition-transform duration-500 ease-in-out">
+                    {% for announcement in announcements %}
+                    <div class="announcement-slide w-full flex-shrink-0">
+                        {% if announcement.slug %}
+                        <a href="{% url 'news:announcement_detail' announcement.slug %}" class="block">
+                        {% endif %}
+                        <div class="bg-white/90 backdrop-blur-sm rounded-lg p-3 sm:p-4 shadow-lg border border-white/30 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer">
+                            <div class="flex items-start gap-2">
+                                <div class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                                    <i class="fas fa-bullhorn text-xs"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-xs sm:text-sm font-bold text-gray-900 mb-1 line-clamp-2 hover:text-orange-600 transition-colors">
+                                        {{ announcement.title|default:"Pengumuman Desa" }}
+                                    </h4>
+                                    <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                                        {{ announcement.content|striptags|truncatewords:15|default:"Informasi penting dari desa" }}
+                                    </p>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-500 flex items-center gap-1">
+                                            <i class="fas fa-calendar text-xs"></i>
+                                            {{ announcement.start_date|date:"d M Y"|default:"Tanggal belum tersedia" }}
+                                        </span>
+                                        <div class="text-orange-600 hover:text-orange-700 font-semibold text-xs flex items-center gap-1 hover:gap-2 transition-all">
+                                            <span class="hidden sm:inline">Baca</span>
+                                            <span class="sm:hidden">Baca</span>
+                                            <i class="fas fa-arrow-right text-xs"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if announcement.slug %}
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if announcements|length > 1 %}
+                <div class="flex justify-center gap-1.5 mt-3">
+                    {% for announcement in announcements %}
+                    <button class="announcement-dot w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-orange-300 hover:bg-orange-400 transition-all duration-300 touch-target {% if forloop.first %}bg-orange-500{% endif %}"
+                            data-slide="{{ forloop.counter0 }}"></button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Section Profil Desa: Tetap 1 kolom di mobile (lg:grid-cols-2) -->
+<section class="py-16 md:py-20 lg:py-24 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 md:mb-14">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 section-title-underline" data-animate>
+                Profil Desa {% if village_profile %}{{ village_profile.name|default:"Pulosarok" }}{% else %}Pulosarok{% endif %}
+            </h2>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mt-4" data-animate>
+                Mengenal lebih dekat tentang desa dan masyarakatnya
+            </p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-14 items-center">
+            <div class="space-y-8" data-animate>
+                <div>
+                    <p class="text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed">
+                        {% if village_profile %}
+                        {{ village_profile.profile_description|default:village_profile.description|default:"Desa yang terletak di tepi pantai dengan pemandangan yang menakjubkan. Masyarakatnya yang ramah dan budaya yang kaya menjadikan desa ini sebagai tempat yang menarik untuk dikunjungi." }}
+                        {% else %}
+                        Desa yang terletak di tepi pantai dengan pemandangan yang menakjubkan. Masyarakatnya yang ramah dan budaya yang kaya menjadikan desa ini sebagai tempat yang menarik untuk dikunjungi.
+                        {% endif %}
+                    </p>
+                </div>
+                <!-- Grid Informasi Profil: Tetap 2 kolom di semua ukuran untuk kerapian -->
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-map-marker-alt text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-base">Lokasi</h4>
+                            <p class="text-sm text-gray-600">
+                                {% if village_profile %}{{ village_profile.district|default:"Kecamatan Sekadau" }}{% else %}Kecamatan Sekadau{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-expand-arrows-alt text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-base">Luas Wilayah</h4>
+                            <p class="text-sm text-gray-600">
+                                {% if village_profile %}{{ village_profile.area|default:"-" }}{% else %}-{% endif %} km²
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-users text-purple-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-base">Total Penduduk</h4>
+                            <p class="text-sm text-gray-600">{{ total_population|default:"0" }} jiwa</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-home text-orange-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 text-base">Jumlah Keluarga</h4>
+                            <p class="text-sm text-gray-600">{{ total_families|default:"0" }} keluarga</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-6">
+                    <a href="{% url 'core:profile' %}"
+                       class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-sm md:text-base transition-all duration-300 hover:scale-105 touch-feedback">
+                        <span>Lihat Profil Lengkap</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="relative" data-animate>
+                {% if village_profile.profile_image %}
+                <a href="{% url 'core:profile' %}" class="block">
+                    <div class="relative h-72 sm:h-96 md:h-[28rem] rounded-2xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer">
+                        <img src="{{ village_profile.profile_image.url }}"
+                             alt="Gambar Profil Desa {{ village_profile.name|default:'Pulosarok' }}"
+                             class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                        <div class="absolute bottom-4 left-4 right-4 text-white">
+                            <h4 class="font-bold text-lg md:text-xl mb-2">Gambar Profil Desa</h4>
+                            <p class="text-sm md:text-base opacity-90">Gambar resmi {{ village_profile.name|default:"Desa" }}</p>
+                        </div>
+                    </div>
+                </a>
+                {% elif village_photos %}
+                <a href="{% url 'core:profile' %}" class="block">
+                    <div class="relative h-72 sm:h-96 md:h-[28rem] rounded-2xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer">
+                        <div id="village-description-slider" class="relative w-full h-full">
+                            {% for photo in village_photos|slice:":3" %}
+                            <div class="slider-slide {% if forloop.first %}active{% endif %} absolute inset-0 transition-opacity duration-1000">
+                                <img src="{{ photo.image.url }}" alt="{{ photo.title|default:'Foto Desa' }}" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                                <div class="absolute bottom-4 left-4 right-4 text-white">
+                                    <h4 class="font-bold text-lg md:text-xl mb-2">{{ photo.title|default:"Foto Desa" }}</h4>
+                                    {% if photo.description %}
+                                    <p class="text-sm md:text-base opacity-90">{{ photo.description|truncatewords:20 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="absolute bottom-4 right-4 flex space-x-2">
+                            {% for photo in village_photos|slice:":3" %}
+                            <button class="slider-dot w-3 h-3 rounded-full bg-white/50 hover:bg-white transition-colors duration-300 {% if forloop.first %}bg-white{% endif %}"
+                                    data-slide="{{ forloop.counter0 }}"></button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </a>
+                {% else %}
+                <a href="{% url 'core:profile' %}" class="block">
+                    <div class="h-72 sm:h-96 md:h-[28rem] bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 cursor-pointer">
+                        <div class="text-center text-white">
+                            <i class="fas fa-image text-4xl md:text-5xl mb-4 opacity-50"></i>
+                            <p class="text-lg md:text-xl font-semibold">Galeri Desa</p>
+                            <p class="text-sm md:text-base opacity-75">Foto-foto desa akan ditampilkan di sini</p>
+                        </div>
+                    </div>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section Statistik Penduduk: Tetap 2 kolom di mobile, 4 kolom di layar besar (grid-cols-2 lg:grid-cols-4) -->
+<section class="py-12 md:py-16 lg:py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 md:mb-14">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 section-title-underline" data-animate>
+                Statistika Penduduk
+            </h2>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mt-4" data-animate>
+                Data demografi dan statistik penduduk {{ village_profile.name|default:"Desa" }}
+            </p>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8" data-animate>
+            <a href="{% url 'core:profile' %}" class="block">
+                <div class="bg-white rounded-xl p-6 shadow-lg card-hover hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Komposisi Gender</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <span class="text-sm text-gray-600">Laki-laki</span>
+                            </div>
+                            <span class="font-bold text-sm text-gray-900">{{ male_population|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 bg-pink-500 rounded-full"></div>
+                                <span class="text-sm text-gray-600">Perempuan</span>
+                            </div>
+                            <span class="font-bold text-sm text-gray-900">{{ female_population|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'core:profile' %}" class="block">
+                <div class="bg-white rounded-xl p-6 shadow-lg card-hover hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-birthday-cake text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Kelompok Usia</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">0-14 tahun</span>
+                            <span class="font-bold text-sm text-gray-900">{{ age_groups.age_0_14|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">15-24 tahun</span>
+                            <span class="font-bold text-sm text-gray-900">{{ age_groups.age_15_24|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">25+ tahun</span>
+                            <span class="font-bold text-sm text-gray-900">{{ age_groups.age_25_54|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'core:profile' %}" class="block">
+                <div class="bg-white rounded-xl p-6 shadow-lg card-hover hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-graduation-cap text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Tingkat Pendidikan</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">SD</span>
+                            <span class="font-bold text-sm text-gray-900">{{ education_levels.sd|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">SMP</span>
+                            <span class="font-bold text-sm text-gray-900">{{ education_levels.smp|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">SMA+</span>
+                            <span class="font-bold text-sm text-gray-900">{{ education_levels.sma|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'core:profile' %}" class="block">
+                <div class="bg-white rounded-xl p-6 shadow-lg card-hover hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                    <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-briefcase text-orange-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-bold text-gray-900 mb-4">Mata Pencaharian</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Nelayan</span>
+                            <span class="font-bold text-sm text-gray-900">{{ occupation_levels.nelayan|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Petani</span>
+                            <span class="font-bold text-sm text-gray-900">{{ occupation_levels.petani|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Lainnya</span>
+                            <span class="font-bold text-sm text-gray-900">{{ occupation_levels.lainnya|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="text-center mt-8" data-animate>
+            <a href="{% url 'references:population' %}" 
+               class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
+                <i class="fas fa-chart-bar text-xs"></i>
+                Lihat Selengkapnya
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Section Berita Terkini: Diubah menjadi 1 kolom (default) dan 2 kolom (sm:) -->
+<section class="py-12 md:py-16 lg:py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 md:mb-14">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 section-title-underline" data-animate>
+                Berita Terkini
+            </h2>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mt-4" data-animate>
+                Informasi dan berita terbaru dari {{ village_profile.name|default:"Desa" }}
+            </p>
+        </div>
+        <!-- CLASS UTAMA: grid-cols-2 (mobile) | sm:grid-cols-2 (2 kolom tablet/desktop kecil) | lg:grid-cols-4 (4 kolom desktop besar) -->
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-10" data-animate>
+            {% for news in latest_news|slice:":4" %}
+            <a href="{% url 'news:detail' news.slug %}" class="block">
+                <article class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-blue-300 card-hover cursor-pointer">
+                    {% if news.featured_image %}
+                    <img src="{{ news.featured_image.url }}" alt="{{ news.title|default:'Berita Desa' }}"
+                         class="w-full h-32 md:h-40 object-cover transition-transform duration-500 hover:scale-110">
+                    {% else %}
+                    <div class="w-full h-32 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50"></div>
+                        <div class="relative z-10 text-center">
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <i class="fas fa-newspaper text-white text-lg"></i>
+                            </div>
+                            <p class="text-xs text-gray-600 font-medium">Berita Desa</p>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+                    </div>
+                    {% endif %}
+                    <div class="p-3 md:p-5 lg:p-6">
+                        <span class="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-block mb-2">
+                            {{ news.category.name|default:'Berita' }}
+                        </span>
+                        <h3 class="text-sm md:text-lg font-bold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
+                            {{ news.title|default:"Judul Berita" }}
+                        </h3>
+                        <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                            {{ news.excerpt|default:news.content|truncatewords:10|striptags|default:"Ringkasan berita desa" }}
+                        </p>
+                        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                            <span class="text-xs text-gray-500 flex items-center gap-1">
+                                <i class="fas fa-calendar text-xs"></i>
+                                {{ news.published_date|date:"d M Y"|default:"Tanggal belum tersedia" }}
+                            </span>
+                            <span class="text-blue-600 hover:text-blue-700 font-semibold text-xs flex items-center gap-1 hover:gap-2 transition-all">
+                                Baca <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                </article>
+            </a>
+            {% empty %}
+            {% for i in "1234"|make_list %}
+            <article class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-blue-300 card-hover">
+                <div class="w-full h-32 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50"></div>
+                    <div class="relative z-10 text-center">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-newspaper text-white text-lg"></i>
+                        </div>
+                        <p class="text-xs text-gray-600 font-medium">Berita Desa</p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+                </div>
+                <div class="p-3 md:p-5 lg:p-6">
+                    <span class="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-block mb-2">
+                        Berita
+                    </span>
+                    <h3 class="text-sm md:text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                        Berita {{ forloop.counter }}
+                    </h3>
+                    <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                        Informasi terbaru dari desa
+                    </p>
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                        <span class="text-xs text-gray-500 flex items-center gap-1">
+                            <i class="fas fa-calendar text-xs"></i>
+                            {{ "now"|date:"d M Y" }}
+                        </span>
+                        <a href="{% url 'news:list' %}"
+                           class="text-blue-600 hover:text-blue-700 font-semibold text-xs flex items-center gap-1 hover:gap-2 transition-all">
+                            Baca <i class="fas fa-arrow-right text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="text-center" data-animate>
+            <a href="{% url 'news:list' %}"
+               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-sm md:text-base inline-flex items-center gap-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 touch-feedback">
+                <span>Lihat Semua Berita</span>
+                <i class="fas fa-arrow-right text-sm"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+{% if featured_businesses %}
+<!-- Section UMKM Unggulan: Diubah menjadi 1 kolom (default) dan 2 kolom (sm:) -->
+<section class="py-12 md:py-16 lg:py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 md:mb-14">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 section-title-underline" data-animate>
+                UMKM Unggulan
+            </h2>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mt-4" data-animate>
+                Usaha Mikro, Kecil, dan Menengah di {{ village_profile.name|default:"Desa" }}
+            </p>
+        </div>
+        <!-- CLASS UTAMA: grid-cols-2 (mobile) | sm:grid-cols-2 (2 kolom tablet/desktop kecil) | lg:grid-cols-4 (4 kolom desktop besar) -->
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-10" data-animate>
+            {% for business in featured_businesses %}
+            <a href="{% url 'business:umkm_detail' business.id %}" class="block">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-green-300 card-hover cursor-pointer">
+                    {% if business.header_image %}
+                    <img src="{{ business.header_image.url }}" alt="{{ business.name|default:'UMKM Desa' }}"
+                         class="w-full h-32 md:h-40 object-cover transition-transform duration-500 hover:scale-110">
+                    {% else %}
+                    <div class="w-full h-32 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50"></div>
+                        <div class="relative z-10 text-center">
+                            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <i class="fas fa-store text-white text-lg"></i>
+                            </div>
+                            <p class="text-xs text-gray-600 font-medium">UMKM Desa</p>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-emerald-400"></div>
+                    </div>
+                    {% endif %}
+                    <div class="p-3 md:p-5 lg:p-6">
+                        <span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-block mb-2">
+                            {{ business.business_type_display|default:'UMKM' }}
+                        </span>
+                        <h3 class="text-sm md:text-lg font-bold text-gray-900 mb-2 line-clamp-2 hover:text-green-600 transition-colors">
+                            {{ business.name|default:"Nama UMKM" }}
+                        </h3>
+                        <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                            {{ business.description|truncatewords:8|striptags|default:"Deskripsi usaha UMKM" }}
+                        </p>
+                        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                            <span class="text-xs text-gray-500 flex items-center gap-1 truncate">
+                                <i class="fas fa-map-marker-alt text-xs"></i>
+                                <span class="truncate">{{ business.address|truncatechars:12|default:"Alamat UMKM" }}</span>
+                            </span>
+                            <span class="text-green-600 hover:text-green-700 font-semibold text-xs flex items-center gap-1 hover:gap-2 transition-all whitespace-nowrap">
+                                Detail <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        <div class="text-center" data-animate>
+            <a href="{% url 'business:business_list' %}"
+               class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold text-sm md:text-base inline-flex items-center gap-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 touch-feedback">
+                <span>Lihat Semua UMKM</span>
+                <i class="fas fa-arrow-right text-sm"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Section Destinasi Wisata: Diubah menjadi 1 kolom (default) dan 2 kolom (sm:) -->
+<section class="py-12 md:py-16 lg:py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 md:mb-14">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 section-title-underline" data-animate>
+                Destinasi Wisata
+            </h2>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mt-4" data-animate>
+                Tempat wisata menarik di {{ village_profile.name|default:"Desa" }}
+            </p>
+        </div>
+        <!-- CLASS UTAMA: grid-cols-2 (mobile) | sm:grid-cols-2 (2 kolom tablet/desktop kecil) | lg:grid-cols-4 (4 kolom desktop besar) -->
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-10" data-animate>
+            {% for location in tourism_locations|slice:":4" %}
+            <a href="{% url 'tourism:location_detail' location.slug %}" class="block">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-purple-300 card-hover cursor-pointer">
+                    {% if location.main_image %}
+                    <img src="{{ location.main_image.url }}" alt="{{ location.title|default:'Destinasi Wisata' }}"
+                         class="w-full h-32 md:h-40 object-cover transition-transform duration-500 hover:scale-110">
+                    {% else %}
+                    <div class="w-full h-32 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-violet-50"></div>
+                        <div class="relative z-10 text-center">
+                            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <i class="fas fa-mountain text-white text-lg"></i>
+                            </div>
+                            <p class="text-xs text-gray-600 font-medium">Wisata Desa</p>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-violet-400"></div>
+                    </div>
+                    {% endif %}
+                    <div class="p-3 md:p-5 lg:p-6">
+                        <span class="bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-block mb-2">
+                            {{ location.location_type_display|default:'Wisata' }}
+                        </span>
+                        <h3 class="text-sm md:text-lg font-bold text-gray-900 mb-2 line-clamp-2 hover:text-purple-600 transition-colors">
+                            {{ location.title|default:"Nama Destinasi" }}
+                        </h3>
+                        <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                            {{ location.short_description|truncatewords:8|striptags|default:"Deskripsi destinasi wisata" }}
+                        </p>
+                        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                            <span class="text-xs text-gray-500 flex items-center gap-1 truncate">
+                                <i class="fas fa-map-marker-alt text-xs"></i>
+                                <span class="truncate">{{ location.address|truncatechars:12|default:"Alamat destinasi" }}</span>
+                            </span>
+                            <span class="text-purple-600 hover:text-purple-700 font-semibold text-xs flex items-center gap-1 hover:gap-2 transition-all whitespace-nowrap">
+                                Detail <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            {% for i in "1234"|make_list %}
+            <div class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-purple-300 card-hover">
+                <div class="w-full h-32 md:h-40 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-violet-50"></div>
+                    <div class="relative z-10 text-center">
+                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-mountain text-white text-lg"></i>
+                        </div>
+                        <p class="text-xs text-gray-600 font-medium">Wisata Desa</p>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-violet-400"></div>
+                </div>
+                <div class="p-3 md:p-5 lg:p-6">
+                    <span class="bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide inline-block mb-2">
+                        Wisata
+                    </span>
+                    <h3 class="text-sm md:text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                        Destinasi {{ forloop.counter }}
+                    </h3>
+                    <p class="text-xs text-gray-600 mb-2 line-clamp-2">
+                        Tempat wisata menarik di desa
+                    </p>
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                        <span class="text-xs text-gray-500 flex items-center gap-1 truncate">
+                            <i class="fas fa-map-marker-alt text-xs"></i>
+                            <span class="truncate">Desa</span>
+                        </span>
+                        <a href="{% url 'tourism:dashboard' %}"
+                           class="text-purple-600 hover:text-purple-700 font-semibold text-xs flex items-center gap-1 hover:gap-2 transition-all whitespace-nowrap">
+                            Detail <i class="fas fa-arrow-right text-xs"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="text-center" data-animate>
+            <a href="{% url 'tourism:dashboard' %}"
+               class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold text-sm md:text-base inline-flex items-center gap-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 touch-feedback">
+                <span>Lihat Semua Wisata</span>
+                <i class="fas fa-arrow-right text-sm"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+{% if village_officials %}
+<!-- Section Perangkat Desa: Diubah menjadi 2 kolom (default) dan 4 kolom (lg:) -->
+<section class="py-12 md:py-16 lg:py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 md:mb-14">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 section-title-underline" data-animate>
+                Perangkat Desa
+            </h2>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mt-4" data-animate>
+                Struktur organisasi dan perangkat desa di {{ village_profile.name|default:"Desa" }}
+            </p>
+        </div>
+        <!-- CLASS UTAMA: grid-cols-2 (mobile/tablet) | lg:grid-cols-4 (desktop) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" data-animate>
+            {% for official in village_officials|slice:":4" %}
+            <a href="{% url 'organization:perangkat_desa_detail' official.id %}" class="block">
+                <div class="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-user text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">{{ official.name|default:"Nama Perangkat" }}</h3>
+                    <p class="text-xs md:text-sm text-gray-600 mb-2">{{ official.position|default:"Jabatan" }}</p>
+                    <div class="text-xs md:text-sm text-gray-500">
+                        <i class="fas fa-calendar mr-1"></i>
+                        {{ official.start_date|date:"Y"|default:"Tahun belum tersedia" }}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-10" data-animate>
+            <a href="{% url 'organization:organization_list' %}"
+               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-sm md:text-base inline-flex items-center gap-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 touch-feedback">
+                <span>Lihat Semua Perangkat</span>
+                <i class="fas fa-arrow-right text-sm"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Section Posyandu: Diubah menjadi 2 kolom (default) dan 4 kolom (lg:) -->
+<section class="py-12 md:py-16 lg:py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 md:mb-14">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 section-title-underline" data-animate>
+                Posyandu
+            </h2>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mt-4" data-animate>
+                Layanan kesehatan terpadu untuk ibu dan anak di {{ village_profile.name|default:"Desa" }}
+            </p>
+        </div>
+        <!-- CLASS UTAMA: grid-cols-2 (mobile/tablet) | lg:grid-cols-4 (desktop) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" data-animate>
+            <a href="{% url 'posyandu:public_posyandu_home' %}" class="block">
+                <div class="bg-gradient-to-br from-red-50 to-white border-2 border-red-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-calendar-alt text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Jadwal Posyandu</h3>
+                    <p class="text-xs md:text-sm text-gray-600 line-clamp-3">Setiap hari Selasa dan Kamis pukul 08.00-11.00 WIB</p>
+                    <div class="text-red-600 hover:text-red-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-1 mt-3 hover:gap-2 transition-all">
+                        Lihat Jadwal <i class="fas fa-arrow-right text-xs"></i>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'posyandu:public_posyandu_home' %}" class="block">
+                <div class="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-syringe text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Imunisasi</h3>
+                    <p class="text-xs md:text-sm text-gray-600 line-clamp-3">Program imunisasi rutin untuk bayi dan balita</p>
+                    <div class="text-green-600 hover:text-green-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-1 mt-3 hover:gap-2 transition-all">
+                        Info Imunisasi <i class="fas fa-arrow-right text-xs"></i>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'posyandu:public_posyandu_home' %}" class="block">
+                <div class="bg-gradient-to-br from-yellow-50 to-white border-2 border-yellow-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-baby text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Gizi Balita</h3>
+                    <p class="text-xs md:text-sm text-gray-600 line-clamp-3">Pemantauan tumbuh kembang dan gizi balita</p>
+                    <div class="text-yellow-600 hover:text-yellow-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-1 mt-3 hover:gap-2 transition-all">
+                        Info Gizi <i class="fas fa-arrow-right text-xs"></i>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'posyandu:public_posyandu_home' %}" class="block">
+                <div class="bg-gradient-to-br from-pink-50 to-white border-2 border-pink-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-heart text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Ibu Hamil</h3>
+                    <p class="text-xs md:text-sm text-gray-600 line-clamp-3">Pemeriksaan kesehatan ibu hamil dan persiapan persalinan</p>
+                    <div class="text-pink-600 hover:text-pink-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-1 mt-3 hover:gap-2 transition-all">
+                        Info Ibu Hamil <i class="fas fa-arrow-right text-xs"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Section Layanan Surat: Diubah menjadi 2 kolom (default) dan 4 kolom (lg:) -->
+<section class="py-12 md:py-16 lg:py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 md:mb-14">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 section-title-underline" data-animate>
+                Layanan Surat
+            </h2>
+            <p class="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mt-4" data-animate>
+                Layanan administrasi dan surat menyurat {{ village_profile.name|default:"Desa" }}
+            </p>
+        </div>
+        <!-- CLASS UTAMA: grid-cols-2 (mobile/tablet) | lg:grid-cols-4 (desktop) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6" data-animate>
+            <a href="{% url 'layanan:document_services' %}" class="block">
+                <div class="bg-gradient-to-br from-indigo-50 to-white border-2 border-indigo-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-file-alt text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Surat Keterangan</h3>
+                    <p class="text-xs md:text-sm text-gray-600 line-clamp-3">Surat keterangan domisili, tidak mampu, dll</p>
+                    <div class="text-indigo-600 hover:text-indigo-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-1 mt-3 hover:gap-2 transition-all">
+                        Ajukan Surat <i class="fas fa-arrow-right text-xs"></i>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'layanan:document_services' %}" class="block">
+                <div class="bg-gradient-to-br from-teal-50 to-white border-2 border-teal-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-stamp text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Surat Izin</h3>
+                    <p class="text-xs md:text-sm text-gray-600 line-clamp-3">Surat izin usaha, keramaian, dll</p>
+                    <div class="text-teal-600 hover:text-teal-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-1 mt-3 hover:gap-2 transition-all">
+                        Ajukan Izin <i class="fas fa-arrow-right text-xs"></i>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'layanan:document_services' %}" class="block">
+                <div class="bg-gradient-to-br from-cyan-50 to-white border-2 border-cyan-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-handshake text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Surat Rekomendasi</h3>
+                    <p class="text-xs md:text-sm text-gray-600 line-clamp-3">Surat rekomendasi untuk berbagai keperluan</p>
+                    <div class="text-cyan-600 hover:text-cyan-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-1 mt-3 hover:gap-2 transition-all">
+                        Ajukan Rekomendasi <i class="fas fa-arrow-right text-xs"></i>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'layanan:document_services' %}" class="block">
+                <div class="bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl p-4 md:p-6 text-center shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 card-hover cursor-pointer">
+                    <div class="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg">
+                        <i class="fas fa-cross text-xl md:text-2xl"></i>
+                    </div>
+                    <h3 class="text-base md:text-lg font-bold text-gray-900 mb-2">Surat Kematian</h3>
+                    <p class="text-xs md:text-sm text-gray-600 line-clamp-3">Surat keterangan kematian</p>
+                    <div class="text-gray-600 hover:text-gray-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-1 mt-3 hover:gap-2 transition-all">
+                        Ajukan Surat <i class="fas fa-arrow-right text-xs"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Section Hubungi Kami: Penyesuaian tampilan mobile agar lebih terpusat dan rapi -->
+<section class="relative py-8 md:py-12 lg:py-16 hero-ocean-gradient overflow-hidden mobile-contact-section">
+    <div class="absolute bottom-0 left-0 w-full h-24 md:h-32 opacity-10">
+        <div class="wave"></div>
+    </div>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center mb-8 md:mb-12 mobile-contact-header">
+            <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white mb-2 md:mb-4 section-title-underline" data-animate>
+                Hubungi Kami
+            </h2>
+            <p class="text-sm md:text-base lg:text-lg text-white/90 max-w-2xl mx-auto" data-animate>
+                Butuh bantuan atau informasi? Jangan ragu untuk menghubungi {{ village_profile.name|default:"Desa" }}
+            </p>
+        </div>
+        <!-- Tampilan Mobile (grid-cols-2) -->
+        <div class="block md:hidden">
+            <div class="grid grid-cols-2 gap-3 text-white mb-6" data-animate>
+                {% if website_settings.contact_phone %}
+                <!-- Item Kontak Mobile: Diperbarui agar lebih rapi -->
+                <a href="tel:{{ website_settings.contact_phone }}" class="flex flex-col items-center p-3 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all touch-feedback text-center">
+                    <div class="bg-blue-500 rounded-full flex items-center justify-center w-10 h-10 mb-2">
+                        <i class="fas fa-phone text-white text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold">Telepon</h3>
+                        <p class="text-xs opacity-90">{{ website_settings.contact_phone }}</p>
+                    </div>
+                </a>
+                {% endif %}
+                {% if website_settings.contact_email %}
+                <a href="mailto:{{ website_settings.contact_email }}" class="flex flex-col items-center p-3 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all touch-feedback text-center">
+                    <div class="bg-green-500 rounded-full flex items-center justify-center w-10 h-10 mb-2">
+                        <i class="fas fa-envelope text-white text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold">Email</h3>
+                        <p class="text-xs opacity-90 truncate">{{ website_settings.contact_email }}</p>
+                    </div>
+                </a>
+                {% endif %}
+                {% if website_settings.contact_address %}
+                <div class="flex flex-col items-center p-3 bg-white/10 backdrop-blur-sm rounded-xl text-center">
+                    <div class="bg-purple-500 rounded-full flex items-center justify-center w-10 h-10 mb-2">
+                        <i class="fas fa-map-marker-alt text-white text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold">Alamat</h3>
+                        <p class="text-xs opacity-90 line-clamp-2">{{ website_settings.contact_address }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Tampilan Desktop (grid-cols-3) -->
+        <div class="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-white mb-8" data-animate>
+            <div class="text-center p-4">
+                <div class="w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-phone text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg md:text-xl font-bold mb-2">Telepon</h3>
+                <p class="text-base md:text-lg opacity-90">{{ website_settings.contact_phone|default:'+62 xxx-xxxx-xxxx' }}</p>
+            </div>
+            <div class="text-center p-4">
+                <div class="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-envelope text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg md:text-xl font-bold mb-2">Email</h3>
+                <p class="text-base md:text-lg opacity-90">{{ website_settings.contact_email|default:'info@pulosarok.desa.id' }}</p>
+            </div>
+            <div class="text-center p-4">
+                <div class="w-14 h-14 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-map-marker-alt text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg md:text-xl font-bold mb-2">Alamat</h3>
+                <p class="text-base md:text-lg opacity-90">{{ website_settings.contact_address|default:'Desa, Kabupaten Sekadau' }}</p>
+            </div>
+        </div>
+        <div class="text-center" data-animate>
+            <a href="{% url 'complaints:complaint_form' %}"
+               class="bg-white text-blue-600 hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold text-sm md:text-base inline-flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 touch-feedback mobile-contact-button">
+                <i class="fas fa-comments"></i>
+                <span>Kirim Pesan</span>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="{% static 'js/home.js' %}"></script>
+<script src="{% static 'js/home-page.js' %}"></script>
+<!-- Skrip JavaScript (Tidak ada perubahan, hanya untuk memastikan fungsionalitas slider tetap berjalan) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Database Announcements Auto Slider
+        const dbAnnouncementsSlider = document.getElementById('announcementsSlider');
+        const dbAnnouncementDots = document.querySelectorAll('.announcement-dot');
+
+        if (dbAnnouncementsSlider && dbAnnouncementDots.length > 1) {
+            let dbCurrentSlide = 0;
+            const dbTotalSlides = dbAnnouncementDots.length;
+            let dbAutoSlideInterval;
+
+            function startDbAutoSlide() {
+                dbAutoSlideInterval = setInterval(() => {
+                    dbCurrentSlide = (dbCurrentSlide + 1) % dbTotalSlides;
+                    updateDbSlider();
+                }, 5000);
+            }
+
+            function updateDbSlider() {
+                const translateX = -dbCurrentSlide * 100;
+                dbAnnouncementsSlider.style.transform = `translateX(${translateX}%)`;
+                dbAnnouncementDots.forEach((dot, index) => {
+                    dot.classList.toggle('bg-orange-500', index === dbCurrentSlide);
+                    dot.classList.toggle('bg-orange-300', index !== dbCurrentSlide);
+                });
+            }
+
+            dbAnnouncementDots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    clearInterval(dbAutoSlideInterval);
+                    dbCurrentSlide = index;
+                    updateDbSlider();
+                    startDbAutoSlide();
+                });
+            });
+
+            dbAnnouncementsSlider.addEventListener('mouseenter', () => {
+                clearInterval(dbAutoSlideInterval);
+            });
+
+            dbAnnouncementsSlider.addEventListener('mouseleave', () => {
+                startDbAutoSlide();
+            });
+
+            startDbAutoSlide();
+        }
+
+        // Village Photos Slider
+        const villageSlider = document.getElementById('village-description-slider');
+        const villageDots = document.querySelectorAll('#village-description-slider ~ .slider-dot');
+
+        if (villageSlider && villageDots.length > 1) {
+            let villageCurrentSlide = 0;
+            const villageTotalSlides = villageDots.length;
+            let villageAutoSlideInterval;
+
+            function startVillageAutoSlide() {
+                villageAutoSlideInterval = setInterval(() => {
+                    villageCurrentSlide = (villageCurrentSlide + 1) % villageTotalSlides;
+                    updateVillageSlider();
+                }, 5000);
+            }
+
+            function updateVillageSlider() {
+                const slides = villageSlider.querySelectorAll('.slider-slide');
+                slides.forEach((slide, index) => {
+                    slide.classList.toggle('active', index === villageCurrentSlide);
+                    slide.style.opacity = index === villageCurrentSlide ? '1' : '0';
+                });
+                villageDots.forEach((dot, index) => {
+                    dot.classList.toggle('bg-white', index === villageCurrentSlide);
+                    dot.classList.toggle('bg-white/50', index !== villageCurrentSlide);
+                });
+            }
+
+            villageDots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    clearInterval(villageAutoSlideInterval);
+                    villageCurrentSlide = index;
+                    updateVillageSlider();
+                    startVillageAutoSlide();
+                });
+            });
+
+            villageSlider.addEventListener('mouseenter', () => {
+                clearInterval(villageAutoSlideInterval);
+            });
+
+            villageSlider.addEventListener('mouseleave', () => {
+                startVillageAutoSlide();
+            });
+
+            startVillageAutoSlide();
+        }
+    });
+</script>
+{% endblock extra_js %}

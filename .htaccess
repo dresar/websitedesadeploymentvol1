@@ -1,0 +1,114 @@
+# .htaccess untuk Mode Deployment - Tidak Ketat
+# Konfigurasi khusus untuk shared hosting dengan pengaturan fleksibel
+# Mode: Development/Testing - Bukan Production
+
+RewriteEngine On
+
+# ==================== STATIC FILES HANDLING ====================
+# Handle static files - FLEKSIBEL
+RewriteRule ^static/(.*)$ /static/$1 [L]
+RewriteRule ^media/(.*)$ /media/$1 [L]
+
+# Handle admin static files - FLEKSIBEL
+RewriteRule ^admin-panel/static/(.*)$ /static/$1 [L]
+
+# Handle favicon and robots.txt - FLEKSIBEL
+RewriteRule ^favicon\.ico$ /static/images/favicon.ico [L]
+RewriteRule ^robots\.txt$ /static/robots.txt [L]
+RewriteRule ^sitemap\.xml$ /static/sitemap.xml [L]
+
+# ==================== DJANGO URL ROUTING ====================
+# Handle Django URLs - FLEKSIBEL
+# Redirect everything else to passenger_wsgi.py
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /passenger_wsgi.py/$1 [QSA,L]
+
+# ==================== SECURITY HEADERS - RELAXED ====================
+# Security headers - RELAXED untuk mode deployment
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options SAMEORIGIN
+Header always set X-XSS-Protection "1; mode=block"
+
+# ==================== CACHE CONTROL - DISABLED ====================
+# Cache control - DISABLED untuk mode deployment
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    ExpiresActive Off
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# ==================== GZIP COMPRESSION - DISABLED ====================
+# Gzip compression - DISABLED untuk mode deployment
+# <IfModule mod_deflate.c>
+#     AddOutputFilterByType DEFLATE text/plain
+#     AddOutputFilterByType DEFLATE text/html
+#     AddOutputFilterByType DEFLATE text/xml
+#     AddOutputFilterByType DEFLATE text/css
+#     AddOutputFilterByType DEFLATE application/xml
+#     AddOutputFilterByType DEFLATE application/xhtml+xml
+#     AddOutputFilterByType DEFLATE application/rss+xml
+#     AddOutputFilterByType DEFLATE application/javascript
+#     AddOutputFilterByType DEFLATE application/x-javascript
+# </IfModule>
+
+# ==================== ERROR PAGES - FLEKSIBEL ====================
+# Error pages - FLEKSIBEL untuk mode deployment
+ErrorDocument 404 /passenger_wsgi.py/
+ErrorDocument 500 /passenger_wsgi.py/
+
+# ==================== CORS HEADERS - FLEKSIBEL ====================
+# CORS headers - FLEKSIBEL untuk mode deployment
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+Header always set Access-Control-Allow-Credentials "true"
+
+# ==================== SECURITY HEADERS - RELAXED ====================
+# Security headers - RELAXED untuk mode deployment
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+# ==================== MIME TYPES ====================
+# MIME types untuk file handling
+AddType application/javascript .js
+AddType text/css .css
+AddType image/svg+xml .svg
+AddType application/font-woff .woff
+AddType application/font-woff2 .woff2
+
+# ==================== DIRECTORY INDEX ====================
+# Directory index - FLEKSIBEL
+DirectoryIndex passenger_wsgi.py index.html index.php
+
+# ==================== FILE UPLOAD LIMITS ====================
+# File upload limits - FLEKSIBEL untuk mode deployment
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# ==================== DEPLOYMENT NOTES ====================
+# 1. SSL/HTTPS: DISABLED - Gunakan HTTP saja
+# 2. Security: RELAXED - Tidak terlalu ketat
+# 3. CORS: FLEKSIBEL - Allow semua origin
+# 4. Cache: DISABLED - Tidak ada caching
+# 5. Compression: DISABLED - Tidak ada compression
+# 6. Error Pages: FLEKSIBEL - Redirect ke Django
+# 7. Static Files: Django serving
+# 8. Media Files: Django serving
+# 9. File Upload: FLEKSIBEL - 10MB limit
+# 10. MIME Types: ENABLED - Proper file handling
+
+# ==================== DEPLOYMENT CHECKLIST ====================
+# ✅ SSL/HTTPS: Disabled
+# ✅ Security: Relaxed
+# ✅ CORS: Flexible
+# ✅ Cache: Disabled
+# ✅ Compression: Disabled
+# ✅ Error Pages: Flexible
+# ✅ Static Files: Django serving
+# ✅ Media Files: Django serving
+# ✅ File Upload: Flexible
+# ✅ MIME Types: Enabled

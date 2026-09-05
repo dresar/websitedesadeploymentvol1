@@ -1,0 +1,1585 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Data Imunisasi{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_list.css' %}">
+<style>
+    /* Header Section */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.5rem !important;
+        }
+
+        .page-header p {
+            font-size: 0.9rem !important;
+        }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #667eea;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .stats-card.gradient-pink {
+        border-left-color: #f093fb;
+    }
+
+    .stats-card.gradient-blue {
+        border-left-color: #4facfe;
+    }
+
+    .stats-card.gradient-green {
+        border-left-color: #43e97b;
+    }
+
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-label {
+        font-size: 0.95rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    @media (max-width: 576px) {
+        .stats-card {
+            padding: 1rem;
+        }
+
+        .stats-number {
+            font-size: 1.8rem;
+        }
+
+        .stats-label {
+            font-size: 0.85rem;
+        }
+    }
+
+    /* Filter Section */
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .filter-section {
+            padding: 1rem;
+        }
+    }
+
+    .filter-title {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        z-index: 2;
+    }
+
+    .search-box .form-control {
+        padding-left: 2.75rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .search-box .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 0.625rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    /* Quick Filters */
+    .quick-filters-wrapper {
+        margin-top: 1rem;
+    }
+
+    .quick-filter-toggle {
+        width: 100%;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-weight: 500;
+        color: #475569;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-bottom: 0.75rem;
+    }
+
+    .quick-filter-toggle:hover {
+        background: #e2e8f0;
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .quick-filter-toggle .toggle-icon {
+        transition: transform 0.3s ease;
+        float: right;
+    }
+
+    .quick-filter-toggle[aria-expanded="true"] .toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .quick-filter-toggle .toggle-text {
+        font-size: 0.95rem;
+    }
+
+    .quick-filters {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    @media (min-width: 769px) {
+        .quick-filters {
+            margin-top: 0;
+            padding-top: 1rem;
+        }
+    }
+
+    .filter-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-group-label {
+        font-weight: 600;
+        color: #475569;
+        margin-bottom: 0.75rem;
+        display: block;
+        font-size: 0.95rem;
+    }
+
+    .filter-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .filter-buttons .btn {
+        border-radius: 8px;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-width: 2px;
+        min-height: 44px;
+        min-width: fit-content;
+    }
+
+    .filter-buttons .btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+    }
+
+    .filter-buttons .btn:hover:not(.active) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-buttons .btn:active {
+        transform: scale(0.98);
+    }
+
+    /* Collapse Animation */
+    #quickFiltersContent.collapsing {
+        transition: height 0.35s ease;
+    }
+
+    #quickFiltersContent.collapse:not(.show) {
+        display: none;
+    }
+
+    #quickFiltersContent.collapse.show {
+        display: block;
+    }
+
+    /* Mobile specific for quick filters */
+    @media (max-width: 768px) {
+        .quick-filters {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .filter-group-label {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .filter-buttons {
+            gap: 0.5rem;
+        }
+
+        .filter-buttons .btn {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            min-height: 44px;
+            flex: 1 1 auto;
+            white-space: nowrap;
+        }
+
+        .btn-group {
+            justify-content: flex-start;
+            gap: 0.25rem;
+        }
+
+        .btn-group .btn-sm {
+            min-width: 36px;
+            min-height: 36px;
+            padding: 0.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .quick-filters {
+            display: block;
+        }
+
+        .filter-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .filter-buttons .btn {
+            font-size: 0.85rem;
+            padding: 0.625rem 0.75rem;
+            min-height: 48px;
+            width: 100%;
+            text-align: center;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .filter-group-label {
+            margin-bottom: 0.625rem;
+        }
+    }
+
+    /* Touch device optimization */
+    @media (hover: none) and (pointer: coarse) {
+        .filter-buttons .btn {
+            min-height: 48px;
+            min-width: 48px;
+            padding: 0.75rem 1rem;
+        }
+
+        .filter-buttons .btn:active {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+
+        /* Touch feedback for different button types */
+        .filter-buttons .btn-outline-success:active {
+            background-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .filter-buttons .btn-outline-warning:active {
+            background-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .filter-buttons .btn-outline-danger:active {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .filter-buttons .btn-outline-primary:active {
+            background-color: rgba(102, 126, 234, 0.2);
+        }
+    }
+
+    /* Focus visible for keyboard navigation */
+    .filter-buttons .btn:focus-visible {
+        outline: 3px solid rgba(102, 126, 234, 0.5);
+        outline-offset: 2px;
+    }
+
+    /* Accessibility - Reduce motion for users who prefer it */
+    @media (prefers-reduced-motion: reduce) {
+        .filter-buttons .btn,
+        .quick-filter-toggle,
+        #quickFiltersContent.collapsing {
+            transition: none;
+        }
+    }
+
+    /* Table Container */
+    .immunization-list-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        border: none;
+    }
+
+    @media (max-width: 768px) {
+        .immunization-list-container {
+            padding: 1rem;
+        }
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+        border: none;
+    }
+
+    @media (max-width: 768px) {
+        .table-responsive {
+            margin: 0 -0.5rem;
+        }
+    }
+
+    .table {
+        border: none;
+    }
+
+    .table thead {
+        border: none;
+    }
+
+    .table tbody {
+        border: none;
+    }
+
+    .immunization-table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .immunization-table thead th {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        border: none;
+        white-space: nowrap;
+    }
+
+    .immunization-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .immunization-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .immunization-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .immunization-table {
+        border: none;
+        margin-bottom: 0;
+    }
+
+    @media (max-width: 768px) {
+        .immunization-table {
+            min-width: 1000px;
+            font-size: 0.9rem;
+        }
+
+        .immunization-table thead th,
+        .immunization-table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+
+    /* Avatar Circle */
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+        .avatar-circle {
+            width: 35px;
+            height: 35px;
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Vaccine Type Badge */
+    .vaccine-type {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+
+    .vaccine-type.bcg {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .vaccine-type.dpt {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .vaccine-type.polio {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .vaccine-type.hepatitis {
+        background: #fce7f3;
+        color: #9f1239;
+    }
+
+    .vaccine-type.campak {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .vaccine-type.other {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+
+    .status-badge.completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.overdue {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    @media (max-width: 768px) {
+        .vaccine-type,
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+        }
+    }
+
+    /* Filter Button Colors - Status Specific */
+    .filter-buttons .btn-outline-success.active {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        color: white;
+    }
+
+    .filter-buttons .btn-outline-warning.active {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-color: #f59e0b;
+        color: white;
+    }
+
+    .filter-buttons .btn-outline-danger.active {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-color: #ef4444;
+        color: white;
+    }
+
+    .filter-buttons .btn-outline-primary.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+    }
+
+    /* Hover states for non-active buttons */
+    .filter-buttons .btn-outline-success:hover:not(.active) {
+        background-color: rgba(16, 185, 129, 0.1);
+        border-color: #10b981;
+    }
+
+    .filter-buttons .btn-outline-warning:hover:not(.active) {
+        background-color: rgba(245, 158, 11, 0.1);
+        border-color: #f59e0b;
+    }
+
+    .filter-buttons .btn-outline-danger:hover:not(.active) {
+        background-color: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+    }
+
+    .filter-buttons .btn-outline-primary:hover:not(.active) {
+        background-color: rgba(102, 126, 234, 0.1);
+        border-color: #667eea;
+    }
+
+    /* Button Group */
+    .btn-group {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-group .btn {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-group .btn:hover {
+        transform: scale(1.05);
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.625rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-light {
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 8px;
+        padding: 0.625rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-light:hover {
+        background: #f8f9fa;
+        color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-outline-light {
+        border: 2px solid white;
+        color: white;
+        background: transparent;
+        border-radius: 8px;
+        padding: 0.625rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-light:hover {
+        background: white;
+        color: #667eea;
+        border-color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-outline-secondary {
+        border-radius: 8px;
+        padding: 0.625rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-danger {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    @media (max-width: 576px) {
+        .btn-primary,
+        .btn-light,
+        .btn-outline-light,
+        .btn-outline-secondary,
+        .btn-outline-danger {
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+        }
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .empty-state i {
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h5 {
+        color: #475569;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .loading-spinner .spinner-border {
+        border-width: 0.3em;
+    }
+
+    .loading-spinner p {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Page Size Selector */
+    #pageSizeSelector {
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        padding: 0.375rem 2rem 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    #pageSizeSelector:hover {
+        border-color: #667eea;
+    }
+
+    #pageSizeSelector:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    @media (max-width: 576px) {
+        #pageSizeSelector {
+            font-size: 0.8rem;
+            padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+        }
+    }
+
+    /* Pagination */
+    .pagination-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+        border: none;
+        padding-top: 1rem;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        border: none;
+    }
+
+    .pagination .page-item {
+        border: none;
+    }
+
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 0.15rem;
+        border: 1px solid #e2e8f0;
+        color: #667eea;
+        padding: 0.5rem 0.9rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #f1f5f9;
+        border-color: #667eea;
+        transform: translateY(-1px);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 576px) {
+        .pagination .page-link {
+            padding: 0.4rem 0.7rem;
+            font-size: 0.85rem;
+            margin: 0 0.1rem;
+        }
+
+        .pagination-wrapper nav {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    /* Scrollbar Styling */
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    /* Container Padding */
+    .container-fluid {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+    }
+
+    /* Alert Custom */
+    .alert-custom {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 400px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        animation: slideInRight 0.3s ease;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .alert-custom {
+            min-width: 250px;
+            max-width: calc(100vw - 40px);
+            right: 10px;
+            top: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="page-header">
+        <div class="row align-items-center g-3">
+            <div class="col-12 col-lg-8">
+                <h2 class="mb-2 fs-3 fs-md-2">
+                    <i class="fas fa-syringe mr-2 d-none d-sm-inline"></i>
+                    Data Imunisasi
+                </h2>
+                <p class="mb-0 opacity-90">Kelola data imunisasi balita dan anak</p>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="d-flex flex-column flex-sm-row gap-2 justify-content-lg-end">
+                    <a href="{% url 'admin_panel:posyandu:immunization_create' %}" class="btn btn-light">
+                        <i class="fas fa-plus mr-1"></i>
+                        Tambah Imunisasi
+                    </a>
+                    <a href="{% url 'admin_panel:dashboard' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left mr-1"></i>
+                        Kembali
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stats-card">
+            <div class="stats-number" id="totalImmunizations">0</div>
+            <div class="stats-label">Total Imunisasi</div>
+        </div>
+        <div class="stats-card gradient-pink">
+            <div class="stats-number" id="completedImmunizations">0</div>
+            <div class="stats-label">Selesai</div>
+        </div>
+        <div class="stats-card gradient-blue">
+            <div class="stats-number" id="pendingImmunizations">0</div>
+            <div class="stats-label">Menunggu</div>
+        </div>
+        <div class="stats-card gradient-green">
+            <div class="stats-number" id="overdueImmunizations">0</div>
+            <div class="stats-label">Terlambat</div>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="filter-header">
+            <h5 class="filter-title">
+                <i class="fas fa-filter mr-2"></i>
+                Filter & Pencarian
+            </h5>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-6 col-lg-4">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cari nama anak atau NIK...">
+                </div>
+            </div>
+            <div class="col-6 col-sm-6 col-lg-2">
+                <select class="form-control" id="vaccineTypeFilter">
+                    <option value="">Semua Jenis Vaksin</option>
+                    <option value="bcg">BCG</option>
+                    <option value="dpt">DPT</option>
+                    <option value="polio">Polio</option>
+                    <option value="hepatitis">Hepatitis B</option>
+                    <option value="campak">Campak</option>
+                    <option value="other">Lainnya</option>
+                </select>
+            </div>
+            <div class="col-6 col-sm-6 col-lg-2">
+                <select class="form-control" id="statusFilter">
+                    <option value="">Semua Status</option>
+                    <option value="completed">Selesai</option>
+                    <option value="pending">Menunggu</option>
+                    <option value="overdue">Terlambat</option>
+                </select>
+            </div>
+            <div class="col-6 col-sm-6 col-lg-2">
+                <select class="form-control" id="posyanduFilter">
+                    <option value="">Semua Posyandu</option>
+                </select>
+            </div>
+            <div class="col-6 col-sm-6 col-lg-2">
+                <button class="btn btn-outline-danger w-100" id="clearFilters">
+                    <i class="fas fa-times mr-1"></i>
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <div class="quick-filters-wrapper">
+            <button class="btn btn-link quick-filter-toggle d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#quickFiltersContent" aria-expanded="false" aria-controls="quickFiltersContent">
+                <i class="fas fa-sliders-h me-2"></i>
+                <span class="toggle-text">Tampilkan Filter Cepat</span>
+                <i class="fas fa-chevron-down ms-2 toggle-icon"></i>
+            </button>
+
+            <div class="collapse d-md-block" id="quickFiltersContent">
+                <div class="quick-filters">
+                    <div class="filter-group">
+                        <label class="filter-group-label">Jenis Vaksin:</label>
+                        <div class="filter-buttons">
+                            <button class="btn btn-outline-primary active" data-vaccine="all">Semua</button>
+                            <button class="btn btn-outline-primary" data-vaccine="bcg">BCG</button>
+                            <button class="btn btn-outline-primary" data-vaccine="dpt">DPT</button>
+                            <button class="btn btn-outline-primary" data-vaccine="polio">Polio</button>
+                            <button class="btn btn-outline-primary" data-vaccine="hepatitis">Hepatitis B</button>
+                            <button class="btn btn-outline-primary" data-vaccine="campak">Campak</button>
+                            <button class="btn btn-outline-primary" data-vaccine="other">Lainnya</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-group-label">Status:</label>
+                        <div class="filter-buttons">
+                            <button class="btn btn-outline-success active" data-status="all">Semua</button>
+                            <button class="btn btn-outline-success" data-status="completed">Selesai</button>
+                            <button class="btn btn-outline-warning" data-status="pending">Menunggu</button>
+                            <button class="btn btn-outline-danger" data-status="overdue">Terlambat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="immunization-list-container">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2">
+            <h6 class="mb-0 text-muted">
+                <i class="fas fa-list mr-2"></i>
+                <span id="resultsCount">Memuat data...</span>
+            </h6>
+            <div class="d-flex align-items-center gap-2">
+                <label class="mb-0 text-muted small">Data per halaman:</label>
+                <select class="form-select form-select-sm" id="pageSizeSelector" style="width: auto; min-width: 80px;">
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover immunization-table">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 50px;">No</th>
+                        <th style="min-width: 200px;">Nama Anak</th>
+                        <th class="text-center" style="min-width: 120px;">Jenis Vaksin</th>
+                        <th class="text-center" style="min-width: 140px;">Tanggal Imunisasi</th>
+                        <th class="text-center" style="min-width: 100px;">Status</th>
+                        <th style="min-width: 150px;">Posyandu</th>
+                        <th style="min-width: 150px;">Petugas</th>
+                        <th class="text-center" style="min-width: 120px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="immunizationsList">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="pagination-wrapper">
+        <nav aria-label="Immunizations pagination">
+            <ul class="pagination" id="pagination">
+
+            </ul>
+        </nav>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+    let currentPage = 1;
+    let pageSize = 10; // Jumlah data per halaman
+    let currentFilters = {
+        search: '',
+        vaccine_type: '',
+        status: '',
+        posyandu: ''
+    };
+
+    loadImmunizations();
+    loadPosyanduOptions();
+
+    // Page size selector handler
+    $('#pageSizeSelector').on('change', function() {
+        pageSize = parseInt($(this).val());
+        currentPage = 1; // Reset ke halaman pertama
+        console.log('Page size changed to:', pageSize);
+        loadImmunizations();
+    });
+
+    $('#searchInput').on('input', function() {
+        currentFilters.search = $(this).val();
+        currentPage = 1;
+        loadImmunizations();
+    });
+
+    $('#vaccineTypeFilter').on('change', function() {
+        currentFilters.vaccine_type = $(this).val();
+        currentPage = 1;
+        loadImmunizations();
+    });
+
+    $('#statusFilter').on('change', function() {
+        currentFilters.status = $(this).val();
+        currentPage = 1;
+        loadImmunizations();
+    });
+
+    $('#posyanduFilter').on('change', function() {
+        currentFilters.posyandu = $(this).val();
+        currentPage = 1;
+        loadImmunizations();
+    });
+
+    $('.filter-buttons .btn[data-vaccine]').on('click', function() {
+        $('.filter-buttons .btn[data-vaccine]').removeClass('active');
+        $(this).addClass('active');
+        const vaccineValue = $(this).data('vaccine');
+        currentFilters.vaccine_type = vaccineValue === 'all' ? '' : vaccineValue;
+        $('#vaccineTypeFilter').val(currentFilters.vaccine_type);
+        currentPage = 1;
+        loadImmunizations();
+    });
+
+    $('.filter-buttons .btn[data-status]').on('click', function() {
+        console.log('Status button clicked:', $(this).data('status'));
+        
+        $('.filter-buttons .btn[data-status]').removeClass('active');
+        $(this).addClass('active');
+        
+        const statusValue = $(this).data('status');
+        currentFilters.status = statusValue === 'all' ? '' : statusValue;
+        $('#statusFilter').val(currentFilters.status);
+        
+        console.log('Status filter set to:', currentFilters.status);
+        
+        currentPage = 1;
+        loadImmunizations();
+    });
+
+    $('#clearFilters').on('click', function() {
+        $('#searchInput').val('');
+        $('#vaccineTypeFilter').val('');
+        $('#statusFilter').val('');
+        $('#posyanduFilter').val('');
+
+        $('.filter-buttons .btn').removeClass('active');
+        $('.filter-buttons .btn[data-vaccine="all"]').addClass('active');
+        $('.filter-buttons .btn[data-status="all"]').addClass('active');
+
+        currentFilters = {
+            search: '',
+            vaccine_type: '',
+            status: '',
+            posyandu: ''
+        };
+        currentPage = 1;
+        loadImmunizations();
+    });
+
+    function loadImmunizations() {
+        const requestData = {
+            page: currentPage,
+            page_size: pageSize,
+            search: currentFilters.search,
+            vaccine_type: currentFilters.vaccine_type,
+            status: currentFilters.status,
+            posyandu: currentFilters.posyandu
+        };
+
+        console.log('Loading immunizations with filters:', requestData);
+
+        // Show loading state
+        showLoading();
+
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_immunization_list" %}',
+            method: 'GET',
+            data: requestData,
+            success: function(response) {
+                console.log('Immunizations loaded:', response);
+                hideLoading();
+                
+                // Check if response exists and has the expected structure (API uses 'results' not 'data')
+                if (response) {
+                    const immunizations = response.results || response.data || [];
+                    updateResultsCount(immunizations.length, response.pagination);
+                    displayImmunizations(immunizations);
+                    updatePagination(response.pagination);
+                    updateStatistics(response.statistics);
+                } else {
+                    console.warn('Immunizations API response is invalid:', response);
+                    updateResultsCount(0, {});
+                    displayImmunizations([]);
+                    updateStatistics({});
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading immunizations:', error);
+                console.error('Response:', xhr.responseText);
+                hideLoading();
+                showAlert('Error loading data', 'error');
+            }
+        });
+    }
+
+    function showLoading() {
+        const container = $('#immunizationsList');
+        container.html(`
+            <tr>
+                <td colspan="8" class="text-center py-5">
+                    <div class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Memuat data imunisasi...</p>
+                    </div>
+                </td>
+            </tr>
+        `);
+    }
+
+    function hideLoading() {
+        // Loading will be replaced by actual data or empty state
+    }
+
+    function updateResultsCount(count, pagination) {
+        let countText = '';
+        
+        if (pagination && pagination.total_items !== undefined) {
+            const startItem = ((pagination.current_page - 1) * pageSize) + 1;
+            const endItem = Math.min(startItem + count - 1, pagination.total_items);
+            
+            if (pagination.total_items > 0) {
+                countText = `Menampilkan ${startItem}-${endItem} dari ${pagination.total_items} data`;
+            } else {
+                countText = 'Tidak ada data';
+            }
+            
+            if (currentFilters.status || currentFilters.vaccine_type || currentFilters.search || currentFilters.posyandu) {
+                countText += ' (dengan filter)';
+            }
+        } else {
+            countText = `${count} data imunisasi ditemukan`;
+        }
+        
+        $('#resultsCount').text(countText);
+    }
+
+    function displayImmunizations(immunizations) {
+        const container = $('#immunizationsList');
+
+        // Check if immunizations is valid and is an array
+        if (!immunizations || !Array.isArray(immunizations) || immunizations.length === 0) {
+            let emptyMessage = 'Belum ada data imunisasi yang tersedia.';
+            
+            if (currentFilters.status) {
+                const statusLabels = {
+                    'completed': 'Selesai',
+                    'pending': 'Menunggu',
+                    'overdue': 'Terlambat'
+                };
+                emptyMessage = `Tidak ada data imunisasi dengan status "${statusLabels[currentFilters.status] || currentFilters.status}".`;
+            } else if (currentFilters.vaccine_type) {
+                const vaccineLabels = {
+                    'bcg': 'BCG',
+                    'dpt': 'DPT',
+                    'polio': 'Polio',
+                    'hepatitis': 'Hepatitis B',
+                    'campak': 'Campak',
+                    'other': 'Lainnya'
+                };
+                emptyMessage = `Tidak ada data imunisasi untuk vaksin "${vaccineLabels[currentFilters.vaccine_type] || currentFilters.vaccine_type}".`;
+            } else if (currentFilters.search) {
+                emptyMessage = `Tidak ada data imunisasi yang cocok dengan pencarian "${currentFilters.search}".`;
+            }
+            
+            container.html(`
+                <tr>
+                    <td colspan="8" class="text-center py-5">
+                        <div class="empty-state">
+                            <i class="fas fa-syringe fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Tidak ada data imunisasi</h5>
+                            <p class="text-muted">${emptyMessage}</p>
+                            <button class="btn btn-outline-primary mt-3" onclick="$('#clearFilters').click()">
+                                <i class="fas fa-refresh mr-2"></i>
+                                Reset Filter
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let html = '';
+        const startIndex = (currentPage - 1) * pageSize;
+        
+        immunizations.forEach(function(immunization, index) {
+            const vaccineTypeLabels = {
+                'bcg': 'BCG',
+                'dpt': 'DPT',
+                'polio': 'Polio',
+                'hepatitis': 'Hepatitis B',
+                'campak': 'Campak',
+                'other': 'Lainnya'
+            };
+
+            const statusLabels = {
+                'completed': 'Selesai',
+                'pending': 'Menunggu',
+                'overdue': 'Terlambat'
+            };
+
+            const statusClasses = {
+                'completed': 'completed',
+                'pending': 'pending',
+                'overdue': 'overdue'
+            };
+
+            const rowNumber = startIndex + index + 1;
+
+            html += `
+                <tr>
+                    <td class="text-center"><strong>${rowNumber}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar-circle flex-shrink-0">
+                                <i class="fas fa-child"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold mb-1">${immunization.child_name || 'Unknown'}</div>
+                                <small class="text-muted d-block">${immunization.child_nik || ''}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="vaccine-type ${immunization.vaccine_type}">
+                            ${vaccineTypeLabels[immunization.vaccine_type] || 'Unknown'}
+                        </span>
+                    </td>
+                    <td class="text-center"><strong>${immunization.immunization_date || '-'}</strong></td>
+                    <td class="text-center">
+                        <span class="status-badge ${statusClasses[immunization.status]}">
+                            ${statusLabels[immunization.status] || 'Unknown'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="d-inline-block text-truncate" style="max-width: 150px;" title="${immunization.posyandu_name || '-'}">
+                            ${immunization.posyandu_name || '-'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="d-inline-block text-truncate" style="max-width: 150px;" title="${immunization.health_worker || '-'}">
+                            ${immunization.health_worker || '-'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="btn-group justify-content-center" role="group">
+                            <a href="/admin-panel/posyandu/immunizations/${immunization.id}/" class="btn btn-sm btn-outline-primary" title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="/admin-panel/posyandu/immunizations/${immunization.id}/edit/" class="btn btn-sm btn-outline-warning" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteImmunization(${immunization.id})" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        container.html(html);
+    }
+
+    function loadPosyanduOptions() {
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_location_list" %}',
+            method: 'GET',
+            success: function(response) {
+                let options = '<option value="">Semua Posyandu</option>';
+                
+                // Check if response and data exist (API might use 'results' or 'data')
+                if (response && response.data && Array.isArray(response.data)) {
+                    response.data.forEach(function(location) {
+                        options += `<option value="${location.id}">${location.name}</option>`;
+                    });
+                } else if (response && response.results && Array.isArray(response.results)) {
+                    response.results.forEach(function(location) {
+                        options += `<option value="${location.id}">${location.name}</option>`;
+                    });
+                } else {
+                    console.warn('Location API response is invalid:', response);
+                }
+                
+                $('#posyanduFilter').html(options);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading posyandu options:', error);
+                // Keep default options on error
+                $('#posyanduFilter').html('<option value="">Semua Posyandu</option>');
+            }
+        });
+    }
+
+    window.deleteImmunization = function(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus data imunisasi ini?')) {
+            $.ajax({
+                url: `{% url "admin_panel:posyandu:api_immunization_delete" 0 %}`.replace('0', id),
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+                },
+                success: function(response) {
+                    showAlert('Data imunisasi berhasil dihapus', 'success');
+                    loadImmunizations();
+                },
+                error: function(xhr, status, error) {
+                    showAlert('Error deleting immunization', 'error');
+                }
+            });
+        }
+    };
+
+    function updateStatistics(stats) {
+        $('#totalImmunizations').text(stats.total || 0);
+        $('#completedImmunizations').text(stats.completed || 0);
+        $('#pendingImmunizations').text(stats.pending || 0);
+        $('#overdueImmunizations').text(stats.overdue || 0);
+    }
+
+    function updatePagination(pagination) {
+        const container = $('#pagination');
+
+        if (!pagination || pagination.total_pages <= 1) {
+            container.html('');
+            return;
+        }
+
+        let html = '';
+        const isMobile = window.innerWidth < 768;
+        const isExtraSmall = window.innerWidth < 576;
+        const maxVisiblePages = isExtraSmall ? 2 : (isMobile ? 3 : 5);
+
+        // Previous button
+        html += `
+            <li class="page-item ${!pagination.has_previous ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="goToPage(${pagination.has_previous ? pagination.previous_page_number : pagination.current_page}); return false;">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+        if (isMobile) {
+            // Mobile: Simplified pagination - hanya current page number
+            html += `
+                <li class="page-item active">
+                    <span class="page-link">${pagination.current_page} / ${pagination.total_pages}</span>
+                </li>
+            `;
+        } else {
+            // Desktop: Full pagination
+            let startPage = Math.max(1, pagination.current_page - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(pagination.total_pages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // First page
+            if (startPage > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(1); return false;">1</a></li>`;
+                if (startPage > 2) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            // Visible pages
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === pagination.current_page) {
+                    html += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+                } else {
+                    html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a></li>`;
+                }
+            }
+
+            // Last page
+            if (endPage < pagination.total_pages) {
+                if (endPage < pagination.total_pages - 1) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${pagination.total_pages}); return false;">${pagination.total_pages}</a></li>`;
+            }
+        }
+
+        // Next button
+        if (pagination.has_next) {
+            html += `<li class="page-item">
+                        <a class="page-link" href="#" onclick="goToPage(${pagination.next_page_number}); return false;">
+                            <span class="d-none d-md-inline">Next</span>
+                            <i class="fas fa-chevron-right d-md-none"></i>
+                        </a>
+                    </li>`;
+        } else {
+            html += `<li class="page-item disabled">
+                        <span class="page-link">
+                            <span class="d-none d-md-inline">Next</span>
+                            <i class="fas fa-chevron-right d-md-none"></i>
+                        </span>
+                    </li>`;
+        }
+
+        container.html(html);
+    }
+
+    window.goToPage = function(page) {
+        currentPage = page;
+        loadImmunizations();
+    };
+
+    function showAlert(message, type = 'info') {
+        const alertTypes = {
+            'success': 'alert-success',
+            'error': 'alert-danger',
+            'warning': 'alert-warning',
+            'info': 'alert-info'
+        };
+
+        const alertClass = alertTypes[type] || alertTypes['info'];
+        const icons = {
+            'success': 'fa-check-circle',
+            'error': 'fa-exclamation-circle',
+            'warning': 'fa-exclamation-triangle',
+            'info': 'fa-info-circle'
+        };
+        const icon = icons[type] || icons['info'];
+
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-custom alert-dismissible fade show" role="alert">
+                <i class="fas ${icon} me-2"></i>
+                <strong>${message}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+        // Remove existing alerts
+        $('.alert-custom').remove();
+
+        // Add new alert
+        $('body').append(alertHtml);
+
+        // Auto dismiss after 3 seconds
+        setTimeout(function() {
+            $('.alert-custom').fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
+
+    // Handle window resize for pagination
+    let resizeTimer;
+    $(window).on('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            const pagination = window.currentPagination;
+            if (pagination) {
+                updatePagination(pagination);
+            }
+        }, 250);
+    });
+
+    // Store pagination data globally for resize
+    window.currentPagination = null;
+    const originalUpdatePagination = updatePagination;
+    updatePagination = function(pagination) {
+        window.currentPagination = pagination;
+        originalUpdatePagination(pagination);
+    };
+
+    // Handle quick filter toggle
+    $('#quickFiltersContent').on('shown.bs.collapse', function () {
+        $('.quick-filter-toggle .toggle-text').text('Sembunyikan Filter Cepat');
+    });
+
+    $('#quickFiltersContent').on('hidden.bs.collapse', function () {
+        $('.quick-filter-toggle .toggle-text').text('Tampilkan Filter Cepat');
+    });
+
+});
+</script>
+{% endblock %}

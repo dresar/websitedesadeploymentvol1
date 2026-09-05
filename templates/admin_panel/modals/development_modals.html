@@ -1,0 +1,729 @@
+{% load static %}
+
+<!-- Development Mode Modals -->
+<!-- Modal untuk fitur yang sedang dalam pengembangan -->
+
+<!-- Security Audit Modal -->
+<div class="modal fade" id="securityAuditModal" tabindex="-1" role="dialog" aria-labelledby="securityAuditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="securityAuditModalLabel">
+                    <i class="fas fa-shield-alt"></i> Security Audit
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Mode Pengembangan:</strong> Fitur Security Audit sedang dalam pengembangan. Berikut adalah preview fitur yang akan tersedia.
+                </div>
+
+                <!-- Security Overview -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <h4>12</h4>
+                                <small>Critical Issues</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                                <h4>28</h4>
+                                <small>Warnings</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-info-circle fa-2x mb-2"></i>
+                                <h4>45</h4>
+                                <small>Recommendations</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <h4>85%</h4>
+                                <small>Security Score</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Checks -->
+                <div class="accordion" id="securityChecksAccordion">
+                    <div class="card">
+                        <div class="card-header" id="headingOne">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link text-left" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    <i class="fas fa-lock"></i> Authentication & Authorization
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#securityChecksAccordion">
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1"><i class="fas fa-check text-success"></i> Password Policy</h5>
+                                            <small class="text-success">PASS</small>
+                                        </div>
+                                        <p class="mb-1">Password policy sudah dikonfigurasi dengan baik</p>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1"><i class="fas fa-exclamation-triangle text-warning"></i> 2FA Implementation</h5>
+                                            <small class="text-warning">WARNING</small>
+                                        </div>
+                                        <p class="mb-1">Two-Factor Authentication belum diaktifkan untuk semua user</p>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1"><i class="fas fa-times text-danger"></i> Session Security</h5>
+                                            <small class="text-danger">CRITICAL</small>
+                                        </div>
+                                        <p class="mb-1">Session timeout terlalu lama (24 jam)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header" id="headingTwo">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    <i class="fas fa-shield-alt"></i> Network Security
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#securityChecksAccordion">
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1"><i class="fas fa-check text-success"></i> HTTPS Configuration</h5>
+                                            <small class="text-success">PASS</small>
+                                        </div>
+                                        <p class="mb-1">SSL/TLS sudah dikonfigurasi dengan benar</p>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1"><i class="fas fa-exclamation-triangle text-warning"></i> Firewall Rules</h5>
+                                            <small class="text-warning">WARNING</small>
+                                        </div>
+                                        <p class="mb-1">Beberapa port tidak terlindungi firewall</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header" id="headingThree">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    <i class="fas fa-database"></i> Data Security
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#securityChecksAccordion">
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1"><i class="fas fa-check text-success"></i> Database Encryption</h5>
+                                            <small class="text-success">PASS</small>
+                                        </div>
+                                        <p class="mb-1">Database sudah dienkripsi</p>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1"><i class="fas fa-times text-danger"></i> Backup Security</h5>
+                                            <small class="text-danger">CRITICAL</small>
+                                        </div>
+                                        <p class="mb-1">Backup tidak dienkripsi</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-4 text-center">
+                    <button type="button" class="btn btn-primary" onclick="runSecurityAudit()">
+                        <i class="fas fa-play"></i> Jalankan Audit Sekarang
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="exportSecurityReport()">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="scheduleSecurityAudit()">
+                        <i class="fas fa-clock"></i> Jadwalkan Audit
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Blocked IPs Modal -->
+<div class="modal fade" id="blockedIPsModal" tabindex="-1" role="dialog" aria-labelledby="blockedIPsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="blockedIPsModalLabel">
+                    <i class="fas fa-ban"></i> Blocked IPs Management
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Mode Pengembangan:</strong> Fitur Blocked IPs Management sedang dalam pengembangan.
+                </div>
+
+                <!-- Add New Blocked IP -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-plus"></i> Tambah IP yang Diblokir</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="addBlockedIPForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="blockedIP">IP Address</label>
+                                        <input type="text" class="form-control" id="blockedIP" placeholder="192.168.1.1 atau 192.168.1.0/24">
+                                        <small class="form-text text-muted">Masukkan IP address atau CIDR range</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="blockReason">Alasan Blokir</label>
+                                        <select class="form-control" id="blockReason">
+                                            <option value="spam">Spam Activity</option>
+                                            <option value="brute_force">Brute Force Attack</option>
+                                            <option value="malicious">Malicious Activity</option>
+                                            <option value="suspicious">Suspicious Behavior</option>
+                                            <option value="manual">Manual Block</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="blockDescription">Deskripsi (Opsional)</label>
+                                <textarea class="form-control" id="blockDescription" rows="2" placeholder="Deskripsi tambahan..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-ban"></i> Blokir IP
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Blocked IPs List -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-list"></i> Daftar IP yang Diblokir</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="refreshBlockedIPs()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="clearAllBlocks()">
+                                <i class="fas fa-trash"></i> Hapus Semua
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>IP Address</th>
+                                        <th>Alasan</th>
+                                        <th>Diblokir Pada</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="blockedIPsTable">
+                                    <tr>
+                                        <td><code>192.168.1.100</code></td>
+                                        <td><span class="badge badge-danger">Brute Force</span></td>
+                                        <td>2024-01-15 14:30</td>
+                                        <td><span class="badge badge-danger">Active</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success" onclick="unblockIP('192.168.1.100')">
+                                                <i class="fas fa-unlock"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteBlockedIP('192.168.1.100')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>10.0.0.0/8</code></td>
+                                        <td><span class="badge badge-warning">Suspicious</span></td>
+                                        <td>2024-01-14 09:15</td>
+                                        <td><span class="badge badge-danger">Active</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success" onclick="unblockIP('10.0.0.0/8')">
+                                                <i class="fas fa-unlock"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteBlockedIP('10.0.0.0/8')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>203.0.113.45</code></td>
+                                        <td><span class="badge badge-info">Manual</span></td>
+                                        <td>2024-01-13 16:45</td>
+                                        <td><span class="badge badge-success">Expired</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning" onclick="extendBlock('203.0.113.45')">
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteBlockedIP('203.0.113.45')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h4>15</h4>
+                                <small>Active Blocks</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h4>8</h4>
+                                <small>Expired Blocks</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h4>127</h4>
+                                <small>Total Blocks Today</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h4>23</h4>
+                                <small>Auto-Unblocked</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Login Logs Modal -->
+<div class="modal fade" id="loginLogsModal" tabindex="-1" role="dialog" aria-labelledby="loginLogsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="loginLogsModalLabel">
+                    <i class="fas fa-list"></i> Login Logs
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Mode Pengembangan:</strong> Fitur Login Logs sedang dalam pengembangan.
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-filter"></i> Filter Logs</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="loginLogsFilterForm">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="logDateFrom">Dari Tanggal</label>
+                                        <input type="date" class="form-control" id="logDateFrom">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="logDateTo">Sampai Tanggal</label>
+                                        <input type="date" class="form-control" id="logDateTo">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="logStatus">Status</label>
+                                        <select class="form-control" id="logStatus">
+                                            <option value="">Semua</option>
+                                            <option value="success">Berhasil</option>
+                                            <option value="failed">Gagal</option>
+                                            <option value="blocked">Diblokir</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="logUser">User</label>
+                                        <input type="text" class="form-control" id="logUser" placeholder="Username atau email">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="logIP">IP Address</label>
+                                        <input type="text" class="form-control" id="logIP" placeholder="192.168.1.1">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="logLocation">Lokasi</label>
+                                        <input type="text" class="form-control" id="logLocation" placeholder="Jakarta, Indonesia">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Login Logs Table -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-list"></i> Login Logs</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="refreshLoginLogs()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="exportLoginLogs()">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="clearOldLogs()">
+                                <i class="fas fa-trash"></i> Hapus Lama
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>User</th>
+                                        <th>IP Address</th>
+                                        <th>Lokasi</th>
+                                        <th>Status</th>
+                                        <th>User Agent</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="loginLogsTable">
+                                    <tr>
+                                        <td>2024-01-15 14:30:25</td>
+                                        <td><strong>admin</strong></td>
+                                        <td><code>192.168.1.100</code></td>
+                                        <td>Jakarta, Indonesia</td>
+                                        <td><span class="badge badge-success">Berhasil</span></td>
+                                        <td>Mozilla/5.0...</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="viewLogDetails(1)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-15 14:25:10</td>
+                                        <td><strong>user123</strong></td>
+                                        <td><code>203.0.113.45</code></td>
+                                        <td>Surabaya, Indonesia</td>
+                                        <td><span class="badge badge-danger">Gagal</span></td>
+                                        <td>Chrome/120.0...</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="viewLogDetails(2)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-15 14:20:05</td>
+                                        <td><strong>hacker</strong></td>
+                                        <td><code>10.0.0.50</code></td>
+                                        <td>Unknown</td>
+                                        <td><span class="badge badge-warning">Diblokir</span></td>
+                                        <td>curl/7.68.0</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info" onclick="viewLogDetails(3)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h4>1,247</h4>
+                                <small>Successful Logins</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h4>89</h4>
+                                <small>Failed Logins</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h4>23</h4>
+                                <small>Blocked Attempts</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h4>45</h4>
+                                <small>Unique IPs</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+.modal-xl {
+    max-width: 90%;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.btn-group .btn {
+    margin-right: 5px;
+}
+
+.form-check {
+    margin-bottom: 15px;
+}
+
+.progress {
+    height: 25px;
+}
+
+.progress-bar {
+    font-size: 14px;
+    line-height: 25px;
+}
+</style>
+
+<script>
+// Security Audit Functions
+function runSecurityAudit() {
+    showAlert('Security audit sedang berjalan...', 'info');
+    // Simulate audit process
+    setTimeout(() => {
+        showAlert('Security audit selesai! Silakan lihat hasilnya.', 'success');
+    }, 3000);
+}
+
+function exportSecurityReport() {
+    showAlert('Exporting security report...', 'info');
+    // Simulate export
+    setTimeout(() => {
+        showAlert('Security report berhasil diekspor!', 'success');
+    }, 2000);
+}
+
+function scheduleSecurityAudit() {
+    showAlert('Security audit berhasil dijadwalkan!', 'success');
+}
+
+// Blocked IPs Functions
+function refreshBlockedIPs() {
+    showAlert('Refreshing blocked IPs list...', 'info');
+    // Simulate refresh
+    setTimeout(() => {
+        showAlert('Blocked IPs list berhasil diperbarui!', 'success');
+    }, 1000);
+}
+
+function clearAllBlocks() {
+    if (confirm('Apakah Anda yakin ingin menghapus semua blocked IPs?')) {
+        showAlert('Semua blocked IPs berhasil dihapus!', 'success');
+    }
+}
+
+function unblockIP(ip) {
+    if (confirm(`Apakah Anda yakin ingin membuka blokir IP ${ip}?`)) {
+        showAlert(`IP ${ip} berhasil dibuka blokir!`, 'success');
+    }
+}
+
+function deleteBlockedIP(ip) {
+    if (confirm(`Apakah Anda yakin ingin menghapus IP ${ip} dari daftar blocked?`)) {
+        showAlert(`IP ${ip} berhasil dihapus dari daftar blocked!`, 'success');
+    }
+}
+
+function extendBlock(ip) {
+    showAlert(`Blokir untuk IP ${ip} berhasil diperpanjang!`, 'success');
+}
+
+// Login Logs Functions
+function refreshLoginLogs() {
+    showAlert('Refreshing login logs...', 'info');
+    // Simulate refresh
+    setTimeout(() => {
+        showAlert('Login logs berhasil diperbarui!', 'success');
+    }, 1000);
+}
+
+function exportLoginLogs() {
+    showAlert('Exporting login logs...', 'info');
+    // Simulate export
+    setTimeout(() => {
+        showAlert('Login logs berhasil diekspor!', 'success');
+    }, 2000);
+}
+
+function clearOldLogs() {
+    if (confirm('Apakah Anda yakin ingin menghapus login logs yang lama?')) {
+        showAlert('Login logs lama berhasil dihapus!', 'success');
+    }
+}
+
+function viewLogDetails(logId) {
+    showAlert(`Menampilkan detail log ID: ${logId}`, 'info');
+}
+
+function resetFilters() {
+    document.getElementById('loginLogsFilterForm').reset();
+    showAlert('Filter berhasil direset!', 'success');
+}
+
+
+// Form Handlers
+document.getElementById('addBlockedIPForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const ip = document.getElementById('blockedIP').value;
+    const reason = document.getElementById('blockReason').value;
+    
+    if (ip && reason) {
+        showAlert(`IP ${ip} berhasil diblokir karena ${reason}!`, 'success');
+        this.reset();
+    } else {
+        showAlert('Mohon isi semua field yang diperlukan!', 'error');
+    }
+});
+
+document.getElementById('loginLogsFilterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showAlert('Filter login logs diterapkan!', 'success');
+});
+
+// Utility Functions
+function showAlert(message, type) {
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[type] || 'alert-info';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    `;
+    
+    // Insert at the top of modal body
+    const modalBody = document.querySelector('.modal-body');
+    modalBody.insertBefore(alertDiv, modalBody.firstChild);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>

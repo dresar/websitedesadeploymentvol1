@@ -1,0 +1,670 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Kategori Berita{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/news/news_list.css' %}">
+<style>
+    /* Compact Mobile First Design */
+    .page-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .page-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .page-subtitle {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    .add-btn {
+        background: white;
+        color: #007bff;
+        border: none;
+        padding: 0.625rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 0.75rem;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    .add-btn:hover {
+        background: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+    .add-btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Stats Bar */
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .stat-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+    .stat-number {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #007bff;
+    }
+    .stat-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    /* Categories Grid */
+    .categories {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    .category-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 0.875rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: transform 0.2s;
+    }
+    .category-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .category-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .category-color {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .category-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #212529;
+        flex: 1;
+        line-height: 1.3;
+    }
+    .category-desc {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .category-stats {
+        display: flex;
+        justify-content: space-around;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 0.375rem;
+        margin-bottom: 0.5rem;
+    }
+    .category-stat {
+        text-align: center;
+    }
+    .category-stat-num {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #007bff;
+    }
+    .category-stat-label {
+        font-size: 0.625rem;
+        color: #6c757d;
+    }
+    .category-actions {
+        display: flex;
+        gap: 0.375rem;
+    }
+    .btn-action {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .btn-action:active {
+        transform: translateY(0);
+    }
+    .btn-edit {
+        background: #007bff;
+        color: white;
+    }
+    .btn-edit:hover {
+        background: #0056b3;
+    }
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+    .btn-delete:hover {
+        background: #bd2130;
+    }
+    
+    /* Modal Compact */
+    .modal-content {
+        border-radius: 0.75rem;
+        border: none;
+    }
+    .modal-header {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        border-radius: 0.75rem 0.75rem 0 0;
+        padding: 0.875rem 1rem;
+    }
+    .modal-title {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    .modal-body {
+        padding: 1rem;
+    }
+    .form-group {
+        margin-bottom: 0.875rem;
+    }
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+    .form-input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 0.375rem;
+        font-size: 0.8rem;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+    .modal-footer {
+        padding: 0.875rem 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+    .btn-modal {
+        padding: 0.625rem 1.25rem;
+        border: none;
+        border-radius: 0.375rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-modal:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .btn-modal:active {
+        transform: translateY(0);
+    }
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-cancel:hover {
+        background: #5a6268;
+    }
+    .btn-save {
+        background: #007bff;
+        color: white;
+    }
+    .btn-save:hover {
+        background: #0056b3;
+    }
+    /* Modern Close Button */
+    .close {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 1;
+        transition: all 0.3s ease;
+        padding: 0;
+        font-size: 1.5rem;
+        line-height: 1;
+        font-weight: 300;
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: rotate(90deg) scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+    .close:active {
+        transform: rotate(90deg) scale(0.95);
+    }
+    .close span {
+        display: block;
+        line-height: 1;
+        margin-top: -2px;
+    }
+    .close:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+    }
+    .close:focus:not(:focus-visible) {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .modal-header .close {
+        margin-left: auto;
+    }
+    
+    /* Alert Info */
+    .alert-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+    .alert-info i {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.6;
+        color: #007bff;
+    }
+    
+    /* Pulse Animation */
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 0.6;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+    }
+    
+    @media (max-width: 575.98px) {
+        .alert-info {
+            font-size: 0.75rem;
+            padding: 0.75rem !important;
+        }
+        .alert-info i {
+            font-size: 1rem;
+        }
+        .empty-state {
+            padding: 2rem 1rem;
+        }
+        .empty-icon {
+            font-size: 3rem;
+        }
+        .empty-state h3 {
+            font-size: 1.1rem !important;
+        }
+        .empty-state p {
+            font-size: 0.875rem;
+        }
+        .empty-state button {
+            font-size: 0.875rem;
+            padding: 0.625rem 1.25rem !important;
+        }
+    }
+    
+    /* Mobile Close Button */
+    @media (max-width: 575.98px) {
+        .close {
+            width: 32px;
+            height: 32px;
+            font-size: 1.25rem;
+        }
+    }
+    
+    /* Tablet & Desktop */
+    @media (min-width: 576px) {
+        .page-header { padding: 1.25rem; }
+        .page-title { font-size: 1.5rem; }
+        .add-btn { width: auto; margin-top: 0; }
+        .stats { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (min-width: 768px) {
+        .categories { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .category-card { padding: 1.25rem; }
+        .category-name { font-size: 1rem; }
+        .close {
+            width: 40px;
+            height: 40px;
+            font-size: 1.75rem;
+        }
+    }
+    @media (min-width: 992px) {
+        .categories { grid-template-columns: repeat(4, 1fr); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 py-3">
+    
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-sm-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title">
+                    <i class="fas fa-folder"></i>
+                    Kategori Berita
+                </h1>
+                <p class="page-subtitle">Kelola kategori untuk mengorganisir berita</p>
+            </div>
+            <button class="add-btn" onclick="openAddModal()">
+                <i class="fas fa-plus"></i> Tambah Kategori
+            </button>
+        </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number">{% if categories %}{{ categories|length }}{% else %}0{% endif %}</div>
+            <div class="stat-label">Total Kategori</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{% if categories %}{{ categories|length }}{% else %}0{% endif %}</div>
+            <div class="stat-label">Aktif</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Total Berita</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Views</div>
+        </div>
+    </div>
+    
+    {% if not categories %}
+    <!-- Info Alert -->
+    <div class="alert alert-info" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; border: none;">
+        <i class="fas fa-info-circle"></i> <strong>Belum ada kategori!</strong> Klik tombol "Tambah Kategori" untuk membuat kategori pertama Anda.
+    </div>
+    {% endif %}
+    
+    <!-- Categories Grid -->
+    <div class="categories">
+        {% for category in categories %}
+        <div class="category-card">
+            <div class="category-header">
+                <span class="category-color" style="background: {{ category.color }};"></span>
+                <h3 class="category-name">{{ category.name }}</h3>
+            </div>
+            {% if category.description %}
+            <p class="category-desc">{{ category.description }}</p>
+            {% endif %}
+            <div class="category-stats">
+                <div class="category-stat">
+                    <div class="category-stat-num">{{ category.news_count|default:0 }}</div>
+                    <div class="category-stat-label">Berita</div>
+                </div>
+                <div class="category-stat">
+                    <div class="category-stat-num">{{ category.views_count|default:0 }}</div>
+                    <div class="category-stat-label">Views</div>
+                </div>
+                <div class="category-stat">
+                    <div class="category-stat-num">{{ category.likes_count|default:0 }}</div>
+                    <div class="category-stat-label">Likes</div>
+                </div>
+            </div>
+            <div class="category-actions">
+                <button class="btn-action btn-edit" onclick="editCategory({{ category.id }}, '{{ category.name }}', '{{ category.color }}', '{{ category.description }}', {{ category.is_active|yesno:'true,false' }})">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn-action btn-delete" onclick="deleteCategory({{ category.id }}, '{{ category.name }}')">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-icon">
+                <i class="fas fa-folder-open" style="animation: pulse 2s ease-in-out infinite;"></i>
+            </div>
+            <h3 style="color: #495057; font-size: 1.25rem; margin-bottom: 0.5rem;">Belum Ada Kategori</h3>
+            <p style="color: #6c757d; margin-bottom: 1.5rem;">Klik tombol <strong>"Tambah Kategori"</strong> di atas untuk membuat kategori pertama Anda</p>
+            <button class="btn btn-primary" onclick="openAddModal()" style="background: linear-gradient(135deg, #007bff, #0056b3); border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600;">
+                <i class="fas fa-plus"></i> Buat Kategori Sekarang
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Tambah Kategori</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" onclick="$('#categoryModal').modal('hide')">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="categoryForm">
+                {% csrf_token %}
+                <input type="hidden" id="categoryId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Nama Kategori <span class="text-danger">*</span></label>
+                        <input type="text" class="form-input" id="categoryName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Warna</label>
+                        <input type="color" class="form-input" id="categoryColor" name="color" value="#007bff">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Deskripsi</label>
+                        <textarea class="form-input" id="categoryDescription" name="description" rows="2"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="categoryActive" name="is_active" checked>
+                        <label class="form-check-label" for="categoryActive">Aktif</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal btn-cancel" data-dismiss="modal" onclick="$('#categoryModal').modal('hide')">Batal</button>
+                    <button type="submit" class="btn-modal btn-save">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Konfirmasi Hapus</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" onclick="$('#deleteModal').modal('hide')">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Yakin hapus kategori <strong id="deleteName"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal btn-cancel" data-dismiss="modal" onclick="$('#deleteModal').modal('hide')">Batal</button>
+                <button type="button" class="btn-modal btn-delete" id="confirmDelete">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global functions
+function openAddModal() {
+    console.log('Opening add modal...');
+    $('#categoryForm')[0].reset();
+    $('#categoryId').val('');
+    $('#modalTitle').text('Tambah Kategori');
+    $('#categoryColor').val('#007bff');
+    $('#categoryActive').prop('checked', true);
+    $('#categoryModal').modal('show');
+}
+
+$(document).ready(function() {
+    console.log('Document ready');
+    console.log('Total categories in page:', $('.category-card').length);
+    
+    // Check if categories exist
+    {% if categories %}
+    console.log('Categories data exists in template');
+    {% else %}
+    console.log('⚠️ No categories data - Database might be empty');
+    {% endif %}
+    
+    // Button "Tambah Kategori" event listener (backup)
+    $('.add-btn').on('click', function() {
+        console.log('Add button clicked');
+        openAddModal();
+    });
+    
+    // Reset form on modal open
+    $('#categoryModal').on('show.bs.modal', function() {
+        console.log('Modal opening...');
+        $('#categoryForm')[0].reset();
+        $('#categoryId').val('');
+        $('#modalTitle').text('Tambah Kategori');
+        $('#categoryColor').val('#007bff');
+        $('#categoryActive').prop('checked', true);
+    });
+    
+    // Submit form
+    $('#categoryForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#categoryId').val();
+        const url = id ? 
+            '{% url "admin_panel:news_category_update" 0 %}'.replace('0', id) : 
+            '{% url "admin_panel:news_category_create" %}';
+        
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            headers: {'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()},
+            success: function(data) {
+                if (data.success) {
+                    $('#categoryModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Gagal menyimpan'));
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan');
+            }
+        });
+    });
+    
+    // Confirm delete
+    $('#confirmDelete').on('click', function() {
+        const id = $(this).data('id');
+        $.ajax({
+            url: '{% url "admin_panel:news_category_delete" 0 %}'.replace('0', id),
+            method: 'DELETE',
+            headers: {'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()},
+            success: function(data) {
+                if (data.success) {
+                    $('#deleteModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Gagal menghapus'));
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan');
+            }
+        });
+    });
+});
+
+// Edit category
+function editCategory(id, name, color, desc, active) {
+    console.log('Edit category:', id, name);
+    $('#categoryId').val(id);
+    $('#categoryName').val(name);
+    $('#categoryColor').val(color);
+    $('#categoryDescription').val(desc);
+    $('#categoryActive').prop('checked', active);
+    $('#modalTitle').text('Edit Kategori');
+    $('#categoryModal').modal('show');
+}
+
+// Delete category
+function deleteCategory(id, name) {
+    console.log('Delete category:', id, name);
+    $('#deleteName').text(name);
+    $('#confirmDelete').data('id', id);
+    $('#deleteModal').modal('show');
+}
+</script>
+{% endblock %}
+

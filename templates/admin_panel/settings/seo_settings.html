@@ -1,0 +1,389 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Pengaturan SEO & Analytics{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/settings/seo_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="seo-container">
+
+    <div class="seo-header">
+        <h1><i class="fas fa-search"></i> Pengaturan SEO & Analytics</h1>
+        <p>Optimasi website untuk mesin pencari dan analisis performa</p>
+    </div>
+
+    <div class="seo-stats">
+        <h4 class="mb-3">
+            <i class="fas fa-chart-pie mr-2"></i>
+            Statistik SEO
+        </h4>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ seo_stats.page_views|default:"0" }}</div>
+                    <div class="stat-label">Page Views</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ seo_stats.unique_visitors|default:"0" }}</div>
+                    <div class="stat-label">Unique Visitors</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ seo_stats.bounce_rate|default:"0" }}%</div>
+                    <div class="stat-label">Bounce Rate</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number">{{ seo_stats.seo_score|default:"85" }}%</div>
+                    <div class="stat-label">SEO Score</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="seo-settings">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <h3><i class="fas fa-cog"></i> Pengaturan SEO Dasar</h3>
+
+            <div class="settings-info">
+                <h4>Informasi SEO</h4>
+                <p>Konfigurasi pengaturan SEO untuk meningkatkan visibilitas website di mesin pencari seperti Google.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.site_title.id_for_label }}">Judul Website</label>
+                {{ form.site_title }}
+                <div class="help-text">Judul yang akan muncul di hasil pencarian (maksimal 60 karakter)</div>
+                {% if form.site_title.errors %}
+                    <div class="text-danger">{{ form.site_title.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.site_description.id_for_label }}">Deskripsi Website</label>
+                {{ form.site_description }}
+                <div class="help-text">Deskripsi yang akan muncul di hasil pencarian (maksimal 160 karakter)</div>
+                {% if form.site_description.errors %}
+                    <div class="text-danger">{{ form.site_description.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.site_keywords.id_for_label }}">Keywords</label>
+                {{ form.site_keywords }}
+                <div class="help-text">Kata kunci yang relevan dengan website (pisahkan dengan koma)</div>
+                {% if form.site_keywords.errors %}
+                    <div class="text-danger">{{ form.site_keywords.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.site_author.id_for_label }}">Author</label>
+                {{ form.site_author }}
+                {% if form.site_author.errors %}
+                    <div class="text-danger">{{ form.site_author.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.site_language.id_for_label }}">Bahasa Website</label>
+                {{ form.site_language }}
+                {% if form.site_language.errors %}
+                    <div class="text-danger">{{ form.site_language.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="seo-preview">
+                <h5><i class="fas fa-eye"></i> Preview Hasil Pencarian</h5>
+                <div class="search-result">
+                    <a href="#" class="search-title" id="preview-title">{{ form.site_title.value|default:'Website Desa Pulo Sarok - Aceh Singkil' }}</a>
+                    <div class="search-url" id="preview-url">https://pulosarok.my.id</div>
+                    <div class="search-description" id="preview-description">{{ form.site_description.value|default:'Website resmi Desa Pulo Sarok yang menyediakan informasi lengkap tentang desa, layanan administrasi, pantai wisata, hutan mangrove, dan kegiatan masyarakat di Kecamatan Singkil, Kabupaten Aceh Singkil.' }}</div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-share-alt"></i> Open Graph (Social Media)</h3>
+
+            <div class="form-group">
+                <label for="{{ form.og_title.id_for_label }}">Open Graph Title</label>
+                {{ form.og_title }}
+                <div class="help-text">Judul yang akan muncul saat dibagikan di media sosial</div>
+                {% if form.og_title.errors %}
+                    <div class="text-danger">{{ form.og_title.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.og_description.id_for_label }}">Open Graph Description</label>
+                {{ form.og_description }}
+                <div class="help-text">Deskripsi yang akan muncul saat dibagikan di media sosial</div>
+                {% if form.og_description.errors %}
+                    <div class="text-danger">{{ form.og_description.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.og_image.id_for_label }}">Open Graph Image</label>
+                {{ form.og_image }}
+                {% if settings.og_image %}
+                    <p>Gambar saat ini: <a href="{{ settings.og_image.url }}" target="_blank">{{ settings.og_image.name }}</a></p>
+                {% endif %}
+                <div class="help-text">Gambar yang akan muncul saat dibagikan di media sosial (1200x630 px)</div>
+                {% if form.og_image.errors %}
+                    <div class="text-danger">{{ form.og_image.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <h3><i class="fas fa-chart-line"></i> Analytics & Tracking</h3>
+
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h5><i class="fab fa-google"></i> Google Analytics</h5>
+
+                    <div class="form-group">
+                        <label for="{{ form.google_analytics_id.id_for_label }}">Google Analytics ID</label>
+                        {{ form.google_analytics_id }}
+                        <div class="help-text">ID tracking Google Analytics</div>
+                        {% if form.google_analytics_id.errors %}
+                            <div class="text-danger">{{ form.google_analytics_id.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.google_tag_manager_id.id_for_label }}">Google Tag Manager ID</label>
+                        {{ form.google_tag_manager_id }}
+                        <div class="help-text">ID Google Tag Manager</div>
+                        {% if form.google_tag_manager_id.errors %}
+                            <div class="text-danger">{{ form.google_tag_manager_id.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <h5><i class="fab fa-facebook"></i> Facebook Pixel</h5>
+
+                    <div class="form-group">
+                        <label for="{{ form.facebook_pixel_id.id_for_label }}">Facebook Pixel ID</label>
+                        {{ form.facebook_pixel_id }}
+                        <div class="help-text">ID Facebook Pixel untuk tracking</div>
+                        {% if form.facebook_pixel_id.errors %}
+                            <div class="text-danger">{{ form.facebook_pixel_id.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            {{ form.enable_facebook_tracking }}
+                            <label for="{{ form.enable_facebook_tracking.id_for_label }}">Aktifkan Facebook Tracking</label>
+                        </div>
+                        {% if form.enable_facebook_tracking.errors %}
+                            <div class="text-danger">{{ form.enable_facebook_tracking.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="analytics-card">
+                    <h5><i class="fas fa-search"></i> Search Console</h5>
+
+                    <div class="form-group">
+                        <label for="{{ form.google_search_console.id_for_label }}">Google Search Console</label>
+                        {{ form.google_search_console }}
+                        <div class="help-text">Kode verifikasi Google Search Console</div>
+                        {% if form.google_search_console.errors %}
+                            <div class="text-danger">{{ form.google_search_console.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.bing_webmaster.id_for_label }}">Bing Webmaster Tools</label>
+                        {{ form.bing_webmaster }}
+                        <div class="help-text">Kode verifikasi Bing Webmaster Tools</div>
+                        {% if form.bing_webmaster.errors %}
+                            <div class="text-danger">{{ form.bing_webmaster.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <h3><i class="fas fa-sitemap"></i> Sitemap & Robots</h3>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    {{ form.enable_sitemap }}
+                    <label for="{{ form.enable_sitemap.id_for_label }}">Aktifkan Sitemap Otomatis</label>
+                </div>
+                {% if form.enable_sitemap.errors %}
+                    <div class="text-danger">{{ form.enable_sitemap.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    {{ form.enable_robots_txt }}
+                    <label for="{{ form.enable_robots_txt.id_for_label }}">Aktifkan robots.txt</label>
+                </div>
+                {% if form.enable_robots_txt.errors %}
+                    <div class="text-danger">{{ form.enable_robots_txt.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.robots_content.id_for_label }}">Isi robots.txt</label>
+                {{ form.robots_content }}
+                <div class="help-text">Konten robots.txt untuk mengatur crawling bot</div>
+                {% if form.robots_content.errors %}
+                    <div class="text-danger">{{ form.robots_content.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="seo-actions">
+                <a href="{% url 'core:generate_sitemap' %}" class="seo-btn primary">
+                    <i class="fas fa-sitemap"></i> Generate Sitemap
+                </a>
+                <a href="{% url 'core:seo_audit' %}" class="seo-btn warning">
+                    <i class="fas fa-search"></i> SEO Audit
+                </a>
+                <a href="{% url 'core:settings' %}" class="seo-btn success">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+                </a>
+                <a href="{% url 'core:seo_reports' %}" class="seo-btn primary">
+                    <i class="fas fa-file-alt"></i> SEO Reports
+                </a>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i> Simpan Pengaturan SEO
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateSEOPreview() {
+        const titleField = document.getElementById('{{ form.site_title.id_for_label }}');
+        const descField = document.getElementById('{{ form.site_description.id_for_label }}');
+        
+        const title = titleField ? titleField.value || 'Website Desa Pulo Sarok - Aceh Singkil' : 'Website Desa Pulo Sarok - Aceh Singkil';
+        const description = descField ? descField.value || 'Website resmi Desa Pulo Sarok yang menyediakan informasi lengkap tentang desa, layanan administrasi, pantai wisata, hutan mangrove, dan kegiatan masyarakat di Kecamatan Singkil, Kabupaten Aceh Singkil.' : 'Website resmi Desa Pulo Sarok yang menyediakan informasi lengkap tentang desa, layanan administrasi, pantai wisata, hutan mangrove, dan kegiatan masyarakat di Kecamatan Singkil, Kabupaten Aceh Singkil.';
+
+        document.getElementById('preview-title').textContent = title;
+        document.getElementById('preview-description').textContent = description;
+    }
+
+    function updateCharCount(field, maxLength) {
+        if (!field) return;
+        
+        const currentLength = field.value.length;
+        const remaining = maxLength - currentLength;
+
+        let counter = field.parentNode.querySelector('.char-counter');
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.className = 'char-counter';
+            counter.style.fontSize = '0.8rem';
+            counter.style.color = remaining < 0 ? '#e74c3c' : '#6c757d';
+            field.parentNode.appendChild(counter);
+        }
+
+        counter.textContent = `${currentLength}/${maxLength} karakter`;
+        counter.style.color = remaining < 0 ? '#e74c3c' : '#6c757d';
+    }
+
+    function showWarning(message) {
+        // Create or update warning message
+        let warning = document.querySelector('.warning-message');
+        if (!warning) {
+            warning = document.createElement('div');
+            warning.className = 'warning-message alert alert-warning';
+            warning.style.position = 'fixed';
+            warning.style.top = '20px';
+            warning.style.right = '20px';
+            warning.style.zIndex = '9999';
+            warning.style.padding = '15px';
+            warning.style.borderRadius = '5px';
+            warning.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            document.body.appendChild(warning);
+        }
+        warning.textContent = message;
+        warning.style.display = 'block';
+        
+        setTimeout(() => {
+            warning.style.display = 'none';
+        }, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const titleField = document.getElementById('{{ form.site_title.id_for_label }}');
+        const descField = document.getElementById('{{ form.site_description.id_for_label }}');
+        
+        if (titleField) {
+            titleField.addEventListener('input', updateSEOPreview);
+            titleField.addEventListener('input', function() {
+                updateCharCount(this, 60);
+            });
+            updateCharCount(titleField, 60);
+        }
+        
+        if (descField) {
+            descField.addEventListener('input', updateSEOPreview);
+            descField.addEventListener('input', function() {
+                updateCharCount(this, 160);
+            });
+            updateCharCount(descField, 160);
+        }
+
+        // SEO Preview update
+        updateSEOPreview();
+
+        // Form validation
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const siteTitle = titleField ? titleField.value : '';
+                const siteDescription = descField ? descField.value : '';
+
+                if (!siteTitle.trim()) {
+                    e.preventDefault();
+                    showWarning('Judul website harus diisi!');
+                    return;
+                }
+
+                if (siteTitle.length > 60) {
+                    e.preventDefault();
+                    showWarning('Judul website maksimal 60 karakter!');
+                    return;
+                }
+
+                if (siteDescription.length > 160) {
+                    e.preventDefault();
+                    showWarning('Deskripsi website maksimal 160 karakter!');
+                    return;
+                }
+            });
+        }
+
+        // Action buttons confirmation
+        document.querySelectorAll('.seo-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const action = this.textContent.trim();
+                if (!confirm(`Apakah Anda yakin ingin ${action.toLowerCase()}?`)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

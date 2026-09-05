@@ -1,0 +1,160 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .service-card {
+        transition: all 0.3s ease;
+    }
+    .service-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .service-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    .tourism-location {
+        transition: all 0.3s ease;
+    }
+    .tourism-location:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .tourism-location:hover {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="bg-gradient-to-br from-orange-50 to-yellow-100 min-h-screen">
+
+    <!-- HERO SECTION -->
+    <header class="relative h-64 sm:h-80 md:h-96 lg:h-[500px] overflow-hidden">
+        {% if hero_image_url %}
+        <img src="{{ hero_image_url }}" alt="Tourism Hero" class="w-full h-full object-cover">
+        {% else %}
+        <div class="w-full h-full bg-gradient-to-br from-orange-500 to-yellow-600 flex items-center justify-center">
+            <i class="fas fa-mountain text-4xl sm:text-6xl text-white opacity-50"></i>
+        </div>
+        {% endif %}
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8 text-white">
+            <div class="max-w-7xl mx-auto text-center">
+                <div class="inline-flex items-center px-4 py-2 bg-white/20 text-white rounded-full text-sm font-medium mb-4">
+                    <i class="fas fa-mountain mr-2"></i> Layanan Pariwisata
+                </div>
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight text-white">
+                    Layanan <span class="text-orange-400">Pariwisata</span>
+                </h1>
+                <p class="text-sm sm:text-base lg:text-lg opacity-90 max-w-3xl mx-auto text-white">
+                    Jelajahi keindahan alam dan budaya Desa Pulosarok melalui destinasi wisata yang menakjubkan
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-mountain text-2xl text-orange-600"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ tourism_locations|length }}</h3>
+                <p class="text-gray-600">Destinasi Wisata</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-calendar text-2xl text-green-600"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ upcoming_events|length }}</h3>
+                <p class="text-gray-600">Event Mendatang</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-camera text-2xl text-blue-600"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">100%</h3>
+                <p class="text-gray-600">Instagramable</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-star text-2xl text-purple-600"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">4.8</h3>
+                <p class="text-gray-600">Rating Wisata</p>
+            </div>
+        </div>
+
+        <div class="w-full">
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-map-marker-alt text-orange-600 mr-3"></i> Destinasi Wisata
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for location in tourism_locations %}
+                    <div class="tourism-location bg-gray-50 rounded-xl p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fas fa-mountain text-orange-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">{{ location.title }}</h3>
+                                <p class="text-sm text-gray-600">{{ location.category.name|default:"Wisata Alam" }}</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-4">
+                            {{ location.short_description|truncatewords:15 }}
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-star text-yellow-500 text-sm"></i>
+                                <span class="text-sm text-gray-600">{{ location.average_rating|floatformat:1|default:"4.5" }}/5</span>
+                            </div>
+                            <a href="{% url 'tourism:location_detail_by_id' location.id %}" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                Detail
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-full text-center py-8">
+                        <i class="fas fa-mountain text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600">Belum ada destinasi wisata yang terdaftar</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pagination for Tourism Locations -->
+            <div class="mt-8 flex justify-center">
+                <nav class="flex items-center space-x-2">
+                    {% if page_obj_locations.has_previous %}
+                    <a href="?page_locations=1" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a href="?page_locations={{ page_obj_locations.previous_page_number }}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                    {% endif %}
+                    {% for num in page_obj_locations.paginator.page_range %}
+                    {% if page_obj_locations.number == num %}
+                    <span class="px-3 py-2 text-sm font-medium text-white bg-orange-600 border border-orange-600">{{ num }}</span>
+                    {% elif num > page_obj_locations.number|add:'-3' and num < page_obj_locations.number|add:'3' %}
+                    <a href="?page_locations={{ num }}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">{{ num }}</a>
+                    {% endif %}
+                    {% endfor %}
+                    {% if page_obj_locations.has_next %}
+                    <a href="?page_locations={{ page_obj_locations.next_page_number }}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?page_locations={{ page_obj_locations.paginator.num_pages }}" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

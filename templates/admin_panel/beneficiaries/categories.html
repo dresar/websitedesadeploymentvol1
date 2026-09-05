@@ -1,0 +1,338 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/beneficiaries/beneficiaries.css' %}">
+<style>
+.category-card {
+    position: relative;
+}
+
+.category-card .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.category-card .d-flex.gap-1 {
+    position: relative;
+    z-index: 10;
+    display: flex !important;
+    gap: 0.35rem !important;
+    flex-direction: column !important;
+}
+
+.category-card .action-btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 11 !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-width: 2px !important;
+    background-color: white !important;
+}
+
+.category-card .action-btn:hover {
+    transform: scale(1.1) !important;
+    z-index: 12 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+.category-card .btn i {
+    pointer-events: none;
+}
+
+/* Ensure buttons are above other content */
+.category-card .d-flex.align-items-start {
+    position: relative;
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="beneficiaries-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-1">Kategori Penerima Bantuan</h4>
+                            <p class="text-muted mb-0">Kelola kategori bantuan di Desa Pulosari</p>
+                        </div>
+                        <div class="w-100 w-md-auto">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-2">
+                                    <div class="d-flex flex-column flex-md-row gap-2">
+                                        <a href="{% url 'admin_panel:category_create' %}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-plus me-1"></i>Tambah Kategori
+                                        </a>
+                                        <button type="button" class="btn btn-success btn-sm" id="importCategoryBtn">
+                                            <i class="fas fa-file-import me-1"></i>Import
+                                        </button>
+                                        <button type="button" class="btn btn-info btn-sm" id="exportCategoryBtn">
+                                            <i class="fas fa-file-export me-1"></i>Export
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 g-md-4">
+                    {% for category in categories %}
+                    <div class="col-12 col-sm-6 col-lg-4">
+                        <div class="category-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title">{{ category.name }}</h5>
+                                        <p class="card-text">{{ category.description|truncatechars:100 }}</p>
+
+                                        <div class="mt-3 d-flex flex-wrap gap-2">
+                                            <span class="badge badge-primary">
+                                                <i class="fas fa-users me-1"></i>{{ category.beneficiary_count }} Penerima
+                                            </span>
+                                            <span class="badge badge-{% if category.is_active %}success{% else %}secondary{% endif %}">
+                                                {% if category.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-1 flex-column">
+                                        <a href="{% url 'admin_panel:category_detail' category.pk %}" 
+                                           class="btn btn-sm btn-outline-info action-btn" 
+                                           title="Lihat Detail" data-bs-toggle="tooltip"
+                                           onclick="console.log('Detail button clicked');">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'admin_panel:beneficiaries_list' %}?category={{ category.id }}" 
+                                           class="btn btn-sm btn-outline-primary action-btn" 
+                                           title="Lihat Penerima" data-bs-toggle="tooltip"
+                                           onclick="console.log('View beneficiaries clicked');">
+                                            <i class="fas fa-users"></i>
+                                        </a>
+                                        <a href="{% url 'admin_panel:category_update' category.pk %}" 
+                                           class="btn btn-sm btn-outline-warning action-btn" 
+                                           title="Edit Kategori" data-bs-toggle="tooltip"
+                                           onclick="console.log('Edit button clicked');">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if category.beneficiary_count == 0 %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger delete-category-btn action-btn" 
+                                                title="Hapus Kategori" data-bs-toggle="tooltip"
+                                                data-category-id="{{ category.id }}"
+                                                data-category-name="{{ category.name }}"
+                                                onclick="console.log('Delete button direct click');">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if category.criteria %}
+                            <div class="card-footer">
+                                <small class="text-muted">
+                                    <strong>Kriteria:</strong> {{ category.criteria|truncatechars:80 }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="fas fa-tags fa-4x mb-3"></i>
+                            <h5>Belum ada kategori bantuan</h5>
+                            <p>Silakan tambah kategori bantuan baru</p>
+                            <a href="{% url 'admin_panel:category_create' %}" class="btn btn-primary mt-3">
+                                <i class="fas fa-plus me-1"></i>Tambah Kategori
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>Konfirmasi Hapus
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus kategori:</p>
+                <div class="alert alert-warning">
+                    <strong id="categoryNameToDelete"></strong>
+                </div>
+                <p class="text-muted mb-0">Data yang sudah dihapus tidak dapat dikembalikan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>
+// Notification functions
+function showSuccess(message) {
+    showAlert(message, 'success');
+}
+
+function showError(message) {
+    showAlert(message, 'danger');
+}
+
+function showAlert(message, type = 'info') {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Add to body
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Categories page loaded - JavaScript initialized');
+    
+    let deleteCategoryId = null;
+    let deleteCategoryName = '';
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    console.log('Found tooltips:', tooltipTriggerList.length);
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Delete category button handler
+    const deleteButtons = document.querySelectorAll('.delete-category-btn');
+    console.log('Found delete buttons:', deleteButtons.length);
+    
+    deleteButtons.forEach(btn => {
+        console.log('Attaching delete listener to button:', btn);
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Delete button clicked!');
+            deleteCategoryId = this.getAttribute('data-category-id');
+            deleteCategoryName = this.getAttribute('data-category-name');
+            console.log('Delete category:', deleteCategoryId, deleteCategoryName);
+            document.getElementById('categoryNameToDelete').textContent = deleteCategoryName;
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        });
+    });
+    
+    // Test action buttons
+    const allActionButtons = document.querySelectorAll('.category-card .btn');
+    console.log('Total action buttons found:', allActionButtons.length);
+    allActionButtons.forEach((btn, index) => {
+        console.log(`Button ${index}:`, btn.className, btn.href || 'no href');
+        btn.addEventListener('click', function(e) {
+            console.log('Button clicked:', this.className);
+        });
+    });
+    
+    // Confirm delete button
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (!deleteCategoryId) return;
+            
+            const submitBtn = this;
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Menghapus...';
+            
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const deleteUrl = "{% url 'admin_panel:category_delete' 0 %}".replace('0', deleteCategoryId);
+            
+            fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                if (deleteModal) deleteModal.hide();
+                
+                if (data.success) {
+                    showSuccess('Kategori berhasil dihapus');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showError(data.message || 'Gagal menghapus kategori');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Terjadi kesalahan saat menghapus kategori');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+    
+    // Reset on modal close
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('hidden.bs.modal', function() {
+            deleteCategoryId = null;
+            deleteCategoryName = '';
+        });
+    }
+    
+    // Import/Export buttons
+    const importBtn = document.getElementById('importCategoryBtn');
+    if (importBtn) {
+        importBtn.addEventListener('click', function() {
+            showAlert('Fitur Import Kategori sedang dalam pengembangan. Coming soon!', 'info');
+        });
+    }
+    
+    const exportBtn = document.getElementById('exportCategoryBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            showAlert('Fitur Export Kategori sedang dalam pengembangan. Coming soon!', 'info');
+        });
+    }
+});
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,497 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .execute-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .execute-header h2 {
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .warning-card {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+    }
+    
+    .warning-card h5 {
+        color: #856404;
+        margin-bottom: 15px;
+    }
+    
+    .warning-card ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .warning-card li {
+        color: #856404;
+        margin-bottom: 8px;
+    }
+    
+    .config-summary {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .config-summary h5 {
+        color: #495057;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+    
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .module-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .module-item.selected {
+        background: #d4edda;
+        border-color: #28a745;
+        color: #155724;
+    }
+    
+    .module-item i {
+        font-size: 1.5em;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .execute-form {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .execute-form h5 {
+        color: #495057;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #dc3545;
+    }
+    
+    .btn-execute {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+        font-weight: 600;
+        padding: 12px 30px;
+        font-size: 1.1em;
+    }
+    
+    .btn-execute:hover {
+        background: #c82333;
+        border-color: #bd2130;
+    }
+    
+    .btn-execute:disabled {
+        background: #6c757d;
+        border-color: #6c757d;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        font-weight: 600;
+        padding: 12px 30px;
+        font-size: 1.1em;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        border-color: #545b62;
+    }
+    
+    .status-info {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .status-info h6 {
+        color: #0c5460;
+        margin-bottom: 10px;
+    }
+    
+    .status-info p {
+        color: #0c5460;
+        margin: 0;
+    }
+    
+    .progress-section {
+        display: none;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .progress-bar {
+        height: 25px;
+        background: #007bff;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        text-align: center;
+        margin-top: 10px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="execute-header">
+                <h2><i class="fas fa-play"></i> {{ page_title }}</h2>
+                <div class="mt-3">
+                    <span class="badge badge-light">{{ config.get_reset_type_display }}</span>
+                    <span class="ml-3">
+                        <i class="fas fa-calendar"></i> Dibuat: {{ config.created_at|date:"d F Y H:i" }}
+                    </span>
+                    {% if config.created_by %}
+                        <span class="ml-3">
+                            <i class="fas fa-user"></i> Oleh: {{ config.created_by.get_full_name|default:config.created_by.username }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Warning -->
+            <div class="warning-card">
+                <h5><i class="fas fa-exclamation-triangle"></i> PERINGATAN PENTING!</h5>
+                <ul>
+                    <li><strong>Operasi ini TIDAK DAPAT DIBATALKAN</strong> setelah dieksekusi</li>
+                    <li>Data yang dipilih akan <strong>DIHAPUS PERMANEN</strong> dari database</li>
+                    <li>Pastikan Anda sudah membuat <strong>BACKUP</strong> jika diperlukan</li>
+                    <li>Operasi ini akan mempengaruhi <strong>SEMUA DATA</strong> dari modul yang dipilih</li>
+                    <li>Pastikan tidak ada pengguna lain yang sedang menggunakan sistem</li>
+                </ul>
+            </div>
+            
+            <!-- Configuration Summary -->
+            <div class="config-summary">
+                <h5><i class="fas fa-info-circle"></i> Ringkasan Konfigurasi</h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Nama Konfigurasi:</strong><br>
+                        <span class="text-muted">{{ config.name }}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Tipe Reset:</strong><br>
+                        <span class="badge badge-info">{{ config.get_reset_type_display }}</span>
+                    </div>
+                </div>
+                
+                {% if config.description %}
+                    <div class="mt-3">
+                        <strong>Deskripsi:</strong><br>
+                        <span class="text-muted">{{ config.description }}</span>
+                    </div>
+                {% endif %}
+                
+                <!-- Selected Modules -->
+                <div class="mt-4">
+                    <strong>Modul yang akan di-Reset:</strong>
+                    {% if config.reset_type == 'full' %}
+                        <div class="alert alert-warning mt-2">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Reset Lengkap:</strong> Semua data akan dihapus kecuali data pengguna dan pengaturan (jika dipilih).
+                        </div>
+                    {% else %}
+                        <div class="module-grid">
+                            <div class="module-item {% if config.reset_penduduk %}selected{% endif %}">
+                                <i class="fas fa-users"></i>
+                                <div>Data Penduduk</div>
+                            </div>
+                            <div class="module-item {% if config.reset_dusun %}selected{% endif %}">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <div>Data Dusun</div>
+                            </div>
+                            <div class="module-item {% if config.reset_lorong %}selected{% endif %}">
+                                <i class="fas fa-road"></i>
+                                <div>Data Lorong</div>
+                            </div>
+                            <div class="module-item {% if config.reset_rt_rw %}selected{% endif %}">
+                                <i class="fas fa-sitemap"></i>
+                                <div>Data RT/RW</div>
+                            </div>
+                            <div class="module-item {% if config.reset_keluarga %}selected{% endif %}">
+                                <i class="fas fa-home"></i>
+                                <div>Data Keluarga</div>
+                            </div>
+                            <div class="module-item {% if config.reset_pelajar %}selected{% endif %}">
+                                <i class="fas fa-graduation-cap"></i>
+                                <div>Data Pelajar</div>
+                            </div>
+                            <div class="module-item {% if config.reset_disabilitas %}selected{% endif %}">
+                                <i class="fas fa-wheelchair"></i>
+                                <div>Data Disabilitas</div>
+                            </div>
+                            <div class="module-item {% if config.reset_beneficiaries %}selected{% endif %}">
+                                <i class="fas fa-hand-holding-heart"></i>
+                                <div>Data Penerima Bantuan</div>
+                            </div>
+                            <div class="module-item {% if config.reset_business %}selected{% endif %}">
+                                <i class="fas fa-store"></i>
+                                <div>Data Usaha</div>
+                            </div>
+                            <div class="module-item {% if config.reset_complaints %}selected{% endif %}">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <div>Data Keluhan</div>
+                            </div>
+                            <div class="module-item {% if config.reset_documents %}selected{% endif %}">
+                                <i class="fas fa-file-alt"></i>
+                                <div>Data Dokumen</div>
+                            </div>
+                            <div class="module-item {% if config.reset_tourism %}selected{% endif %}">
+                                <i class="fas fa-camera"></i>
+                                <div>Data Wisata</div>
+                            </div>
+                            <div class="module-item {% if config.reset_posyandu %}selected{% endif %}">
+                                <i class="fas fa-heartbeat"></i>
+                                <div>Data Posyandu</div>
+                            </div>
+                            <div class="module-item {% if config.reset_news %}selected{% endif %}">
+                                <i class="fas fa-newspaper"></i>
+                                <div>Data Berita</div>
+                            </div>
+                            <div class="module-item {% if config.reset_organization %}selected{% endif %}">
+                                <i class="fas fa-building"></i>
+                                <div>Data Organisasi</div>
+                            </div>
+                            <div class="module-item {% if config.reset_layanan %}selected{% endif %}">
+                                <i class="fas fa-concierge-bell"></i>
+                                <div>Data Layanan</div>
+                            </div>
+                            <div class="module-item {% if config.reset_letters %}selected{% endif %}">
+                                <i class="fas fa-envelope"></i>
+                                <div>Data Surat Menyurat</div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Options -->
+                <div class="mt-4">
+                    <strong>Opsi Konfigurasi:</strong>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" {% if config.backup_before_reset %}checked{% endif %} disabled>
+                                <label class="form-check-label">
+                                    Backup sebelum reset
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" {% if config.keep_users %}checked{% endif %} disabled>
+                                <label class="form-check-label">
+                                    Tetap simpan data pengguna
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" {% if config.keep_settings %}checked{% endif %} disabled>
+                                <label class="form-check-label">
+                                    Tetap simpan pengaturan
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" {% if config.keep_media %}checked{% endif %} disabled>
+                                <label class="form-check-label">
+                                    Tetap simpan file media
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Execute Form -->
+            <div class="execute-form">
+                <h5><i class="fas fa-play-circle"></i> Eksekusi Reset</h5>
+                
+                {% if config.status == 'running' %}
+                    <div class="status-info">
+                        <h6><i class="fas fa-spinner fa-spin"></i> Reset Sedang Berjalan</h6>
+                        <p>Reset database sedang dalam proses. Harap tunggu hingga selesai.</p>
+                    </div>
+                    
+                    <div class="progress-section" id="progressSection">
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Memulai reset...</div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="btn btn-execute" disabled>
+                            <i class="fas fa-spinner fa-spin"></i> Sedang Berjalan...
+                        </button>
+                        <a href="{% url 'core:database_reset_detail' config.id %}" class="btn btn-cancel">
+                            <i class="fas fa-eye"></i> Lihat Detail
+                        </a>
+                    </div>
+                {% elif config.status == 'completed' %}
+                    <div class="status-info">
+                        <h6><i class="fas fa-check-circle"></i> Reset Selesai</h6>
+                        <p>Reset database telah berhasil diselesaikan pada {{ config.completed_at|date:"d F Y H:i" }}.</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{% url 'core:database_reset_detail' config.id %}" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> Lihat Detail
+                        </a>
+                        <a href="{% url 'core:database_reset_list' %}" class="btn btn-cancel">
+                            <i class="fas fa-list"></i> Kembali ke Daftar
+                        </a>
+                    </div>
+                {% elif config.status == 'failed' %}
+                    <div class="status-info" style="background: #f8d7da; border-color: #f5c6cb;">
+                        <h6><i class="fas fa-exclamation-circle"></i> Reset Gagal</h6>
+                        <p>Reset database gagal. Silakan periksa log error untuk detail lebih lanjut.</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{% url 'core:database_reset_detail' config.id %}" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> Lihat Detail & Log
+                        </a>
+                        <a href="{% url 'core:database_reset_edit' config.id %}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Edit Konfigurasi
+                        </a>
+                        <a href="{% url 'core:database_reset_list' %}" class="btn btn-cancel">
+                            <i class="fas fa-list"></i> Kembali ke Daftar
+                        </a>
+                    </div>
+                {% else %}
+                    <form method="post" id="executeForm">
+                        {% csrf_token %}
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-execute" id="executeBtn">
+                                <i class="fas fa-play"></i> Eksekusi Reset Sekarang
+                            </button>
+                            <a href="{% url 'core:database_reset_detail' config.id %}" class="btn btn-cancel">
+                                <i class="fas fa-times"></i> Batal
+                            </a>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('executeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!confirm('⚠️ PERINGATAN FINAL!\n\nApakah Anda BENAR-BENAR yakin ingin mengeksekusi reset ini?\n\nOperasi ini akan:\n- Menghapus data secara PERMANEN\n- TIDAK DAPAT DIBATALKAN\n- Mempengaruhi SEMUA data dari modul yang dipilih\n\nPastikan Anda sudah membuat backup jika diperlukan!')) {
+        return;
+    }
+    
+    // Show loading state
+    const button = document.getElementById('executeBtn');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menjalankan Reset...';
+    button.disabled = true;
+    
+    // Show progress section
+    document.getElementById('progressSection').style.display = 'block';
+    
+    // Simulate progress
+    let progress = 0;
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress > 90) progress = 90;
+        
+        progressBar.style.width = progress + '%';
+        
+        if (progress < 30) {
+            progressText.textContent = 'Memulai reset...';
+        } else if (progress < 60) {
+            progressText.textContent = 'Menghapus data...';
+        } else if (progress < 90) {
+            progressText.textContent = 'Menyelesaikan reset...';
+        }
+    }, 500);
+    
+    // Submit form
+    fetch('{% url "core:database_reset_execute" config.id %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => {
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        progressText.textContent = 'Reset selesai!';
+        
+        setTimeout(() => {
+            window.location.href = '{% url "core:database_reset_detail" config.id %}';
+        }, 1000);
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        alert('❌ Error: ' + error.message);
+        button.innerHTML = originalText;
+        button.disabled = false;
+        document.getElementById('progressSection').style.display = 'none';
+    });
+});
+
+// Auto-refresh if status is running
+{% if config.status == 'running' %}
+setTimeout(function() {
+    location.reload();
+}, 5000);
+{% endif %}
+</script>
+{% endblock %}

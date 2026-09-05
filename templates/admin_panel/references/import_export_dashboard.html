@@ -1,0 +1,511 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Import/Export Data - Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Import/Export Data</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .model-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-left: 4px solid #667eea;
+    }
+    
+    .model-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .model-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .model-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    .model-count {
+        background: #667eea;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .btn-export {
+        background: #48bb78;
+        color: white;
+    }
+    
+    .btn-export:hover {
+        background: #38a169;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-import {
+        background: #4299e1;
+        color: white;
+    }
+    
+    .btn-import:hover {
+        background: #3182ce;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-template {
+        background: #ed8936;
+        color: white;
+    }
+    
+    .btn-template:hover {
+        background: #dd6b20;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .bulk-actions {
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .bulk-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1rem;
+    }
+    
+    .format-selector {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .format-option {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .format-option.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+    
+    .model-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 6px;
+        transition: background 0.3s ease;
+    }
+    
+    .model-checkbox:hover {
+        background: #f7fafc;
+    }
+    
+    .model-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #667eea;
+    }
+    
+    .global-import-section {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .global-import-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .global-import-desc {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn-global {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 2px solid rgba(255,255,255,0.3);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-global:hover {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #718096;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .format-selector {
+            flex-direction: column;
+        }
+        
+        .model-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Dashboard -->
+    <div class="dashboard-card">
+        <h1 class="mb-3">
+            <i class="fas fa-database me-2"></i>
+            Import/Export Data Dashboard
+        </h1>
+        <p class="mb-0">
+            Kelola semua data referensi dengan fitur import/export yang komprehensif. 
+            Export data dalam berbagai format atau import data secara global.
+        </p>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ models|length }}</div>
+            <div class="stat-label">Jenis Data</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ models|length|add:"-1" }}</div>
+            <div class="stat-label">Format Export</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">3</div>
+            <div class="stat-label">Format Import</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Auto-Detection</div>
+        </div>
+    </div>
+
+    <!-- Global Import Section -->
+    <div class="global-import-section">
+        <h2 class="global-import-title">
+            <i class="fas fa-upload me-2"></i>
+            Global Import Data
+        </h2>
+        <p class="global-import-desc">
+            Import semua jenis data dalam satu file. Sistem akan otomatis mendeteksi jenis data 
+            berdasarkan kolom yang ada dan memprosesnya sesuai dengan model yang tepat.
+        </p>
+        <a href="{% url 'references:global_import' %}" class="btn-global">
+            <i class="fas fa-file-upload me-2"></i>
+            Mulai Global Import
+        </a>
+    </div>
+
+    <!-- Bulk Export Section -->
+    <div class="bulk-actions">
+        <h2 class="bulk-title">
+            <i class="fas fa-download me-2"></i>
+            Bulk Export Data
+        </h2>
+        
+        <form method="post" action="{% url 'references:bulk_export' %}" id="bulkExportForm">
+            {% csrf_token %}
+            
+            <!-- Format Selection -->
+            <div class="format-selector">
+                <label class="format-option active" data-format="excel">
+                    <i class="fas fa-file-excel me-2"></i>
+                    Excel (.xlsx)
+                </label>
+                <label class="format-option" data-format="csv">
+                    <i class="fas fa-file-csv me-2"></i>
+                    CSV (.csv)
+                </label>
+                <label class="format-option" data-format="json">
+                    <i class="fas fa-file-code me-2"></i>
+                    JSON (.json)
+                </label>
+                <label class="format-option" data-format="pdf">
+                    <i class="fas fa-file-pdf me-2"></i>
+                    PDF (.pdf)
+                </label>
+            </div>
+            
+            <input type="hidden" name="format" value="excel" id="selectedFormat">
+            
+            <!-- Model Selection -->
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="mb-3">Pilih Data untuk Export:</h5>
+                    <div class="model-selection">
+                        {% for model in models %}
+                        <div class="model-checkbox">
+                            <input type="checkbox" name="models" value="{{ model.name }}" id="model_{{ model.name }}">
+                            <label for="model_{{ model.name }}">
+                                <strong>{{ model.verbose_name }}</strong>
+                                <span class="text-muted">({{ model.count }} data)</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAll()">
+                            <i class="fas fa-check-square me-1"></i>
+                            Pilih Semua
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deselectAll()">
+                            <i class="fas fa-square me-1"></i>
+                            Batal Pilih Semua
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5 class="mb-3">Aksi Export:</h5>
+                    <button type="submit" class="btn btn-success btn-lg w-100" id="exportBtn" disabled>
+                        <i class="fas fa-download me-2"></i>
+                        Export Data Terpilih
+                    </button>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Data akan dikemas dalam file ZIP untuk kemudahan download
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Individual Model Management -->
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-list me-2"></i>
+                Kelola Data Individual
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for model in models %}
+        <div class="col-lg-6 col-xl-4">
+            <div class="model-card">
+                <div class="model-header">
+                    <h3 class="model-title">{{ model.verbose_name }}</h3>
+                    <span class="model-count">{{ model.count }} data</span>
+                </div>
+                
+                <div class="action-buttons">
+                    <a href="{% url 'references:export_data' model.name 'excel' %}" 
+                       class="btn-action btn-export" 
+                       title="Export Excel">
+                        <i class="fas fa-file-excel me-1"></i>
+                        Excel
+                    </a>
+                    
+                    <a href="{% url 'references:export_data' model.name 'csv' %}" 
+                       class="btn-action btn-export" 
+                       title="Export CSV">
+                        <i class="fas fa-file-csv me-1"></i>
+                        CSV
+                    </a>
+                    
+                    <a href="{% url 'references:export_data' model.name 'json' %}" 
+                       class="btn-action btn-export" 
+                       title="Export JSON">
+                        <i class="fas fa-file-code me-1"></i>
+                        JSON
+                    </a>
+                    
+                    <a href="{% url 'references:export_data' model.name 'pdf' %}" 
+                       class="btn-action btn-export" 
+                       title="Export PDF">
+                        <i class="fas fa-file-pdf me-1"></i>
+                        PDF
+                    </a>
+                    
+                    <a href="{% url 'references:import_data' model.name %}" 
+                       class="btn-action btn-import" 
+                       title="Import Data">
+                        <i class="fas fa-upload me-1"></i>
+                        Import
+                    </a>
+                    
+                    <a href="{% url 'references:download_template' model.name 'excel' %}" 
+                       class="btn-action btn-template" 
+                       title="Download Template">
+                        <i class="fas fa-download me-1"></i>
+                        Template
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format selection
+    const formatOptions = document.querySelectorAll('.format-option');
+    const selectedFormatInput = document.getElementById('selectedFormat');
+    
+    formatOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            formatOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+            selectedFormatInput.value = this.dataset.format;
+        });
+    });
+    
+    // Model selection
+    const modelCheckboxes = document.querySelectorAll('input[name="models"]');
+    const exportBtn = document.getElementById('exportBtn');
+    
+    function updateExportButton() {
+        const checkedCount = document.querySelectorAll('input[name="models"]:checked').length;
+        exportBtn.disabled = checkedCount === 0;
+        exportBtn.innerHTML = checkedCount > 0 
+            ? `<i class="fas fa-download me-2"></i>Export ${checkedCount} Data Terpilih`
+            : `<i class="fas fa-download me-2"></i>Export Data Terpilih`;
+    }
+    
+    modelCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateExportButton);
+    });
+    
+    // Form submission
+    document.getElementById('bulkExportForm').addEventListener('submit', function(e) {
+        const checkedCount = document.querySelectorAll('input[name="models"]:checked').length;
+        if (checkedCount === 0) {
+            e.preventDefault();
+            alert('Pilih minimal satu jenis data untuk di-export!');
+            return false;
+        }
+        
+        // Show loading
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses Export...';
+        exportBtn.disabled = true;
+    });
+});
+
+function selectAll() {
+    document.querySelectorAll('input[name="models"]').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.querySelectorAll('input[name="models"]')[0].dispatchEvent(new Event('change'));
+}
+
+function deselectAll() {
+    document.querySelectorAll('input[name="models"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll('input[name="models"]')[0].dispatchEvent(new Event('change'));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load currency %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/beneficiaries/beneficiaries-detail.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="beneficiaries-detail-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+                <div class="mb-3">
+                    <a href="{% url 'admin_panel:aid_distributions_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar
+                    </a>
+                </div>
+
+                <div class="beneficiaries-detail-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4>Detail Distribusi Bantuan</h4>
+                            <p class="text-muted mb-0">Detail lengkap distribusi bantuan</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card mb-4">
+                    <div class="beneficiaries-detail-card-header">
+                        <div class="beneficiaries-detail-stat-icon">
+                            <i class="fas fa-gift"></i>
+                        </div>
+                        <h1>Distribusi Bantuan</h1>
+                        <p>{{ distribution.aid.name }}</p>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-info-circle me-2"></i>Informasi Distribusi
+                    </h5>
+                    <div class="beneficiaries-detail-section">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="beneficiaries-detail-info-item">
+                                    <div class="beneficiaries-detail-info-label">Program Bantuan</div>
+                                    <div class="beneficiaries-detail-info-value">{{ distribution.aid.name }}</div>
+                                </div>
+                                <div class="beneficiaries-detail-info-item">
+                                    <div class="beneficiaries-detail-info-label">Penerima</div>
+                                    <div class="beneficiaries-detail-info-value">{{ distribution.beneficiary.person.name }} (NIK: {{ distribution.beneficiary.person.nik }})</div>
+                                </div>
+                                <div class="beneficiaries-detail-info-item">
+                                    <div class="beneficiaries-detail-info-label">Status</div>
+                                    <div class="beneficiaries-detail-info-value">
+                                        <span class="beneficiaries-detail-badge beneficiaries-detail-badge-{% if distribution.status == 'distributed' %}success{% elif distribution.status == 'approved' %}info{% elif distribution.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                            {{ distribution.get_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="beneficiaries-detail-info-item">
+                                    <div class="beneficiaries-detail-info-label">Jumlah Diterima</div>
+                                    <div class="beneficiaries-detail-info-value">{{ distribution.amount_received|rupiah }}</div>
+                                </div>
+                                <div class="beneficiaries-detail-info-item">
+                                    <div class="beneficiaries-detail-info-label">Tanggal Distribusi</div>
+                                    <div class="beneficiaries-detail-info-value">{{ distribution.distribution_date|date:"d/m/Y"|default:"-" }}</div>
+                                </div>
+                                <div class="beneficiaries-detail-info-item">
+                                    <div class="beneficiaries-detail-info-label">No. Kwitansi</div>
+                                    <div class="beneficiaries-detail-info-value">{{ distribution.receipt_number|default:"-" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-info-item beneficiaries-detail-info-full">
+                            <div class="beneficiaries-detail-info-label">Catatan</div>
+                            <div class="beneficiaries-detail-info-value">
+                                <div class="beneficiaries-detail-notes-card">
+                                    {{ distribution.notes|default:"-" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card">
+                    <h5 class="beneficiaries-detail-section-title">
+                        <i class="fas fa-info me-2"></i>Informasi Sistem
+                    </h5>
+                    <div class="beneficiaries-detail-stats">
+                        <div class="beneficiaries-detail-stat-card">
+                            <div class="beneficiaries-detail-stat-label">ID Distribusi</div>
+                            <div class="beneficiaries-detail-stat-value">#{{ distribution.id }}</div>
+                        </div>
+                        <div class="beneficiaries-detail-stat-card">
+                            <div class="beneficiaries-detail-stat-label">Dibuat</div>
+                            <div class="beneficiaries-detail-stat-value beneficiaries-detail-stat-value-sm">
+                                {% if distribution.created_at %}
+                                    {{ distribution.created_at|date:"d M Y" }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="beneficiaries-detail-stat-card">
+                            <div class="beneficiaries-detail-stat-label">Diperbarui</div>
+                            <div class="beneficiaries-detail-stat-value beneficiaries-detail-stat-value-sm">
+                                {% if distribution.updated_at %}
+                                    {{ distribution.updated_at|date:"d M Y" }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="beneficiaries-detail-card">
+                    <div class="beneficiaries-detail-actions">
+                        <a href="{% url 'admin_panel:beneficiary_detail' distribution.beneficiary.pk %}" class="btn btn-info">
+                            <i class="fas fa-user me-1"></i>Lihat Detail Penerima
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

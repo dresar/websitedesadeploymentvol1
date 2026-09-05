@@ -1,0 +1,811 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load business_filters %}
+
+{% block extra_css %}
+<script src="{% static 'js/business-image-upload.js' %}"></script>
+<style>
+/* Image Preview Styling */
+.image-preview-container {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.current-image-preview {
+    text-align: center;
+}
+
+.preview-image {
+    max-width: 200px;
+    max-height: 150px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #dee2e6;
+}
+
+.image-info {
+    margin-top: 8px;
+}
+
+/* Business Penduduk Autocomplete Styles */
+.business-penduduk-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+    display: none;
+}
+
+.business-penduduk-dropdown.show {
+    display: block;
+}
+
+.business-penduduk-dropdown .autocomplete-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.business-penduduk-dropdown .autocomplete-item:hover {
+    background-color: #f8f9fa;
+}
+
+.business-penduduk-dropdown .autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.business-penduduk-dropdown .autocomplete-item-name {
+    color: #2c3e50;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.business-penduduk-dropdown .autocomplete-item-nik {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-top: 2px;
+}
+
+.business-penduduk-dropdown .autocomplete-loading {
+    padding: 12px 16px;
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+}
+
+.business-penduduk-dropdown .autocomplete-no-results {
+    padding: 12px 16px;
+    color: #6c757d;
+    text-align: center;
+}
+
+/* Visual feedback for auto-filled fields */
+.business-form-filled {
+    background-color: #d4edda !important;
+    border-color: #28a745 !important;
+    transition: all 0.3s ease;
+}
+
+/* Currency formatting styles */
+.business-form-currency-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.business-form-currency-wrapper .business-form-control {
+    flex: 1;
+}
+
+.business-form-currency-display {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-weight: 500;
+    color: #495057;
+    min-width: 120px;
+    text-align: right;
+    font-size: 0.9rem;
+}
+
+/* File preview styles */
+.file-preview {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.file-preview i {
+    margin-bottom: 10px;
+}
+
+.file-preview .image-info {
+    margin-top: 10px;
+}
+
+/* Mobile responsive */
+@media (max-width: 767.98px) {
+    .preview-image {
+        max-width: 150px;
+        max-height: 120px;
+    }
+}
+.business-form-wrapper {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.business-form-page-header {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.business-form-page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.business-form-page-subtitle {
+    color: #6c757d;
+    margin: 0.5rem 0 0 0;
+    font-size: 1.1rem;
+}
+
+.business-form-page-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.business-form-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.business-form-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+.business-form-header-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.business-form-body {
+    padding: 2rem;
+}
+
+.business-form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.business-form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.business-form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.business-form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.business-form-col-half {
+    flex: 1;
+}
+
+.business-form-col-full {
+    flex: 1;
+}
+
+.business-form-label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.business-form-label-required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.business-form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.business-form-control:focus {
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+    outline: none;
+}
+
+.business-form-control[readonly] {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+}
+
+.business-form-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.business-form-help {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.business-form-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.business-form-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.business-form-btn-outline-secondary {
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    background: white;
+}
+
+.business-form-btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.business-form-btn-purple {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+}
+
+.business-form-btn-purple:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.penduduk-autocomplete {
+    position: relative;
+}
+
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ced4da;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.autocomplete-suggestion {
+    padding: 0.75rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.autocomplete-suggestion:hover {
+    background-color: #f8f9fa;
+}
+
+.autocomplete-suggestion:last-child {
+    border-bottom: none;
+}
+
+@media (max-width: 767px) {
+    .business-form-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    .business-form-page-title {
+        font-size: 1.5rem;
+    }
+
+    .business-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .business-form-footer {
+        flex-direction: column;
+    }
+
+    .business-form-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="business-form-wrapper business-form-wrapper-layanan">
+
+    <div class="business-form-page-header">
+        <div>
+            <h1 class="business-form-page-title">
+                <i class="fas fa-tools"></i>{% if is_edit %}Edit Layanan Jasa{% else %}Tambah Layanan Jasa{% endif %}
+            </h1>
+            <p class="business-form-page-subtitle">{% if is_edit %}Perbarui data layanan jasa{% else %}Isi form untuk menambahkan layanan jasa baru{% endif %}</p>
+        </div>
+        <div class="business-form-page-actions">
+            <a href="{% url 'admin_panel:layanan_jasa_list' %}" class="business-form-btn business-form-btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>Kembali
+            </a>
+        </div>
+    </div>
+
+    <div class="business-form-card">
+        <div class="business-form-header business-form-header-layanan">
+            <h3 class="business-form-header-title">
+                <i class="fas fa-tools"></i>Form Data Layanan Jasa
+            </h3>
+        </div>
+        <div class="business-form-body">
+            <form method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="business-form-section business-form-section-layanan">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-info-circle"></i> Informasi Dasar Layanan
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_nama">Nama Layanan</label>
+                            {{ form.nama }}
+                            {% for error in form.nama.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_kategori">Kategori Layanan</label>
+                            {{ form.kategori }}
+                            {% for error in form.kategori.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label" for="id_deskripsi">Deskripsi Layanan</label>
+                            {{ form.deskripsi }}
+                            {% for error in form.deskripsi.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="business-form-section business-form-section-layanan">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-user"></i> Informasi Penyedia
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_penyedia">Nama Penyedia</label>
+                            {{ form.penyedia }}
+                            {% for error in form.penyedia.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_telepon">Nomor Telepon</label>
+                            {{ form.telepon }}
+                            {% for error in form.telepon.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_email">Email</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_website">Website</label>
+                            {{ form.website }}
+                            {% for error in form.website.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label" for="id_alamat">Alamat</label>
+                            {{ form.alamat }}
+                            {% for error in form.alamat.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="business-form-section business-form-section-layanan">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-star"></i> Pengalaman & Kualitas
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_pengalaman">Pengalaman (Tahun)</label>
+                            {{ form.pengalaman }}
+                            {% for error in form.pengalaman.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_rating">Rating</label>
+                            {{ form.rating }}
+                            {% for error in form.rating.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label" for="id_sertifikat">Sertifikat</label>
+                            {{ form.sertifikat }}
+                            {% for error in form.sertifikat.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                            <small class="business-form-help">Upload file PDF atau gambar sertifikat (PDF, PNG, JPG, JPEG)</small>
+                            
+                            <!-- Preview Sertifikat -->
+                            {% if is_edit and form.instance.sertifikat %}
+                                <div class="image-preview-container">
+                                    <label class="business-form-label">Sertifikat Saat Ini:</label>
+                                    <div class="current-image-preview">
+                                        {% if form.instance.sertifikat.name|slice:"-4:" == ".pdf" %}
+                                            <div class="file-preview">
+                                                <i class="fas fa-file-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                                <div class="image-info">
+                                                    <small class="text-muted">{{ form.instance.sertifikat.name|basename }}</small>
+                                                    <br>
+                                                    <a href="{{ form.instance.sertifikat.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-download"></i> Download PDF
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <img src="{{ form.instance.sertifikat.url }}" alt="Sertifikat Saat Ini" class="preview-image">
+                                            <div class="image-info">
+                                                <small class="text-muted">{{ form.instance.sertifikat.name|basename }}</small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="business-form-section business-form-section-layanan">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-dollar-sign"></i> Harga & Satuan
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_harga_min">Harga Minimum</label>
+                            <div class="business-form-currency-wrapper">
+                                {{ form.harga_min }}
+                                <span class="business-form-currency-display" id="harga_min_display">Rp 0</span>
+                            </div>
+                            {% for error in form.harga_min.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_harga_max">Harga Maksimum</label>
+                            <div class="business-form-currency-wrapper">
+                                {{ form.harga_max }}
+                                <span class="business-form-currency-display" id="harga_max_display">Rp 0</span>
+                            </div>
+                            {% for error in form.harga_max.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_satuan_harga">Satuan Harga</label>
+                            {{ form.satuan_harga }}
+                            {% for error in form.satuan_harga.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_status">Status</label>
+                            {{ form.status }}
+                            {% for error in form.status.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="business-form-section business-form-section-layanan">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-clock"></i> Waktu & Area Layanan
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_waktu_layanan">Waktu Layanan</label>
+                            {{ form.waktu_layanan }}
+                            {% for error in form.waktu_layanan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_area_layanan">Area Layanan</label>
+                            {{ form.area_layanan }}
+                            {% for error in form.area_layanan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="business-form-section business-form-section-layanan">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-info"></i> Informasi Tambahan
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label" for="id_keunggulan">Keunggulan</label>
+                            {{ form.keunggulan }}
+                            {% for error in form.keunggulan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label" for="id_syarat_ketentuan">Syarat & Ketentuan</label>
+                            {{ form.syarat_ketentuan }}
+                            {% for error in form.syarat_ketentuan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media & Gambar -->
+                <div class="business-form-section business-form-section-layanan">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-images"></i> Media & Gambar
+                    </h4>
+                    
+                    <!-- Upload Help -->
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_foto_layanan">Foto Layanan</label>
+                            {{ form.foto_layanan }}
+                            {% for error in form.foto_layanan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                            <small class="business-form-help">Upload foto layanan atau tempat kerja</small>
+                            
+                            <!-- Preview Foto Layanan -->
+                            {% if is_edit and form.instance.foto_layanan %}
+                                <div class="image-preview-container">
+                                    <label class="business-form-label">Foto Layanan Saat Ini:</label>
+                                    <div class="current-image-preview">
+                                        <img src="{{ form.instance.foto_layanan.url }}" alt="Foto Layanan Saat Ini" class="preview-image">
+                                        <div class="image-info">
+                                            <small class="text-muted">{{ form.instance.foto_layanan.name|basename }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_logo_layanan">Logo Layanan</label>
+                            {{ form.logo_layanan }}
+                            {% for error in form.logo_layanan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                            <small class="business-form-help">Upload logo atau identitas layanan</small>
+                            
+                            <!-- Preview Logo Layanan -->
+                            {% if is_edit and form.instance.logo_layanan %}
+                                <div class="image-preview-container">
+                                    <label class="business-form-label">Logo Layanan Saat Ini:</label>
+                                    <div class="current-image-preview">
+                                        <img src="{{ form.instance.logo_layanan.url }}" alt="Logo Layanan Saat Ini" class="preview-image">
+                                        <div class="image-info">
+                                            <small class="text-muted">{{ form.instance.logo_layanan.name|basename }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="business-form-footer">
+                    <a href="{% url 'admin_panel:layanan_jasa_list' %}" class="business-form-btn business-form-btn-outline-secondary">
+                        <i class="fas fa-times"></i>Batal
+                    </a>
+                    <button type="submit" class="business-form-btn business-form-btn-purple">
+                        <i class="fas fa-save"></i>{% if is_edit %}Simpan Perubahan{% else %}Simpan{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- Business Penduduk Autocomplete -->
+<script src="{% static 'js/admin/business-penduduk-autocomplete.js' %}?v=3"></script>
+
+<script>
+$(document).ready(function() {
+    console.log('=== Layanan Jasa Form Debug Started ===');
+    
+    // Initialize Penduduk Autocomplete
+    if (typeof BusinessPendudukAutocomplete !== 'undefined') {
+        const autocompleteInputs = document.querySelectorAll('.penduduk-autocomplete');
+        autocompleteInputs.forEach(input => {
+            new BusinessPendudukAutocomplete(input);
+        });
+        console.log(`Penduduk autocomplete initialized for ${autocompleteInputs.length} field(s)`);
+    } else {
+        console.error('BusinessPendudukAutocomplete not loaded');
+    }
+    
+    // Debug form elements
+    console.log('Form elements found:');
+    console.log('- Form:', $('form').length);
+    console.log('- Penduduk autocomplete inputs:', $('.penduduk-autocomplete').length);
+    
+    // Currency formatting
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+    }
+    
+    // Currency input formatting for harga min
+    $('#id_harga_min').on('input', function() {
+        let value = $(this).val().replace(/[^\d]/g, '');
+        if (value) {
+            let formatted = formatCurrency(parseInt(value));
+            // Update display if exists
+            if ($('#harga_min_display').length) {
+                $('#harga_min_display').text(formatted);
+            }
+        }
+    });
+    
+    // Currency input formatting for harga max
+    $('#id_harga_max').on('input', function() {
+        let value = $(this).val().replace(/[^\d]/g, '');
+        if (value) {
+            let formatted = formatCurrency(parseInt(value));
+            // Update display if exists
+            if ($('#harga_max_display').length) {
+                $('#harga_max_display').text(formatted);
+            }
+        }
+    });
+    
+    // Initialize currency display on page load
+    if ($('#id_harga_min').val()) {
+        let value = $('#id_harga_min').val().replace(/[^\d]/g, '');
+        if (value) {
+            let formatted = formatCurrency(parseInt(value));
+            if ($('#harga_min_display').length) {
+                $('#harga_min_display').text(formatted);
+            }
+        }
+    }
+    
+    if ($('#id_harga_max').val()) {
+        let value = $('#id_harga_max').val().replace(/[^\d]/g, '');
+        if (value) {
+            let formatted = formatCurrency(parseInt(value));
+            if ($('#harga_max_display').length) {
+                $('#harga_max_display').text(formatted);
+            }
+        }
+    }
+    
+    console.log('=== Layanan Jasa Form Debug Ready ===');
+});
+</script>
+{% endblock extra_js %}

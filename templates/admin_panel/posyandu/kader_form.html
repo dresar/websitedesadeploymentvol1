@@ -1,0 +1,371 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}
+    {% if kader %}Edit Kader Posyandu{% else %}Tambah Kader Posyandu{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_form.css' %}">
+<style>
+    .penduduk-search {
+        position: relative;
+    }
+    
+    .penduduk-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 0 0 8px 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 9999;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        margin-top: 5px;
+    }
+    
+    .penduduk-item {
+        padding: 15px;
+        border-bottom: 1px solid #f8f9fa;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .penduduk-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .penduduk-item:last-child {
+        border-bottom: none;
+    }
+    
+    .selected-penduduk {
+        background: #e3f2fd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 15px;
+    }
+    
+    .penduduk-photo {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-user-nurse text-primary mr-2"></i>
+                        {% if kader %}Edit Kader Posyandu{% else %}Tambah Kader Posyandu{% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {% if kader %}Ubah informasi kader posyandu{% else %}Tambah kader posyandu baru{% endif %}
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'admin_panel:posyandu:kaders' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left mr-1"></i>
+                        Kembali ke Daftar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="kaderForm">
+        {% csrf_token %}
+        <input type="hidden" id="pendudukId" name="penduduk_id" value="{% if kader %}{{ kader.penduduk.id }}{% endif %}">
+
+        <div class="form-section">
+            <div class="section-header">
+                <h5>
+                    <i class="fas fa-user mr-2"></i>
+                    {% if kader %}Data Penduduk Terpilih{% else %}Pilih Data Penduduk{% endif %}
+                </h5>
+            </div>
+
+            {% if not kader %}
+
+            <div class="penduduk-search">
+                <label for="pendudukSearch" class="form-label required-field">Cari Penduduk</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="pendudukSearch" placeholder="Ketik nama atau NIK penduduk...">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="searchPendudukBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="pendudukResults" class="penduduk-results">
+
+                </div>
+            </div>
+            {% endif %}
+
+            <div id="selectedPendudukInfo" class="selected-penduduk" {% if not kader %}style="display: none;"{% endif %}>
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <img id="selectedPendudukPhoto"
+                             src="{% if kader and kader.penduduk.photo %}{{ kader.penduduk.photo.url }}{% else %}/static/images/defaults/avatar-placeholder.svg{% endif %}"
+                             alt="Photo" class="penduduk-photo">
+                    </div>
+                    <div class="col-md-10">
+                        <h6 id="selectedPendudukName">{% if kader %}{{ kader.penduduk.name }}{% endif %}</h6>
+                        <p class="mb-1"><strong>NIK:</strong> <span id="selectedPendudukNik">{% if kader %}{{ kader.penduduk.nik }}{% endif %}</span></p>
+                        <p class="mb-1"><strong>Alamat:</strong> <span id="selectedPendudukAddress">{% if kader %}{{ kader.penduduk.alamat }}{% endif %}</span></p>
+                        <p class="mb-0"><strong>No. HP:</strong> <span id="selectedPendudukPhone">{% if kader %}{{ kader.penduduk.telepon }}{% endif %}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-header">
+                <h5>
+                    <i class="fas fa-user-nurse mr-2"></i>
+                    Informasi Kader
+                </h5>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="posyandu" class="form-label required-field">Lokasi Posyandu</label>
+                        <select class="form-control" id="posyandu" name="posyandu_id" required>
+                            <option value="">Pilih Lokasi Posyandu</option>
+                            {% for location in posyandu_locations %}
+                                <option value="{{ location.id }}" {% if kader and kader.posyandu.id == location.id %}selected{% endif %}>
+                                    {{ location.name }}
+                                </option>
+                            {% empty %}
+                                <option value="" disabled>Belum ada lokasi posyandu aktif</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="jabatan" class="form-label required-field">Jabatan</label>
+                        <select class="form-control" id="jabatan" name="jabatan" required>
+                            <option value="">Pilih Jabatan</option>
+                            <option value="ketua" {% if kader and kader.jabatan == 'ketua' %}selected{% endif %}>Ketua</option>
+                            <option value="wakil_ketua" {% if kader and kader.jabatan == 'wakil_ketua' %}selected{% endif %}>Wakil Ketua</option>
+                            <option value="sekretaris" {% if kader and kader.jabatan == 'sekretaris' %}selected{% endif %}>Sekretaris</option>
+                            <option value="bendahara" {% if kader and kader.jabatan == 'bendahara' %}selected{% endif %}>Bendahara</option>
+                            <option value="anggota" {% if kader and kader.jabatan == 'anggota' %}selected{% endif %}>Anggota</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="nomor_hp" class="form-label">No. HP Kader</label>
+                        <input type="text" class="form-control" id="nomor_hp" name="nomor_hp"
+                               value="{% if kader %}{{ kader.nomor_hp }}{% endif %}"
+                               placeholder="Nomor HP khusus kader">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-control" id="status" name="status">
+                            <option value="aktif" {% if not kader or kader.status == 'aktif' %}selected{% endif %}>Aktif</option>
+                            <option value="nonaktif" {% if kader and kader.status == 'nonaktif' %}selected{% endif %}>Non-Aktif</option>
+                            <option value="cuti" {% if kader and kader.status == 'cuti' %}selected{% endif %}>Cuti</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="tanggal_mulai" class="form-label required-field">Tanggal Mulai Tugas</label>
+                        <input type="date" class="form-control" id="tanggal_mulai" name="tanggal_mulai"
+                               value="{% if kader %}{{ kader.tanggal_mulai|date:'Y-m-d' }}{% endif %}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="tanggal_selesai" class="form-label">Tanggal Selesai Tugas</label>
+                        <input type="date" class="form-control" id="tanggal_selesai" name="tanggal_selesai"
+                               value="{% if kader %}{{ kader.tanggal_selesai|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="keterangan" class="form-label">Keterangan</label>
+                        <textarea class="form-control" id="keterangan" name="keterangan" rows="3"
+                                  placeholder="Catatan tambahan tentang kader...">{% if kader %}{{ kader.keterangan }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <div class="row">
+                <div class="col-md-12 text-right">
+                    <a href="{% url 'admin_panel:posyandu:kaders' %}" class="btn btn-secondary btn-custom mr-2">
+                        <i class="fas fa-times mr-1"></i>
+                        Batal
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-custom">
+                        <i class="fas fa-save mr-1"></i>
+                        {% if kader %}Update Kader{% else %}Simpan Kader{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script></script>
+<script>$(document).ready(function() {
+    let selectedPenduduk = null;
+
+    {% if not kader %}
+    $('#searchPendudukBtn').on('click', function() {
+        searchPenduduk();
+    });
+
+    $('#pendudukSearch').on('keypress', function(e) {
+        if (e.which === 13) {
+            searchPenduduk();
+        }
+    });
+
+    function searchPenduduk() {
+        const query = $('#pendudukSearch').val();
+        if (query.length < 2) {
+            showAlert('Minimal 2 karakter untuk pencarian', 'warning');
+            return;
+        }
+
+        console.log('Searching penduduk with query:', query);
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_penduduk_search" %}',
+            method: 'GET',
+            data: { q: query },
+            success: function(response) {
+                console.log('Search response:', response);
+                if (response.success) {
+                    displayPendudukResults(response.results || []);
+                } else {
+                    console.error('Search failed:', response.error);
+                    alert('Pencarian gagal: ' + (response.error || 'Unknown error'));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error searching penduduk:', error);
+                console.error('XHR:', xhr);
+                console.error('Status:', status);
+                console.error('Response Text:', xhr.responseText);
+                alert('Error mencari penduduk. Silakan cek console untuk detail.');
+            }
+        });
+    }
+
+    function displayPendudukResults(pendudukList) {
+        const container = $('#pendudukResults');
+        container.show();
+
+        if (!pendudukList || pendudukList.length === 0) {
+            container.html('<div class="alert alert-info">Tidak ada penduduk ditemukan</div>');
+            return;
+        }
+
+        let html = '';
+        pendudukList.forEach(function(penduduk, index) {
+            const name = penduduk.name || 'N/A';
+            const nik = penduduk.nik || '-';
+            const gender = penduduk.gender_display || penduduk.gender || '-';
+            const age = penduduk.age || 0;
+            const address = penduduk.address || penduduk.full_address || '-';
+            const photo = penduduk.photo || '/static/images/defaults/avatar-placeholder.svg';
+            
+            html += `
+                <div class="penduduk-item" data-penduduk-index="${index}">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <img src="${photo}" alt="Photo" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="mb-1">${name}</h6>
+                            <p class="mb-1 text-muted">NIK: ${nik} | ${gender} | ${age} tahun</p>
+                            <p class="mb-0 text-muted">${address}</p>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-sm btn-primary select-penduduk">
+                                <i class="fas fa-check"></i> Pilih
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.html(html);
+
+        $('.select-penduduk').on('click', function() {
+            const pendudukIndex = $(this).closest('.penduduk-item').data('penduduk-index');
+            if (pendudukIndex !== undefined) {
+                const pendudukData = pendudukList[pendudukIndex];
+                selectPenduduk(pendudukData);
+            }
+        });
+    }
+
+    function selectPenduduk(penduduk) {
+        selectedPenduduk = penduduk;
+
+        $('#selectedPendudukPhoto').attr('src', penduduk.photo || '/static/images/defaults/avatar-placeholder.svg');
+        $('#selectedPendudukName').text(penduduk.name || 'N/A');
+        $('#selectedPendudukNik').text(penduduk.nik || '-');
+        $('#selectedPendudukAddress').text(penduduk.alamat || penduduk.address || '-');
+        $('#selectedPendudukPhone').text(penduduk.telepon || penduduk.phone || '-');
+
+        $('#pendudukId').val(penduduk.id);
+
+        $('#selectedPendudukInfo').show();
+        $('#pendudukResults').hide();
+        $('#pendudukSearch').val('');
+    }
+    {% endif %}
+
+    $('#kaderForm').on('submit', function(e) {
+        {% if not kader %}
+        if (!selectedPenduduk && !$('#pendudukId').val()) {
+            e.preventDefault();
+            showAlert('Pilih penduduk terlebih dahulu', 'warning');
+            return;
+        }
+        {% endif %}
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.penduduk-search').length) {
+            $('#pendudukResults').hide();
+        }
+    });
+});
+</script>
+{% endblock %}

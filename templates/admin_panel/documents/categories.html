@@ -1,0 +1,385 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Kategori Dokumen{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-list.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-mobile.css' %}">
+<style>
+
+.category-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.category-stat-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.category-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.category-icon-sm {
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4A90E2 0%, #6BA3F0 100%);
+    color: white;
+    font-size: 1.25rem;
+}
+
+.category-stat-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.category-stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #2c3e50;
+    line-height: 1.2;
+}
+
+.category-stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    .category-stats-grid {
+        gap: 0.5rem;
+    }
+
+    .category-stat-card {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .category-icon-sm {
+        width: 35px;
+        height: 35px;
+        min-width: 35px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .category-stat-number {
+        font-size: 1.25rem;
+    }
+
+    .category-stat-label {
+        font-size: 0.7rem;
+    }
+}
+
+@media (min-width: 769px) {
+    .category-stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+
+    .category-stat-card {
+        padding: 1.25rem;
+    }
+}
+
+.category-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4A90E2 0%, #6BA3F0 100%);
+    color: white;
+    font-size: 1.2rem;
+}
+
+.category-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+}
+
+.category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.badge-count {
+    background: linear-gradient(135deg, #4A90E2 0%, #6BA3F0 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="documents-list-container">
+
+    <div class="documents-list-header">
+        <div class="header-left">
+            <h1 class="page-title">
+                <i class="fas fa-tags"></i>
+                Kategori Dokumen Transparansi
+            </h1>
+            <p class="page-subtitle">Kelola kategori dokumen transparansi desa</p>
+        </div>
+        <div class="header-right">
+            <a href="{% url 'admin_panel:documents_dashboard' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                <i class="fas fa-plus"></i> Tambah Kategori
+            </button>
+        </div>
+    </div>
+
+    <div class="category-stats-grid mb-3">
+        <div class="category-stat-card">
+            <div class="category-icon-sm">
+                <i class="fas fa-tags"></i>
+            </div>
+            <div class="category-stat-content">
+                <h3 class="category-stat-number">{{ categories|length }}</h3>
+                <p class="category-stat-label">Total Kategori</p>
+            </div>
+        </div>
+
+        <div class="category-stat-card">
+            <div class="category-icon-sm" style="background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="category-stat-content">
+                <h3 class="category-stat-number" id="active-categories-count">0</h3>
+                <p class="category-stat-label">Kategori Aktif</p>
+            </div>
+        </div>
+
+        <div class="category-stat-card">
+            <div class="category-icon-sm" style="background: linear-gradient(135deg, #ffc107 0%, #ffd43b 100%);">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="category-stat-content">
+                <h3 class="category-stat-number" id="total-documents-count">0</h3>
+                <p class="category-stat-label">Total Dokumen</p>
+            </div>
+        </div>
+
+        <div class="category-stat-card">
+            <div class="category-icon-sm" style="background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="category-stat-content">
+                <h3 class="category-stat-number">13</h3>
+                <p class="category-stat-label">Jenis Kategori</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if categories %}
+                <div class="row">
+                    {% for category in categories %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card category-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start">
+                                    <div class="category-icon me-3">
+                                        <i class="fas {{ category.icon }}"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title mb-1">{{ category.name }}</h5>
+                                        <p class="text-muted small mb-2">{{ category.get_category_type_display }}</p>
+                                        <p class="card-text small text-muted mb-2">
+                                            {{ category.description|truncatechars:80 }}
+                                        </p>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span class="badge-count">
+                                                <i class="fas fa-file-alt"></i> {{ category.doc_count }} Dokumen
+                                            </span>
+                                            <div class="btn-group btn-group-sm">
+                                                <button type="button"
+                                                        class="btn btn-outline-primary btn-sm"
+                                                        onclick="editCategory({{ category.id }})"
+                                                        title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-outline-danger btn-sm"
+                                                        onclick="deleteCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+                                                        title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-sort"></i> Urutan: {{ category.display_order }}
+                                                {% if category.is_active %}
+                                                <span class="badge bg-success ms-2">Aktif</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary ms-2">Nonaktif</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Belum ada kategori dokumen</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                        <i class="fas fa-plus"></i> Tambah Kategori Pertama
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addCategoryModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Tambah Kategori Baru
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'admin_panel:document_category_create' %}" id="addCategoryForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nama Kategori <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category_type" class="form-label">Jenis Kategori <span class="text-danger">*</span></label>
+                        <select class="form-select" id="category_type" name="category_type" required>
+                            <option value="">Pilih Jenis</option>
+                            <option value="apbdes">APBDES</option>
+                            <option value="realisasi_anggaran">Laporan Realisasi Anggaran</option>
+                            <option value="dana_desa">Info Dana Desa</option>
+                            <option value="perdes">Peraturan Desa (Perdes)</option>
+                            <option value="perkades">Peraturan Kepala Desa (Perkades)</option>
+                            <option value="sk_kades">SK Kepala Desa</option>
+                            <option value="profil_desa">Profil Desa</option>
+                            <option value="data_kependudukan">Data Kependudukan</option>
+                            <option value="peta_desa">Peta Desa</option>
+                            <option value="lppd">LPPD</option>
+                            <option value="musdes">Notulensi Musdes</option>
+                            <option value="laporan_lainnya">Laporan Lainnya</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Deskripsi</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="icon" class="form-label">Icon (FontAwesome)</label>
+                        <input type="text" class="form-control" id="icon" name="icon" placeholder="fa-file" value="fa-file">
+                        <small class="form-text text-muted">Contoh: fa-file, fa-folder, fa-chart-bar</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="display_order" class="form-label">Urutan Tampilan</label>
+                        <input type="number" class="form-control" id="display_order" name="display_order" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>document.addEventListener('DOMContentLoaded', function() {
+    let totalDocs = 0;
+    let activeCategories = 0;
+
+    {% for cat in categories %}
+        totalDocs += {{ cat.doc_count }};
+        {% if cat.is_active %}
+        activeCategories++;
+        {% endif %}
+    {% endfor %}
+
+    document.getElementById('total-documents-count').textContent = totalDocs;
+    document.getElementById('active-categories-count').textContent = activeCategories;
+});
+
+function editCategory(categoryId) {
+
+    window.location.href = `/admin-panel/documents/categories/${categoryId}/edit/`;
+}
+
+function deleteCategory(categoryId, categoryName) {
+    if (confirm(`Apakah Anda yakin ingin menghapus kategori "${categoryName}"?\n\nSemua dokumen dalam kategori ini akan kehilangan kategorinya.`)) {
+        $.ajax({
+            url: `/admin-panel/documents/categories/${categoryId}/delete/`,
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (window.showAlert) {
+                        window.showAlert(response.message, 'success');
+                    }
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    if (window.showAlert) {
+                        window.showAlert(response.message, 'error');
+                    }
+                }
+            },
+            error: function() {
+                if (window.showAlert) {
+                    window.showAlert('Terjadi kesalahan saat menghapus kategori', 'error');
+                }
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
+

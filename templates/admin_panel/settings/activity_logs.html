@@ -1,0 +1,311 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Log Aktivitas{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+<style>
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .logs-table {
+        width: 100%;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .logs-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .logs-table thead {
+        background: linear-gradient(135deg, #4A90E2 0%, #6BA3F0 100%);
+        color: white;
+    }
+    
+    .logs-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .logs-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.85rem;
+    }
+    
+    .logs-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .action-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .action-add {
+        background: rgba(40, 167, 69, 0.2);
+        color: #155724;
+    }
+    
+    .action-change {
+        background: rgba(255, 193, 7, 0.2);
+        color: #856404;
+    }
+    
+    .action-delete {
+        background: rgba(220, 53, 69, 0.2);
+        color: #721c24;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .pagination a, .pagination span {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #4A90E2;
+    }
+    
+    .pagination .current {
+        background: #4A90E2;
+        color: white;
+        border-color: #4A90E2;
+    }
+    
+    .pagination a:hover {
+        background: #f0f8ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    Log Aktivitas
+                </h1>
+                <p class="dashboard-subtitle">Monitor semua aktivitas pengguna di sistem</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">User</label>
+                <select name="user" class="form-select">
+                    <option value="">Semua User</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}" {% if selected_user == user.id|stringformat:"s" %}selected{% endif %}>
+                            {{ user.get_full_name|default:user.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Aksi</label>
+                <select name="action" class="form-select">
+                    <option value="">Semua Aksi</option>
+                    <option value="1" {% if selected_action == "1" %}selected{% endif %}>Tambah</option>
+                    <option value="2" {% if selected_action == "2" %}selected{% endif %}>Ubah</option>
+                    <option value="3" {% if selected_action == "3" %}selected{% endif %}>Hapus</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label">Dari Tanggal</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from|default:'' }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label">Sampai Tanggal</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to|default:'' }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-chart-bar"></i>
+                Statistik Log
+            </h2>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-cart stat-cart-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-list"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_logs }}</div>
+                    <div class="stat-label">Total Log</div>
+                    <p class="stat-description">Total aktivitas tercatat</p>
+                </div>
+            </div>
+            
+            <div class="stat-cart stat-cart-success">
+                <div class="stat-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ logs|length }}</div>
+                    <div class="stat-label">Halaman Ini</div>
+                    <p class="stat-description">Log pada halaman saat ini</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="logs-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>User</th>
+                    <th>Aksi</th>
+                    <th>Objek</th>
+                    <th>Perubahan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        <i class="fas fa-clock text-muted me-2"></i>
+                        {% if log.action_time %}
+                            {{ log.action_time|date:"d M Y, H:i" }}
+                        {% else %}
+                            {{ log.created_at|date:"d M Y, H:i" }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <i class="fas fa-user text-muted me-2"></i>
+                        {{ log.user.get_full_name|default:log.user.username }}
+                    </td>
+                    <td>
+                        {% if log.action_flag == 1 or log.action == 'create' %}
+                            <span class="action-badge action-add">
+                                <i class="fas fa-plus me-1"></i>Tambah
+                            </span>
+                        {% elif log.action_flag == 2 or log.action == 'update' %}
+                            <span class="action-badge action-change">
+                                <i class="fas fa-edit me-1"></i>Ubah
+                            </span>
+                        {% elif log.action_flag == 3 or log.action == 'delete' %}
+                            <span class="action-badge action-delete">
+                                <i class="fas fa-trash me-1"></i>Hapus
+                            </span>
+                        {% elif log.action == 'login' %}
+                            <span class="action-badge action-add">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </span>
+                        {% elif log.action == 'logout' %}
+                            <span class="action-badge action-change">
+                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            </span>
+                        {% else %}
+                            <span class="action-badge action-change">
+                                <i class="fas fa-info me-1"></i>{{ log.get_action_display|default:log.action }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ log.object_type|default:"N/A" }}</strong>
+                        {% if log.object_repr %}
+                            <br><small class="text-muted">{{ log.object_repr }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.description %}
+                            <small>{{ log.description }}</small>
+                        {% else %}
+                            <small class="text-muted">Tidak ada keterangan</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Tidak ada log aktivitas ditemukan</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if logs.has_other_pages %}
+    <div class="pagination">
+        {% if logs.has_previous %}
+            <a href="?page=1{% if selected_user %}&user={{ selected_user }}{% endif %}{% if selected_action %}&action={{ selected_action }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ logs.previous_page_number }}{% if selected_user %}&user={{ selected_user }}{% endif %}{% if selected_action %}&action={{ selected_action }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                <i class="fas fa-angle-left"></i>
+            </a>
+        {% endif %}
+
+        <span class="current">
+            Halaman {{ logs.number }} dari {{ logs.paginator.num_pages }}
+        </span>
+
+        {% if logs.has_next %}
+            <a href="?page={{ logs.next_page_number }}{% if selected_user %}&user={{ selected_user }}{% endif %}{% if selected_action %}&action={{ selected_action }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ logs.paginator.num_pages }}{% if selected_user %}&user={{ selected_user }}{% endif %}{% if selected_action %}&action={{ selected_action }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="mt-4 text-center">
+        <a href="{% url 'core:settings' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali ke Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+

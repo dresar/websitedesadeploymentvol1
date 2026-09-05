@@ -1,0 +1,971 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block page_title %}
+{% if form.instance.pk %}Edit{% else %}Buat{% endif %} Surat
+{% endblock %}
+
+{% block page_description %}
+{% if form.instance.pk %}Ubah informasi surat yang sudah ada{% else %}Buat surat baru dengan informasi lengkap{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+    .letter-form-container {
+        background: #ffffff;
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .form-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    
+    .form-card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .form-card-body {
+        padding: 25px;
+    }
+    
+    .form-label {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+    
+    .form-control {
+        background-color: #ffffff;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        color: #495057;
+        font-size: 14px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        background-color: #ffffff;
+        border-color: #667eea;
+        color: #495057;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-control::placeholder {
+        color: #6c757d;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-outline-secondary {
+        border: 2px solid #6c757d;
+        color: #6c757d;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-outline-info {
+        border: 2px solid #17a2b8;
+        color: #17a2b8;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-info:hover {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        color: white;
+    }
+    
+    .input-group .form-control {
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .input-group .btn {
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    
+    .form-text {
+        color: #6c757d;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    
+    .sidebar-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    
+    .sidebar-card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .sidebar-card-body {
+        padding: 20px;
+    }
+    
+    .info-grid {
+        display: grid;
+        gap: 15px;
+    }
+    
+    .info-item {
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .info-label {
+        font-size: 12px;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        font-size: 14px;
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .tips-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid #f8f9fa;
+        color: #495057;
+        font-size: 13px;
+    }
+    
+    .tips-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+    }
+    
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .alert-warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .alert-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .modal-content {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px 10px 0 0;
+        border-bottom: none;
+    }
+    
+    .modal-body {
+        padding: 25px;
+    }
+    
+    .list-group-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+    
+    .summernote-editor {
+        background-color: #ffffff;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        min-height: 500px;
+        width: 100%;
+    }
+    
+    .note-editor {
+        background-color: #ffffff !important;
+        border: 2px solid #e9ecef !important;
+        border-radius: 8px !important;
+        min-height: 500px !important;
+        width: 100% !important;
+    }
+    
+    .note-editor .note-editing-area {
+        background-color: #ffffff !important;
+        color: #495057 !important;
+        min-height: 450px !important;
+    }
+    
+    .note-editor .note-editing-area .note-editable {
+        background-color: #ffffff !important;
+        color: #495057 !important;
+        min-height: 450px !important;
+        padding: 20px !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+    }
+    
+    .note-toolbar {
+        background-color: #f8f9fa !important;
+        border-bottom: 1px solid #e9ecef !important;
+        padding: 10px !important;
+    }
+    
+    .note-btn-group {
+        background-color: transparent !important;
+        margin-right: 5px !important;
+    }
+    
+    .note-btn {
+        color: #495057 !important;
+        background-color: transparent !important;
+        border: 1px solid #e9ecef !important;
+        border-radius: 4px !important;
+        padding: 5px 8px !important;
+        margin: 2px !important;
+    }
+    
+    .note-btn:hover {
+        background-color: #e9ecef !important;
+        border-color: #667eea !important;
+    }
+    
+    .note-btn.active {
+        background-color: #667eea !important;
+        color: white !important;
+        border-color: #667eea !important;
+    }
+    
+    /* Expanded Editor Container */
+    .editor-container {
+        background: #ffffff;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .editor-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 20px;
+        border-radius: 10px 10px 0 0;
+        margin: -20px -20px 20px -20px;
+    }
+    
+    .editor-body {
+        min-height: 500px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .character-count {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        margin-top: 10px;
+        font-size: 12px;
+        color: #6c757d;
+    }
+    
+    .template-preview {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+        font-size: 13px;
+        color: #495057;
+    }
+    
+    .form-actions {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        margin-top: 30px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        color: #dee2e6;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .badge {
+        font-size: 11px;
+        padding: 6px 12px;
+        border-radius: 20px;
+    }
+    
+    .badge-success {
+        background-color: #28a745;
+    }
+    
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-danger {
+        background-color: #dc3545;
+    }
+    
+    .badge-info {
+        background-color: #17a2b8;
+    }
+    
+    .badge-secondary {
+        background-color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="letter-form-container">
+    <!-- Form Header -->
+    <div class="form-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} me-3"></i>
+                        {% if form.instance.pk %}Edit{% else %}Buat{% endif %} Surat
+                    </h1>
+                    <p class="mb-0 opacity-75">
+                        {% if form.instance.pk %}Ubah informasi surat yang sudah ada{% else %}Buat surat baru dengan informasi lengkap{% endif %}
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'admin_panel:letters:admin_letter_list' %}" class="btn btn-light">
+                            <i class="fas fa-arrow-left me-2"></i>Kembali
+                        </a>
+                        {% if form.instance.pk %}
+                        <button type="button" class="btn btn-light" onclick="previewLetter()">
+                            <i class="fas fa-eye me-2"></i>Preview
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="row">
+            <!-- Main Form - Full Width -->
+            <div class="col-12">
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Formulir Surat
+                        </h5>
+                    </div>
+                    <div class="form-card-body">
+                        <form method="post" enctype="multipart/form-data" novalidate id="letterForm">
+                            {% csrf_token %}
+
+                            <!-- Basic Information Section -->
+                            <div class="form-card mb-4">
+                                <div class="form-card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Informasi Dasar
+                                    </h6>
+                                </div>
+                                <div class="form-card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="{{ form.letter_type.id_for_label }}" class="form-label">
+                                                    Jenis Surat <span class="text-danger">*</span>
+                                                </label>
+                                                {% render_field form.letter_type class="form-control" %}
+                                                {% if form.letter_type.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.letter_type.errors %}
+                                                    {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                                    Prioritas
+                                                </label>
+                                                {% render_field form.priority class="form-control" %}
+                                                {% if form.priority.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.priority.errors %}
+                                                    {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Applicant Selection -->
+                                    <div class="mb-3">
+                                        <label for="{{ form.applicant.id_for_label }}" class="form-label">
+                                            Pemohon <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            {% render_field form.applicant class="form-control" %}
+                                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#applicantSearchModal">
+                                                <i class="fas fa-search"></i> Cari
+                                            </button>
+                                        </div>
+                                        {% if form.applicant.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.applicant.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        <div class="form-text">
+                                            Pilih pemohon dari database penduduk atau cari melalui modal pencarian
+                                        </div>
+                                    </div>
+
+                                    <!-- Subject -->
+                                    <div class="mb-3">
+                                        <label for="{{ form.subject.id_for_label }}" class="form-label">
+                                                    Perihal <span class="text-danger">*</span>
+                                                </label>
+                                        {% render_field form.subject class="form-control" placeholder="Masukkan perihal surat" %}
+                                                {% if form.subject.errors %}
+                                        <div class="invalid-feedback d-block">
+                                                    {% for error in form.subject.errors %}
+                                                    {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                                {% endif %}
+                                    </div>
+
+                                    <!-- Purpose -->
+                                    <div class="mb-3">
+                                        <label for="{{ form.purpose.id_for_label }}" class="form-label">
+                                            Tujuan Penggunaan
+                                        </label>
+                                        {% render_field form.purpose class="form-control" rows="3" placeholder="Jelaskan tujuan penggunaan surat ini" %}
+                                        {% if form.purpose.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.purpose.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        <div class="form-text">
+                                            Berikan penjelasan singkat mengenai tujuan penggunaan surat
+                                        </div>
+                                    </div>
+                                        </div>
+                                    </div>
+
+                            <!-- Content Section - Expanded -->
+                            <div class="form-card mb-4">
+                                <div class="form-card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-file-text me-2"></i>
+                                        Isi Surat
+                                    </h6>
+                                </div>
+                                <div class="form-card-body">
+                                    <!-- Notes Section -->
+                                    <div class="mb-4">
+                                        <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                            Catatan
+                                        </label>
+                                        {% render_field form.notes class="form-control" rows="3" placeholder="Catatan tambahan jika diperlukan" %}
+                                        {% if form.notes.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.notes.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Editor Section - Expanded Area -->
+                            <div class="form-card mb-4">
+                                <div class="form-card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-edit me-2"></i>
+                                        Editor Konten Surat
+                                    </h6>
+                                </div>
+                                <div class="form-card-body">
+                                    <div class="mb-3">
+                                        <label for="{{ form.content.id_for_label }}" class="form-label">
+                                            Konten Surat <span class="text-danger">*</span>
+                                        </label>
+                                        {% render_field form.content %}
+                                        {% if form.content.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.content.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        <div class="character-count">
+                                            <span id="charCount">0</span> karakter, <span id="wordCount">0</span> kata
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Template Selection -->
+                                    {% if templates %}
+                            <div class="form-card mb-4">
+                                <div class="form-card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-template me-2"></i>
+                                        Template Surat
+                                    </h6>
+                                </div>
+                                <div class="form-card-body">
+                                    <div class="mb-3">
+                                        <label for="template_select" class="form-label">
+                                            Gunakan Template
+                                        </label>
+                                        <select class="form-control" id="template_select">
+                                            <option value="">Pilih template...</option>
+                                            {% for template in templates %}
+                                            <option value="{{ template.id }}" data-content="{{ template.content_template }}">
+                                                {{ template.name }} ({{ template.get_template_type_display }})
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">
+                                            Pilih template untuk mengisi konten secara otomatis
+                                        </div>
+                                    </div>
+                                    <div id="templatePreview" class="template-preview" style="display: none;">
+                                        <strong>Preview Template:</strong>
+                                        <div id="templateContent"></div>
+                                </div>
+                            </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Form Actions -->
+                            <div class="form-actions">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="saveDraft()">
+                                            <i class="fas fa-save me-2"></i>Simpan Draft
+                                        </button>
+                                </div>
+                                    <div>
+                                    {% if form.instance.pk %}
+                                        <button type="button" class="btn btn-outline-info me-2" onclick="previewLetter()">
+                                            <i class="fas fa-eye me-2"></i>Preview
+                                    </button>
+                                    {% endif %}
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-check me-2"></i>
+                                        {% if form.instance.pk %}Simpan Perubahan{% else %}Buat Surat{% endif %}
+                                    </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Sections - Moved to Bottom -->
+        <div class="row mt-4">
+            <div class="col-lg-6">
+                <!-- Letter Information -->
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informasi Surat
+                        </h6>
+                    </div>
+                    <div class="sidebar-card-body">
+                        {% if form.instance.pk %}
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Nomor Surat</div>
+                                <div class="info-value">{{ form.instance.letter_number|default:"Belum ada" }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Status</div>
+                                <div class="info-value">
+                                    <span class="badge badge-{{ form.instance.status|default:'secondary' }}">
+                                        {{ form.instance.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Dibuat</div>
+                                <div class="info-value">
+                                    {{ form.instance.created_at|date:"d M Y H:i" }}
+                                    {% if form.instance.created_by %}
+                                    <br><small class="text-muted">oleh {{ form.instance.created_by.get_full_name|default:form.instance.created_by.username }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Terakhir Update</div>
+                                <div class="info-value">{{ form.instance.updated_at|date:"d M Y H:i" }}</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-lightbulb"></i>
+                            <p class="mb-0">Setelah surat dibuat, informasi seperti nomor surat dan status akan muncul di sini.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <!-- Quick Tips -->
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Tips Pengisian
+                        </h6>
+                    </div>
+                    <div class="sidebar-card-body">
+                        <ul class="tips-list">
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Pilih jenis surat yang sesuai dengan kebutuhan
+                            </li>
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Pastikan data pemohon sudah benar
+                            </li>
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Jelaskan perihal dengan jelas dan lengkap
+                            </li>
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Gunakan editor untuk format teks yang baik
+                            </li>
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Template dapat membantu mempercepat pengisian
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Progress Indicator -->
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Progress Pengisian
+                        </h6>
+            </div>
+                    <div class="sidebar-card-body">
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Progress</small>
+                            <small class="text-muted" id="progressText">0%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Section - Full Width -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <!-- Progress Indicator -->
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Progress Pengisian
+                        </h6>
+                    </div>
+                    <div class="sidebar-card-body">
+                        <div class="progress mb-3" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Progress</small>
+                            <small class="text-muted" id="progressText">0%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Applicant Search Modal -->
+<div class="modal fade" id="applicantSearchModal" tabindex="-1" aria-labelledby="applicantSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="applicantSearchModalLabel">
+                    <i class="fas fa-search me-2"></i>Cari Pemohon
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="applicantSearchInput"
+                           placeholder="Cari berdasarkan NIK atau nama...">
+                </div>
+                <div id="applicantSearchResults" class="list-group">
+                    <!-- Results will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+{% if form.instance.pk %}
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">
+                    <i class="fas fa-eye me-2"></i>Preview Surat
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewContent">
+                <!-- Preview content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Alert Container -->
+<div id="alertContainer" class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
+    <!-- Alerts will be dynamically inserted here -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin/letters-admin.js' %}"></script>
+<script>
+// Form validation and functionality
+$(document).ready(function() {
+    console.log('Letter form loaded successfully');
+    
+    // Form submission handling
+    $('#letterForm').on('submit', function(e) {
+        console.log('Form submission started...');
+        
+        // Validate content
+        const content = $('#id_content').val();
+        if (!content || !content.trim()) {
+            e.preventDefault();
+            alert('Konten surat tidak boleh kosong!');
+            return false;
+        }
+        
+        console.log('Form submitted successfully');
+    });
+    
+    // Template loading functionality
+    function loadTemplate(templateId) {
+        console.log('Loading template:', templateId);
+        
+        $.ajax({
+            url: '/admin-panel/letters/templates/' + templateId + '/content/',
+            method: 'GET',
+            success: function(data) {
+                console.log('Template loaded successfully');
+                const templateContent = data.content || '';
+                $('#id_content').val(templateContent);
+                console.log('Template content applied');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading template:', error);
+                alert('Gagal memuat template: ' + error);
+            }
+        });
+    }
+    
+    // Template selection
+    $('#templateSelect').on('change', function() {
+        const templateId = $(this).val();
+        if (templateId) {
+            loadTemplate(templateId);
+        }
+    });
+    
+    // Print preview
+    function printPreview() {
+        const content = $('#id_content').val();
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Preview Surat</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .content { line-height: 1.6; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h2>DESA PULOSAROK</h2>
+                    <p>Kecamatan Pulosarok, Kabupaten Indramayu</p>
+                </div>
+                <div class="content">
+                    ${content}
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+    
+    // Keyboard shortcuts
+    $(document).on('keydown', function(e) {
+        // Ctrl+S for save
+        if (e.ctrlKey && e.keyCode === 83) {
+            e.preventDefault();
+            $('#letterForm').submit();
+        }
+        
+        // Ctrl+P for print preview
+        if (e.ctrlKey && e.keyCode === 80) {
+            e.preventDefault();
+            printPreview();
+        }
+    });
+    
+    console.log('✅ Letter form JavaScript loaded successfully');
+});
+</script>
+{% endblock %}

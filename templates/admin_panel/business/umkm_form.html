@@ -1,0 +1,665 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load business_filters %}
+
+{% block title %}{% if is_edit %}Edit UMKM{% else %}Tambah UMKM{% endif %} - Admin Panel{% endblock %}
+{% block page_title %}{% if is_edit %}Edit UMKM{% else %}Tambah UMKM{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/business/business-form.css' %}">
+<style>
+/* Simple dropdown styling */
+.penduduk-search-container {
+    position: relative;
+}
+
+#pendudukDropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+    display: none;
+}
+
+.dropdown-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item strong {
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.dropdown-item small {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Image Preview Styling */
+.image-preview-container {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.current-image-preview {
+    text-align: center;
+}
+
+.preview-image {
+    max-width: 200px;
+    max-height: 150px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #dee2e6;
+}
+
+.image-info {
+    margin-top: 8px;
+}
+
+/* Business Penduduk Autocomplete Styles */
+.business-penduduk-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+    display: none;
+}
+
+.business-penduduk-dropdown.show {
+    display: block;
+}
+
+.business-penduduk-dropdown .autocomplete-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.business-penduduk-dropdown .autocomplete-item:hover {
+    background-color: #f8f9fa;
+}
+
+.business-penduduk-dropdown .autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.business-penduduk-dropdown .autocomplete-item-name {
+    color: #2c3e50;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.business-penduduk-dropdown .autocomplete-item-nik {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-top: 2px;
+}
+
+.business-penduduk-dropdown .autocomplete-loading {
+    padding: 12px 16px;
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+}
+
+.business-penduduk-dropdown .autocomplete-no-results {
+    padding: 12px 16px;
+    color: #6c757d;
+    text-align: center;
+}
+
+/* Visual feedback for auto-filled fields */
+.business-form-filled {
+    background-color: #d4edda !important;
+    border-color: #28a745 !important;
+    transition: all 0.3s ease;
+}
+
+/* Mobile responsive */
+@media (max-width: 767.98px) {
+    #pendudukDropdown {
+        max-height: 250px;
+        border-radius: 6px;
+    }
+    
+    .dropdown-item {
+        padding: 8px 12px;
+    }
+    
+    .preview-image {
+        max-width: 150px;
+        max-height: 120px;
+    }
+    
+    .business-penduduk-dropdown {
+        max-height: 250px;
+        border-radius: 6px;
+    }
+    
+    .business-penduduk-dropdown .autocomplete-item {
+        padding: 8px 12px;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="business-form-wrapper business-form-wrapper-umkm">
+    <!-- Header -->
+    <div class="business-form-page-header">
+        <div>
+            <h1 class="business-form-page-title">
+                <i class="fas fa-industry"></i>{% if is_edit %}Edit UMKM{% else %}Tambah UMKM{% endif %}
+            </h1>
+            <p class="business-form-page-subtitle">{% if is_edit %}Perbarui data UMKM{% else %}Isi form untuk menambahkan UMKM baru{% endif %}</p>
+        </div>
+        <div class="business-form-page-actions">
+            <a href="{% url 'admin_panel:umkm_list' %}" class="business-form-btn business-form-btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>Kembali
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="business-form-card">
+        <div class="business-form-header business-form-header-umkm">
+            <h3 class="business-form-header-title">
+                <i class="fas fa-industry"></i>Form Data UMKM
+            </h3>
+        </div>
+        <div class="business-form-body">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <!-- Informasi Dasar Usaha -->
+                <div class="business-form-section business-form-section-umkm">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-building"></i> Informasi Dasar Usaha
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_nama_usaha">Nama Usaha</label>
+                            {{ form.nama_usaha }}
+                            {% for error in form.nama_usaha.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_jenis_usaha">Jenis Usaha</label>
+                            {{ form.jenis_usaha }}
+                            {% for error in form.jenis_usaha.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_skala_usaha">Skala Usaha</label>
+                            {{ form.skala_usaha }}
+                            {% for error in form.skala_usaha.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_tanggal_mulai">Tanggal Mulai Usaha</label>
+                            {{ form.tanggal_mulai }}
+                            {% for error in form.tanggal_mulai.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informasi Pemilik -->
+                <div class="business-form-section business-form-section-umkm">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-user"></i> Informasi Pemilik
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_pemilik">Pemilik Usaha</label>
+                            <div class="penduduk-search-container">
+                                <input type="text" name="pemilik" class="form-control penduduk-autocomplete" id="id_pemilik" 
+                                       value="{% if form.pemilik.value %}{{ form.pemilik.value }}{% endif %}" 
+                                       placeholder="Ketik nama pemilik usaha..." autocomplete="off"
+                                       data-fill-nik="id_nik_pemilik"
+                                       data-fill-alamat="id_alamat_pemilik"
+                                       data-fill-telepon="id_telepon"
+                                       data-fill-email="id_email">
+                                <div id="pendudukDropdown" class="dropdown-menu"></div>
+                            </div>
+                            {% for error in form.pemilik.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_telepon">Nomor Telepon</label>
+                            {{ form.telepon }}
+                            {% for error in form.telepon.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_email">Email</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_nomor_izin">Nomor Izin Usaha</label>
+                            {{ form.nomor_izin }}
+                            {% for error in form.nomor_izin.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_nik_pemilik">NIK Pemilik</label>
+                            {{ form.nik_pemilik }}
+                            {% for error in form.nik_pemilik.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alamat -->
+                <div class="business-form-section business-form-section-umkm">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-map-marker-alt"></i> Alamat
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label business-form-label-required" for="id_alamat_usaha">Alamat Usaha</label>
+                            {{ form.alamat_usaha }}
+                            {% for error in form.alamat_usaha.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label business-form-label-required" for="id_alamat_pemilik">Alamat Pemilik</label>
+                            {{ form.alamat_pemilik }}
+                            {% for error in form.alamat_pemilik.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informasi Keuangan -->
+                <div class="business-form-section business-form-section-umkm">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-chart-line"></i> Informasi Keuangan
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_modal_awal">Modal Awal</label>
+                            <div class="business-form-currency-wrapper">
+                                {{ form.modal_awal }}
+                                <span class="business-form-currency-display" id="modal_awal_display">Rp 0</span>
+                            </div>
+                            {% for error in form.modal_awal.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_omzet_bulanan">Omzet Bulanan</label>
+                            <div class="business-form-currency-wrapper">
+                                {{ form.omzet_bulanan }}
+                                <span class="business-form-currency-display" id="omzet_bulanan_display">Rp 0</span>
+                            </div>
+                            {% for error in form.omzet_bulanan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_jumlah_karyawan">Jumlah Karyawan</label>
+                            {{ form.jumlah_karyawan }}
+                            {% for error in form.jumlah_karyawan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label business-form-label-required" for="id_status">Status Usaha</label>
+                            {{ form.status }}
+                            {% for error in form.status.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informasi Produk -->
+                <div class="business-form-section business-form-section-umkm">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-box"></i> Informasi Produk
+                    </h4>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label business-form-label-required" for="id_produk_utama">Produk Utama</label>
+                            {{ form.produk_utama }}
+                            {% for error in form.produk_utama.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label business-form-label-required" for="id_target_pasar">Target Pasar</label>
+                            {{ form.target_pasar }}
+                            {% for error in form.target_pasar.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="business-form-row">
+                        <div class="business-form-col-full">
+                            <label class="business-form-label" for="id_keterangan">Keterangan Tambahan</label>
+                            {{ form.keterangan }}
+                            {% for error in form.keterangan.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media & Gambar -->
+                <div class="business-form-section business-form-section-umkm">
+                    <h4 class="business-form-section-title">
+                        <i class="fas fa-images"></i> Media & Gambar
+                    </h4>
+                    
+                    <div class="business-form-row">
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_foto_usaha">Foto Usaha</label>
+                            {{ form.foto_usaha }}
+                            {% for error in form.foto_usaha.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                            <small class="business-form-help">Upload foto usaha (opsional)</small>
+                            
+                            <!-- Preview Foto Usaha -->
+                            {% if is_edit and form.instance.foto_usaha %}
+                                <div class="image-preview-container">
+                                    <label class="business-form-label">Foto Usaha Saat Ini:</label>
+                                    <div class="current-image-preview">
+                                        <img src="{{ form.instance.foto_usaha.url }}" alt="Foto Usaha Saat Ini" class="preview-image">
+                                        <div class="image-info">
+                                            <small class="text-muted">{{ form.instance.foto_usaha.name|basename }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="business-form-col-half">
+                            <label class="business-form-label" for="id_logo_usaha">Logo Usaha</label>
+                            {{ form.logo_usaha }}
+                            {% for error in form.logo_usaha.errors %}
+                                <div class="business-form-error">{{ error }}</div>
+                            {% endfor %}
+                            <small class="business-form-help">Upload logo usaha (opsional)</small>
+                            
+                            <!-- Preview Logo Usaha -->
+                            {% if is_edit and form.instance.logo_usaha %}
+                                <div class="image-preview-container">
+                                    <label class="business-form-label">Logo Usaha Saat Ini:</label>
+                                    <div class="current-image-preview">
+                                        <img src="{{ form.instance.logo_usaha.url }}" alt="Logo Usaha Saat Ini" class="preview-image">
+                                        <div class="image-info">
+                                            <small class="text-muted">{{ form.instance.logo_usaha.name|basename }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="business-form-footer">
+                    <a href="{% url 'admin_panel:umkm_list' %}" class="business-form-btn business-form-btn-outline-secondary">
+                        <i class="fas fa-times"></i>Batal
+                    </a>
+                    <button type="submit" class="business-form-btn business-form-btn-success">
+                        <i class="fas fa-save"></i>{% if is_edit %}Simpan Perubahan{% else %}Simpan{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- Business Penduduk Autocomplete -->
+<script src="{% static 'js/admin/business-penduduk-autocomplete.js' %}?v=3"></script>
+
+<script>
+$(document).ready(function() {
+    console.log('=== UMKM Form Debug Started ===');
+    
+    // Initialize Penduduk Autocomplete
+    if (typeof BusinessPendudukAutocomplete !== 'undefined') {
+        const autocompleteInputs = document.querySelectorAll('.penduduk-autocomplete');
+        autocompleteInputs.forEach(input => {
+            new BusinessPendudukAutocomplete(input);
+        });
+        console.log(`Penduduk autocomplete initialized for ${autocompleteInputs.length} field(s)`);
+    } else {
+        console.error('BusinessPendudukAutocomplete not loaded');
+    }
+    
+    // Debug form elements
+    console.log('Form elements found:');
+    console.log('- Form:', $('form').length);
+    console.log('- Foto usaha input:', $('#id_foto_usaha').length);
+    console.log('- Logo usaha input:', $('#id_logo_usaha').length);
+    console.log('- Form enctype:', $('form').attr('enctype'));
+    console.log('- Penduduk autocomplete inputs:', $('.penduduk-autocomplete').length);
+    
+    // Debug file inputs
+    $('#id_foto_usaha, #id_logo_usaha').on('change', function(e) {
+        var input = this;
+        var file = input.files[0];
+        var fieldName = input.name;
+        
+        console.log('=== File Upload Debug ===');
+        console.log('Field:', fieldName);
+        console.log('File selected:', file ? file.name : 'No file');
+        
+        if (file) {
+            console.log('File details:');
+            console.log('- Name:', file.name);
+            console.log('- Size:', file.size, 'bytes');
+            console.log('- Type:', file.type);
+            console.log('- Last modified:', new Date(file.lastModified));
+            
+            // Check file size
+            var maxSize = fieldName === 'foto_usaha' ? 5 * 1024 * 1024 : 2 * 1024 * 1024; // 5MB or 2MB
+            if (file.size > maxSize) {
+                console.error('File too large:', file.size, '>', maxSize);
+                alert('File terlalu besar! Maksimal ' + (fieldName === 'foto_usaha' ? '5MB' : '2MB'));
+                input.value = '';
+                return;
+            }
+            
+            // Check file type
+            var allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+            if (!allowedTypes.includes(file.type)) {
+                console.error('Invalid file type:', file.type);
+                alert('Format file tidak didukung! Gunakan JPG, PNG, GIF, WEBP, atau BMP.');
+                input.value = '';
+                return;
+            }
+            
+            console.log('✅ File validation passed');
+        }
+    });
+    
+    // Debug form submission
+    $('form').on('submit', function(e) {
+        console.log('=== Form Submission Debug ===');
+        
+        // Check form data
+        var formData = new FormData(this);
+        console.log('Form data entries:');
+        for (var pair of formData.entries()) {
+            if (pair[0].includes('foto') || pair[0].includes('logo')) {
+                console.log('- ' + pair[0] + ':', pair[1] instanceof File ? 'File: ' + pair[1].name : pair[1]);
+            }
+        }
+        
+        // Check required fields
+        var isValid = true;
+        var missingFields = [];
+        
+        $('input[required], select[required], textarea[required]').each(function() {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                missingFields.push($(this).attr('name') || $(this).attr('id'));
+                isValid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            console.error('Missing required fields:', missingFields);
+            e.preventDefault();
+            alert('Mohon lengkapi semua field yang wajib diisi: ' + missingFields.join(', '));
+            return;
+        }
+        
+        // Check file inputs specifically
+        var fotoFile = $('#id_foto_usaha')[0].files[0];
+        var logoFile = $('#id_logo_usaha')[0].files[0];
+        
+        console.log('File inputs:');
+        console.log('- Foto usaha:', fotoFile ? fotoFile.name : 'No file');
+        console.log('- Logo usaha:', logoFile ? logoFile.name : 'No file');
+        
+        if (fotoFile) {
+            console.log('Foto file details:', {
+                name: fotoFile.name,
+                size: fotoFile.size,
+                type: fotoFile.type
+            });
+        }
+        
+        if (logoFile) {
+            console.log('Logo file details:', {
+                name: logoFile.name,
+                size: logoFile.size,
+                type: logoFile.type
+            });
+        }
+        
+        console.log('✅ Form validation passed, submitting...');
+    });
+    
+    // Debug any JavaScript errors
+    window.addEventListener('error', function(e) {
+        console.error('JavaScript Error:', e.error);
+        console.error('Error details:', {
+            message: e.message,
+            filename: e.filename,
+            lineno: e.lineno,
+            colno: e.colno
+        });
+    });
+    
+    // Currency formatting
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+    }
+    
+    // Currency input formatting for modal awal
+    $('#id_modal_awal').on('input', function() {
+        let value = $(this).val().replace(/[^\d]/g, '');
+        if (value) {
+            let formatted = formatCurrency(parseInt(value));
+            $('#modal_awal_display').text(formatted);
+        } else {
+            $('#modal_awal_display').text('Rp 0');
+        }
+    });
+    
+    // Currency input formatting for omzet bulanan
+    $('#id_omzet_bulanan').on('input', function() {
+        let value = $(this).val().replace(/[^\d]/g, '');
+        if (value) {
+            let formatted = formatCurrency(parseInt(value));
+            $('#omzet_bulanan_display').text(formatted);
+        } else {
+            $('#omzet_bulanan_display').text('Rp 0');
+        }
+    });
+    
+    // Initialize currency display on page load
+    if ($('#id_modal_awal').val()) {
+        let value = $('#id_modal_awal').val().replace(/[^\d]/g, '');
+        if (value) {
+            $('#modal_awal_display').text(formatCurrency(parseInt(value)));
+        }
+    }
+    
+    if ($('#id_omzet_bulanan').val()) {
+        let value = $('#id_omzet_bulanan').val().replace(/[^\d]/g, '');
+        if (value) {
+            $('#omzet_bulanan_display').text(formatCurrency(parseInt(value)));
+        }
+    }
+    
+    console.log('=== UMKM Form Debug Ready ===');
+});
+</script>
+{% endblock extra_js %}

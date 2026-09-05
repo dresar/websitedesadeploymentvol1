@@ -1,0 +1,209 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+{% block title %}Pendaftaran Berhasil - {{ website_settings.site_name|default:'Desa Pulosarok' }}{% endblock %}
+{% block meta_description %}Pendaftaran bisnis Anda berhasil dikirim. Tim kami akan menghubungi Anda dalam 1-2 hari kerja.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-animation {
+        animation: bounceIn 0.8s ease-out;
+    }
+    
+    @keyframes bounceIn {
+        0% {
+            transform: scale(0.3);
+            opacity: 0;
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        70% {
+            transform: scale(0.9);
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    .checkmark {
+        animation: checkmark 0.6s ease-in-out 0.3s both;
+    }
+    
+    @keyframes checkmark {
+        0% {
+            stroke-dashoffset: 100;
+        }
+        100% {
+            stroke-dashoffset: 0;
+        }
+    }
+    
+    .fade-in-up {
+        animation: fadeInUp 0.8s ease-out 0.5s both;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-100 flex items-center justify-center py-12">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-green-600 to-blue-600 px-8 py-12 text-center text-white">
+                <div class="success-animation">
+                    <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-12 h-12 text-white checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 6L9 17l-5-5" stroke-dasharray="100" stroke-dashoffset="100" style="stroke-dashoffset: 0;"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-bold mb-4">Pendaftaran Berhasil!</h1>
+                    <p class="text-lg text-white/90">Bisnis Anda telah berhasil didaftarkan</p>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="px-8 py-8">
+                <div class="fade-in-up">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-4">Terima Kasih!</h2>
+                        <p class="text-gray-600 leading-relaxed">
+                            Pendaftaran bisnis <strong>{{ registration.business_name }}</strong> telah berhasil dikirim. 
+                            Tim kami akan memverifikasi informasi dan menghubungi Anda dalam <strong>1-2 hari kerja</strong>.
+                        </p>
+                    </div>
+                    
+                    <!-- Registration Details -->
+                    <div class="bg-gray-50 rounded-xl p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                            Detail Pendaftaran
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-500">Nomor Pendaftaran</p>
+                                <p class="font-semibold text-gray-900">#{{ registration.id|stringformat:"06d" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Jenis Bisnis</p>
+                                <p class="font-semibold text-gray-900">{{ registration.get_registration_type_display }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Nama Bisnis</p>
+                                <p class="font-semibold text-gray-900">{{ registration.business_name }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Status</p>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-clock mr-2"></i>Menunggu Verifikasi
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Next Steps -->
+                    <div class="bg-blue-50 rounded-xl p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-list-check text-blue-600 mr-3"></i>
+                            Langkah Selanjutnya
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</div>
+                                <div>
+                                    <p class="font-medium text-gray-900">Verifikasi Data</p>
+                                    <p class="text-sm text-gray-600">Tim kami akan memverifikasi informasi yang Anda berikan</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</div>
+                                <div>
+                                    <p class="font-medium text-gray-900">Kontak Lanjutan</p>
+                                    <p class="text-sm text-gray-600">Kami akan menghubungi Anda untuk konfirmasi dan informasi tambahan</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">3</div>
+                                <div>
+                                    <p class="font-medium text-gray-900">Publikasi</p>
+                                    <p class="text-sm text-gray-600">Bisnis Anda akan ditampilkan di website desa setelah disetujui</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Info -->
+                    <div class="bg-green-50 rounded-xl p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-phone text-green-600 mr-3"></i>
+                            Butuh Bantuan?
+                        </h3>
+                        <p class="text-gray-600 mb-4">
+                            Jika Anda memiliki pertanyaan atau butuh bantuan, silakan hubungi kami:
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <a href="tel:+6281234567890" class="flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                                <i class="fas fa-phone mr-2"></i> Hubungi Kami
+                            </a>
+                            <a href="mailto:info@desapulosarok.com" class="flex items-center justify-center px-4 py-3 bg-white text-green-600 border-2 border-green-600 rounded-lg hover:bg-green-50 transition-colors duration-200">
+                                <i class="fas fa-envelope mr-2"></i> Kirim Email
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="{% url 'business:business_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                            <i class="fas fa-store mr-2"></i> Lihat Daftar Bisnis
+                        </a>
+                        <a href="{% url 'business:business_register' %}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                            <i class="fas fa-plus mr-2"></i> Daftar Bisnis Lain
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add some interactive animations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate the checkmark
+        const checkmark = document.querySelector('.checkmark path');
+        if (checkmark) {
+            checkmark.style.strokeDasharray = '100';
+            checkmark.style.strokeDashoffset = '100';
+            checkmark.style.animation = 'checkmark 0.6s ease-in-out 0.3s both';
+        }
+        
+        // Add hover effects to buttons
+        const buttons = document.querySelectorAll('a[href]');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

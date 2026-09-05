@@ -1,0 +1,491 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{% if pelajar %}Edit Pelajar{% else %}Tambah Pelajar{% endif %} - Admin Panel{% endblock %}
+{% block page_title %}{% if pelajar %}Edit Pelajar{% else %}Tambah Pelajar{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/references/references-form.css' %}">
+<style>
+/* Custom dropdown positioning */
+.penduduk-search-container {
+    position: relative;
+}
+
+#pelajarPendudukDropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.dropdown-item.penduduk-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    margin: 2px 4px;
+}
+
+.dropdown-item.penduduk-item:hover {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-color: #667eea;
+}
+
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.avatar-placeholder i {
+    color: white;
+    font-size: 16px;
+}
+
+.penduduk-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.penduduk-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.penduduk-details {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+/* Mobile responsive */
+@media (max-width: 767.98px) {
+    #pelajarPendudukDropdown {
+        max-height: 250px;
+        border-radius: 6px;
+    }
+    
+    .dropdown-item.penduduk-item {
+        padding: 8px 12px;
+    }
+    
+    .avatar-placeholder {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .avatar-placeholder i {
+        font-size: 14px;
+    }
+    
+    .penduduk-name {
+        font-size: 0.875rem;
+    }
+    
+    .penduduk-details {
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="penduduk-form-wrapper">
+    <!-- Header -->
+    <div class="penduduk-form-header">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center">
+                    <div class="mb-3 mb-lg-0">
+                        <h1 class="h2 mb-2">
+                            <i class="fas fa-graduation-cap penduduk-text-primary"></i>
+                            {{ form_title|default:"Tambah Pelajar" }}
+                        </h1>
+                        <p class="penduduk-text-muted mb-0">{{ form_subtitle|default:"Lengkapi data pelajar baru" }}</p>
+                    </div>
+                    <div class="penduduk-form-btn-group">
+                        <a href="{% url 'admin_panel:references_pelajar_list' %}" class="penduduk-form-btn penduduk-form-btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Kembali
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="pelajarForm" method="post" novalidate action="{% if pelajar %}{% url 'admin_panel:references_pelajar_update' pelajar.id %}{% else %}{% url 'admin_panel:references_pelajar_add' %}{% endif %}">
+        {% csrf_token %}
+        {% if pelajar %}
+        <input type="hidden" name="pelajar_id" value="{{ pelajar.id }}">
+        {% endif %}
+
+        <div class="penduduk-form-row row">
+            <!-- Main Form -->
+            <div class="col-lg-8 col-12">
+                <div class="penduduk-form-card card">
+                    <div class="card-header">
+                        <h6>
+                            <i class="fas fa-graduation-cap"></i>
+                            Informasi Pelajar
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Search Penduduk -->
+                            <div class="col-12 mb-4">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-search mr-2"></i>
+                                            Cari dan Pilih Penduduk (Usia 5-35 tahun)
+                                        </h6>
+                                        <small class="text-light">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Ketik nama atau NIK untuk mencari penduduk yang belum terdaftar sebagai pelajar
+                                        </small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="penduduk-form-field">
+                                            <label for="pelajarPendudukSearch" class="form-label">
+                                                <i class="fas fa-user mr-1"></i>
+                                                Cari Penduduk <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="hidden" name="penduduk_id" id="pelajarPendudukId" value="{% if pelajar %}{{ pelajar.penduduk_id }}{% endif %}">
+                                            <div class="penduduk-search-container">
+                                                <input type="text" class="form-control" id="pelajarPendudukSearch"
+                                                       placeholder="Ketik nama atau NIK penduduk..."
+                                                       value="{% if pelajar %}{{ pelajar.penduduk.name }} - {{ pelajar.penduduk.nik }}{% endif %}"
+                                                       autocomplete="off" required>
+                                                <div id="pelajarPendudukDropdown" class="dropdown-menu" style="display: none;">
+                                                </div>
+                                            </div>
+                                            <div class="invalid-feedback">
+                                                Penduduk harus dipilih.
+                                            </div>
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                Hanya menampilkan penduduk usia 5-35 tahun yang belum terdaftar sebagai pelajar
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Data Pelajar -->
+                            <div class="col-12 mb-4">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-graduation-cap mr-2"></i>
+                                            Data Pelajar (Dapat Diedit)
+                                        </h6>
+                                        <small class="text-light">
+                                            <i class="fas fa-edit mr-1"></i>
+                                            Edit jenjang pendidikan, nama sekolah, dan status pelajar
+                                        </small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="penduduk-form-field">
+                                                    <label for="jenjang" class="form-label">
+                                                        <i class="fas fa-layer-group mr-1"></i>
+                                                        Jenjang Pendidikan <span class="text-danger">*</span>
+                                                    </label>
+                                                    <select class="form-control" id="jenjang" name="jenjang" required>
+                                                        <option value="">Pilih Jenjang</option>
+                                                        <option value="SD" {% if pelajar and pelajar.jenjang == 'SD' %}selected{% endif %}>SD (Sekolah Dasar)</option>
+                                                        <option value="SMP" {% if pelajar and pelajar.jenjang == 'SMP' %}selected{% endif %}>SMP (Sekolah Menengah Pertama)</option>
+                                                        <option value="SMA" {% if pelajar and pelajar.jenjang == 'SMA' %}selected{% endif %}>SMA (Sekolah Menengah Atas)</option>
+                                                        <option value="PT" {% if pelajar and pelajar.jenjang == 'PT' %}selected{% endif %}>Perguruan Tinggi</option>
+                                                    </select>
+                                                    <div class="invalid-feedback">
+                                                        Jenjang harus dipilih.
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <div class="penduduk-form-field">
+                                                    <label for="sekolah" class="form-label">
+                                                        <i class="fas fa-school mr-1"></i>
+                                                        Nama Sekolah <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="text" class="form-control" id="sekolah" name="sekolah"
+                                                           value="{% if pelajar %}{{ pelajar.sekolah }}{% endif %}"
+                                                           placeholder="Masukkan nama sekolah" required>
+                                                    <div class="invalid-feedback">
+                                                        Nama sekolah harus diisi.
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <div class="penduduk-form-field">
+                                                    <label for="status" class="form-label">
+                                                        <i class="fas fa-user-check mr-1"></i>
+                                                        Status Pelajar
+                                                    </label>
+                                                    <select class="form-control" id="status" name="status">
+                                                        <option value="aktif" {% if pelajar and pelajar.status == 'aktif' %}selected{% endif %}>Aktif</option>
+                                                        <option value="lulus" {% if pelajar and pelajar.status == 'lulus' %}selected{% endif %}>Lulus</option>
+                                                        <option value="dropout" {% if pelajar and pelajar.status == 'dropout' %}selected{% endif %}>Dropout</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 mb-3">
+                                                <div class="penduduk-form-field">
+                                                    <label for="tahun_masuk" class="form-label">
+                                                        <i class="fas fa-calendar mr-1"></i>
+                                                        Tahun Masuk
+                                                    </label>
+                                                    <input type="number" class="form-control" id="tahun_masuk" name="tahun_masuk"
+                                                           value="{% if pelajar %}{{ pelajar.tahun_masuk }}{% endif %}"
+                                                           placeholder="2024" min="1990" max="2030">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Keterangan -->
+                            <div class="col-12 mb-3">
+                                <div class="penduduk-form-field">
+                                    <label for="keterangan" class="form-label">
+                                        <i class="fas fa-sticky-note mr-1"></i>
+                                        Keterangan
+                                    </label>
+                                    <textarea class="form-control" id="keterangan" name="keterangan" rows="3"
+                                              placeholder="Keterangan tambahan...">{% if pelajar %}{{ pelajar.keterangan }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4 col-12">
+                <!-- Status -->
+                <div class="penduduk-form-card card mb-4">
+                    <div class="card-header">
+                        <h6>
+                            <i class="fas fa-toggle-on"></i>
+                            Status
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="penduduk-status-switch">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active"
+                                       {% if pelajar and pelajar.is_active != False %}checked{% endif %}>
+                                <label class="custom-control-label" for="is_active">
+                                    Pelajar Aktif
+                                </label>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">
+                            Pelajar yang tidak aktif tidak akan muncul dalam laporan.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="penduduk-form-card card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="penduduk-form-btn penduduk-form-btn-primary">
+                                <i class="fas fa-save"></i>
+                                Simpan Data
+                            </button>
+                            <a href="{% url 'admin_panel:references_pelajar_list' %}" class="penduduk-form-btn penduduk-form-btn-secondary">
+                                <i class="fas fa-times"></i>
+                                Batal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    var searchUrl = '{% url "admin_panel:api_references_residents_search" %}';
+    var input = document.getElementById('pelajarPendudukSearch');
+    var hidden = document.getElementById('pelajarPendudukId');
+    var dropdown = document.getElementById('pelajarPendudukDropdown');
+    var searchTimeout;
+
+    function clearDropdown() {
+        dropdown.innerHTML = '';
+        dropdown.style.display = 'none';
+    }
+
+    function fetchData(query) {
+        if (!query || query.length < 2) {
+            clearDropdown();
+            return;
+        }
+
+        dropdown.innerHTML = '<div class="dropdown-item"><i class="fas fa-spinner fa-spin mr-2"></i>Mencari...</div>';
+        dropdown.style.display = 'block';
+
+        var url = new URL(searchUrl, window.location.origin);
+        url.searchParams.set('q', query);
+        url.searchParams.set('no_pagination', 'true');
+
+        fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            }
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            clearDropdown();
+            if (data.success && data.data && Array.isArray(data.data)) {
+                var results = data.data;
+                if (results.length > 0) {
+                    results.slice(0, 10).forEach(function(item) {
+                        var dropdownItem = document.createElement('div');
+                        dropdownItem.className = 'dropdown-item penduduk-item';
+                        dropdownItem.setAttribute('data-id', item.id || '');
+                        dropdownItem.setAttribute('data-name', item.name || 'Nama tidak tersedia');
+                        dropdownItem.setAttribute('data-nik', item.nik || '');
+                        dropdownItem.setAttribute('data-age', item.age || '');
+                        dropdownItem.setAttribute('data-gender', item.gender || '');
+                        dropdownItem.setAttribute('data-dusun', item.dusun || '');
+                        dropdownItem.innerHTML = `
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="penduduk-info">
+                                    <div class="penduduk-name">${item.name || 'Nama tidak tersedia'}</div>
+                                    <div class="penduduk-details">
+                                        NIK: ${item.nik || '-'} | ${item.age || '-'} tahun | ${item.dusun || '-'}
+                                    </div>
+                                    <div class="penduduk-details">
+                                        ${item.gender || '-'} | ${item.education || '-'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        dropdown.appendChild(dropdownItem);
+                    });
+                    dropdown.style.display = 'block';
+                } else {
+                    dropdown.innerHTML = '<div class="dropdown-item text-muted">Tidak ada penduduk ditemukan</div>';
+                    dropdown.style.display = 'block';
+                }
+            } else {
+                console.error('API returned error or invalid data structure:', data);
+                dropdown.innerHTML = '<div class="dropdown-item text-danger">Error: ' + (data.message || 'Tidak dapat memuat data penduduk') + '</div>';
+                dropdown.style.display = 'block';
+            }
+        })
+        .catch(function(error) {
+            console.error('Search error:', error);
+            clearDropdown();
+            dropdown.innerHTML = '<div class="dropdown-item text-danger">Error: Gagal memuat data penduduk</div>';
+            dropdown.style.display = 'block';
+        });
+    }
+
+    input.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        var query = this.value.trim();
+        searchTimeout = setTimeout(function() {
+            fetchData(query);
+        }, 300);
+    });
+
+    dropdown.addEventListener('click', function(e) {
+        if (e.target.closest('.penduduk-item')) {
+            var item = e.target.closest('.penduduk-item');
+            var id = item.getAttribute('data-id');
+            var name = item.getAttribute('data-name');
+            var nik = item.getAttribute('data-nik');
+
+            hidden.value = id;
+            input.value = name + ' - ' + nik;
+            clearDropdown();
+
+            input.classList.remove('is-invalid');
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#pelajarPendudukSearch, #pelajarPendudukDropdown')) {
+            clearDropdown();
+        }
+    });
+
+    // Form validation
+    $('#pelajarForm').on('submit', function(e) {
+        var isValid = true;
+
+        $('.form-control').removeClass('is-invalid');
+        $('.invalid-feedback').hide();
+
+        if (!hidden.value) {
+            input.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        $('#jenjang, #sekolah').each(function() {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                isValid = false;
+            }
+        });
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('Mohon lengkapi semua field yang wajib diisi.');
+        }
+    });
+
+    $('#jenjang, #sekolah').on('blur', function() {
+        if (!$(this).val()) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+
+    // Load existing data if editing
+    {% if pelajar and pelajar.penduduk_id %}
+    $(document).ready(function() {
+        // Data already loaded in input field
+    });
+    {% endif %}
+});
+</script>
+{% endblock extra_js %}

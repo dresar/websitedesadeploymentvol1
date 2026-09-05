@@ -1,0 +1,257 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Daftar Dokumen Transparansi{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-list.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-mobile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="documents-list-container">
+
+    <div class="documents-list-header">
+        <div class="header-left">
+            <h1 class="page-title">
+                <i class="fas fa-file-alt"></i>
+                Daftar Dokumen Transparansi
+            </h1>
+            <p class="page-subtitle">Kelola semua dokumen transparansi desa</p>
+        </div>
+        <div class="header-right">
+            <a href="{% url 'admin_panel:document_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tambah Dokumen
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2">
+                <div class="col-md-3">
+                    <input type="text"
+                           name="search"
+                           class="form-control form-control-sm"
+                           placeholder="Cari dokumen..."
+                           value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="category" class="form-select form-select-sm">
+                        <option value="">Semua Kategori</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">Semua Status</option>
+                        <option value="draft" {% if selected_status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="review" {% if selected_status == 'review' %}selected{% endif %}>Review</option>
+                        <option value="published" {% if selected_status == 'published' %}selected{% endif %}>Published</option>
+                        <option value="archived" {% if selected_status == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="year" class="form-select form-select-sm">
+                        <option value="">Semua Tahun</option>
+                        {% for year in years %}
+                        <option value="{{ year }}" {% if selected_year == year|stringformat:"s" %}selected{% endif %}>
+                            {{ year }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="btn-group w-100" role="group">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                        <a href="{% url 'admin_panel:documents_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-redo"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if documents %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 5%">ID</th>
+                                <th style="width: 25%">Judul</th>
+                                <th style="width: 12%">Nomor</th>
+                                <th style="width: 15%">Kategori</th>
+                                <th style="width: 8%">Tahun</th>
+                                <th style="width: 10%">Status</th>
+                                <th style="width: 8%">Public</th>
+                                <th style="width: 8%">Download</th>
+                                <th style="width: 9%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in documents %}
+                            <tr>
+                                <td>{{ document.id }}</td>
+                                <td>
+                                    <strong>{{ document.title|truncatechars:50 }}</strong>
+                                    {% if document.is_featured %}
+                                    <i class="fas fa-star text-warning" title="Dokumen Unggulan"></i>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ document.document_number|default:"-" }}</small></td>
+                                <td><small>{{ document.category.name }}</small></td>
+                                <td>{{ document.document_year }}</td>
+                                <td>
+                                    {% if document.status == 'published' %}
+                                    <span class="badge bg-success">Published</span>
+                                    {% elif document.status == 'review' %}
+                                    <span class="badge bg-warning text-dark">Review</span>
+                                    {% elif document.status == 'archived' %}
+                                    <span class="badge bg-secondary">Archived</span>
+                                    {% else %}
+                                    <span class="badge bg-info text-dark">Draft</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if document.is_public %}
+                                    <i class="fas fa-check text-success"></i>
+                                    {% else %}
+                                    <i class="fas fa-times text-danger"></i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>
+                                        <i class="fas fa-download"></i> {{ document.download_count }}
+                                        <br>
+                                        <i class="fas fa-eye"></i> {{ document.view_count }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'admin_panel:document_detail' document.pk %}"
+                                           class="btn btn-outline-primary btn-sm"
+                                           title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'admin_panel:document_preview' document.pk %}"
+                                           class="btn btn-outline-info btn-sm"
+                                           title="Preview"
+                                           target="_blank">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                        <a href="{% url 'admin_panel:document_edit' document.pk %}"
+                                           class="btn btn-outline-warning btn-sm"
+                                           title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button"
+                                                onclick="confirmDelete({{ document.pk }}, '{{ document.title|escapejs }}')"
+                                                class="btn btn-outline-danger btn-sm"
+                                                title="Hapus">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if documents.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-3">
+                    <ul class="pagination pagination-sm justify-content-center">
+                        {% if documents.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ documents.previous_page_number }}&search={{ search }}&category={{ selected_category }}&status={{ selected_status }}&year={{ selected_year }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in documents.paginator.page_range %}
+                            {% if documents.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > documents.number|add:'-3' and num < documents.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}&search={{ search }}&category={{ selected_category }}&status={{ selected_status }}&year={{ selected_year }}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if documents.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ documents.next_page_number }}&search={{ search }}&category={{ selected_category }}&status={{ selected_status }}&year={{ selected_year }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                <div class="text-center text-muted mt-2">
+                    <small>
+                        Menampilkan {{ documents.start_index }} - {{ documents.end_index }} dari {{ documents.paginator.count }} dokumen
+                    </small>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">
+                        {% if search or selected_category or selected_status or selected_year %}
+                        Tidak ada dokumen yang sesuai dengan filter
+                        {% else %}
+                        Belum ada dokumen. Tambahkan dokumen pertama Anda!
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'admin_panel:document_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Tambah Dokumen
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>function confirmDelete(documentId, documentTitle) {
+    if (confirm(`Apakah Anda yakin ingin menghapus dokumen "${documentTitle}"?\n\nTindakan ini tidak dapat dibatalkan.`)) {
+        $.ajax({
+            url: `/admin-panel/documents/${documentId}/delete/`,
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    showSuccess(response.message);
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showError(response.message);
+                }
+            },
+            error: function() {
+                showError('Terjadi kesalahan saat menghapus dokumen');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
+

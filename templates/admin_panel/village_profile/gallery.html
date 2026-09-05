@@ -1,0 +1,292 @@
+{% extends "admin_panel/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/village_profile_global.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/gallery.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/forms.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<!-- Tombol Kembali -->
+<div class="back-button-container">
+    <a href="{% url 'village_profile:admin_dashboard' %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Dashboard
+    </a>
+</div>
+
+<div class="container">
+    <!-- Header -->
+    <div class="gallery-header">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 class="text-primary mb-2">
+                    <i class="fas fa-camera mr-2"></i>Galeri Desa
+                </h2>
+                <p class="text-muted mb-0">Kelola galeri foto dan dokumentasi desa</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary" onclick="previewGallery()">
+                    <i class="fas fa-eye mr-1"></i>Preview
+                </button>
+                <a href="{% url 'village_profile:admin_gallery_form' %}" class="btn btn-success">
+                    <i class="fas fa-plus mr-1"></i>Tambah Foto
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="row text-center mb-4">
+            <div class="col-md-3 col-6 mb-2">
+                <div class="stats-card bg-primary">
+                    <h4 id="totalPhotos">0</h4>
+                    <small>Total Foto</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-2">
+                <div class="stats-card bg-success">
+                    <h4 id="thisMonth">0</h4>
+                    <small>Bulan Ini</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-2">
+                <div class="stats-card bg-info">
+                    <h4 id="totalSize">0 MB</h4>
+                    <small>Total Ukuran</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-2">
+                <div class="stats-card bg-warning">
+                    <h4 id="categories">0</h4>
+                    <small>Kategori</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery Grid -->
+    <div id="galleryGrid" class="gallery-grid"></div>
+
+    <!-- Empty State -->
+    <div id="emptyGallery" class="empty-gallery" style="display: none;">
+        <i class="fas fa-images"></i>
+        <h4 class="text-muted mb-3">Belum Ada Foto</h4>
+        <p class="text-muted mb-4">Mulai dengan menambahkan foto pertama ke galeri desa</p>
+        <a href="{% url 'village_profile:admin_gallery_form' %}" class="btn btn-primary">
+            <i class="fas fa-plus mr-1"></i>Tambah Foto Pertama
+        </a>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash mr-2"></i>Konfirmasi Hapus
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus foto ini?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Peringatan:</strong> Tindakan ini tidak dapat dibatalkan!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="fas fa-trash mr-1"></i>Hapus Foto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>let currentPhotoId = null;
+let photos = [];
+
+$(document).ready(function() {
+    loadGallery();
+    setupImageUpload();
+});
+
+function loadGallery() {
+    $.ajax({
+        url: '{% url "village_profile:gallery_api" %}',
+        method: 'GET',
+        success: function(data) {
+            if (data.success) {
+                photos = data.photos || [];
+                displayGallery();
+                updateStatistics();
+            } else {
+                // API Error
+                showEmptyGallery();
+            }
+        },
+        error: function(xhr) {
+            // Load gallery error
+            showEmptyGallery();
+            if (xhr.status === 404) {
+                showError('API endpoint tidak ditemukan. Pastikan URL routing sudah benar.');
+            } else if (xhr.status === 403) {
+                showError('Anda tidak memiliki izin untuk mengakses galeri.');
+            } else {
+                showError('Gagal memuat data galeri. Silakan refresh halaman.');
+            }
+        }
+    });
+}
+
+function displayGallery() {
+    const grid = $('#galleryGrid');
+    const emptyState = $('#emptyGallery');
+
+    if (photos.length === 0) {
+        grid.hide();
+        emptyState.show();
+        return;
+    }
+
+    grid.show();
+    emptyState.hide();
+
+    grid.empty();
+
+    photos.forEach(photo => {
+        const photoCard = createPhotoCard(photo);
+        grid.append(photoCard);
+    });
+}
+
+function createPhotoCard(photo) {
+    const photoUrl = photo.image_url || '{% static "images/placeholder.svg" %}';
+    const uploadDate = new Date(photo.created_at).toLocaleDateString('id-ID');
+    
+    // Strip HTML tags from description
+    const description = photo.description || 'Tidak ada deskripsi';
+    const strippedDesc = description.replace(/<[^>]*>/g, '');
+    
+    // Truncate to 1 line (max 50 chars for mobile, 80 for desktop)
+    const maxLength = window.innerWidth < 768 ? 40 : 60;
+    const truncatedDesc = strippedDesc.length > maxLength ? strippedDesc.substring(0, maxLength) + '...' : strippedDesc;
+
+    return $(`
+        <div class="photo-card">
+            <img src="${photoUrl}" alt="${photo.title}" class="photo-image" onerror="this.src='{% static "images/placeholder.svg" %}'">
+            <div class="photo-info">
+                <div class="photo-title" title="${photo.title}">${photo.title}</div>
+                <div class="photo-description" title="${strippedDesc}">${truncatedDesc}</div>
+                <div class="photo-meta">
+                    <span><i class="fas fa-calendar mr-1"></i>${uploadDate}</span>
+                    <span><i class="fas fa-tag mr-1"></i>${getCategoryLabel(photo.category)}</span>
+                </div>
+            </div>
+            <div class="photo-actions">
+                <button class="btn btn-sm btn-light" onclick="viewPhoto(${photo.id})" title="Lihat">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="editPhoto(${photo.id})" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deletePhoto(${photo.id})" title="Hapus">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `);
+}
+
+function updateStatistics() {
+    const totalPhotos = photos.length;
+    const thisMonth = photos.filter(photo => {
+        const photoDate = new Date(photo.created_at);
+        const now = new Date();
+        return photoDate.getMonth() === now.getMonth() && photoDate.getFullYear() === now.getFullYear();
+    }).length;
+
+    const totalSize = photos.reduce((sum, photo) => sum + (photo.file_size || 0), 0);
+    const categories = [...new Set(photos.map(photo => photo.category))].length;
+
+    $('#totalPhotos').text(totalPhotos);
+    $('#thisMonth').text(thisMonth);
+    $('#totalSize').text((totalSize / 1024 / 1024).toFixed(1) + ' MB');
+    $('#categories').text(categories);
+}
+
+function showEmptyGallery() {
+    $('#galleryGrid').hide();
+    $('#emptyGallery').show();
+    updateStatistics();
+}
+
+function editPhoto(photoId) {
+    window.location.href = `{% url 'village_profile:admin_gallery_form' %}?id=${photoId}`;
+}
+
+function deletePhoto(photoId) {
+    currentPhotoId = photoId;
+    $('#deleteModal').modal('show');
+}
+
+function confirmDelete() {
+    if (!currentPhotoId) return;
+
+    $.ajax({
+        url: '{% url "village_profile:gallery_api" %}',
+        method: 'DELETE',
+        data: {
+            photo_id: currentPhotoId,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        },
+        success: function() {
+            $('#deleteModal').modal('hide');
+            showSuccess('Foto berhasil dihapus!');
+            loadGallery();
+        },
+        error: function() {
+            showError('Gagal menghapus foto!');
+        }
+    });
+}
+
+function viewPhoto(photoId) {
+    const photo = photos.find(p => p.id === photoId);
+    if (photo) {
+        window.open(photo.image_url, '_blank');
+    }
+}
+
+function previewGallery() {
+    window.open('{% url "village_profile:gallery" %}', '_blank');
+}
+
+function getCategoryLabel(category) {
+    const categories = {
+        'LANDSCAPE': 'Pemandangan',
+        'BUILDING': 'Bangunan',
+        'ACTIVITY': 'Kegiatan',
+        'CULTURE': 'Budaya',
+        'FACILITY': 'Fasilitas',
+        'EVENT': 'Acara',
+        'PEOPLE': 'Masyarakat',
+        'NATURE': 'Alam',
+        'OTHER': 'Lainnya'
+    };
+    return categories[category] || category;
+}
+
+// Notifikasi menggunakan sistem global dari base.html
+</script>
+{% endblock extra_js %}

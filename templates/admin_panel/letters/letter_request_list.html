@@ -1,0 +1,459 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %}Permintaan Surat{% endblock %}
+{% block page_description %}Kelola permintaan surat dari penduduk{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Simple List Styles */
+.request-list-page {
+    padding: 1rem 0;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.request-header {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.request-header h4 {
+    margin: 0;
+    color: #495057;
+    font-size: 1.25rem;
+}
+
+.request-filters {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.request-item {
+    background: white;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 3px solid #007bff;
+    transition: all 0.2s ease;
+}
+
+.request-item:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transform: translateX(2px);
+}
+
+.request-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.request-number {
+    font-weight: 600;
+    color: #007bff;
+    font-size: 0.9rem;
+}
+
+.request-status {
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.request-status.pending { background: #fff3cd; color: #856404; }
+.request-status.verified { background: #d1ecf1; color: #0c5460; }
+.request-status.in_progress { background: #cce5ff; color: #004085; }
+.request-status.completed { background: #d4edda; color: #155724; }
+.request-status.rejected { background: #f8d7da; color: #721c24; }
+
+.request-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.request-applicant {
+    font-weight: 500;
+    color: #495057;
+}
+
+.request-date {
+    font-size: 0.75rem;
+}
+
+.request-purpose {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.request-actions {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
+}
+
+.request-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 0.25rem;
+}
+
+.pagination-wrapper {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 1rem;
+}
+
+.pagination {
+    margin: 0;
+    justify-content: center;
+}
+
+.pagination .page-link {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    margin: 0 0.125rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.empty-state i {
+    font-size: 2rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state h6 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .request-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .request-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .request-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="request-list-page">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="request-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-inbox me-2"></i>Permintaan Surat</h4>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'admin_panel:letters:letter_request_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Buat Permintaan
+                    </a>
+                    <a href="{% url 'admin_panel:letters:admin_letter_list' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Kembali
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="request-filters">
+            <form method="GET" class="row g-2">
+                <div class="col-md-4">
+                    <input type="text" class="form-control form-control-sm" name="search" 
+                           value="{{ search_query|default:'' }}" placeholder="Cari permintaan...">
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" name="status">
+                        <option value="">Semua Status</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select form-select-sm" name="priority">
+                        <option value="">Semua Prioritas</option>
+                        {% for value, label in priority_choices %}
+                        <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" class="form-control form-control-sm" name="date_from" 
+                           value="{{ date_from|default:'' }}" placeholder="Dari tanggal">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Request List -->
+        {% if requests %}
+        {% for request in requests %}
+        <div class="request-item">
+            <div class="request-item-header">
+                <div class="request-number">{{ request.request_number }}</div>
+                <div class="request-status {{ request.status }}">
+                    {{ request.get_status_display }}
+                </div>
+            </div>
+            
+            <div class="request-info">
+                <div class="request-applicant">{{ request.applicant.nama }} ({{ request.applicant.nik }})</div>
+                <div class="request-date">{{ request.submitted_at|date:"d M Y H:i" }}</div>
+            </div>
+            
+            <div class="request-purpose">
+                {{ request.purpose|truncatechars:100 }}
+            </div>
+            
+            <div class="request-actions">
+                <a href="{% url 'admin_panel:letters:letter_request_detail' request.id %}" 
+                   class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-eye"></i>
+                </a>
+                {% if request.status == 'pending' %}
+                <button class="btn btn-success btn-sm" onclick="verifyRequest({{ request.id }})">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="rejectRequest({{ request.id }})">
+                    <i class="fas fa-times"></i>
+                </button>
+                {% elif request.status == 'verified' %}
+                <button class="btn btn-primary btn-sm" onclick="generateLetter({{ request.id }})">
+                    <i class="fas fa-file-alt"></i>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if requests.has_other_pages %}
+        <div class="pagination-wrapper">
+            <nav>
+                <ul class="pagination">
+                    {% if requests.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ requests.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in requests.paginator.page_range %}
+                    {% if num == requests.number %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > requests.number|add:'-3' and num < requests.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if requests.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ requests.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ requests.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h6>Tidak ada permintaan surat</h6>
+            <p>Belum ada permintaan surat yang sesuai dengan kriteria pencarian</p>
+            <a href="{% url 'admin_panel:letters:letter_request_create' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i>Buat Permintaan Pertama
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Verification Modal -->
+<div class="modal fade" id="verificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Verifikasi Permintaan Surat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="verificationForm">
+                    <div class="mb-3">
+                        <label for="verificationNotes" class="form-label">Catatan Verifikasi</label>
+                        <textarea class="form-control" id="verificationNotes" name="verification_notes" rows="3" 
+                                  placeholder="Tambahkan catatan verifikasi..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="confirmVerification">Verifikasi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tolak Permintaan Surat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rejectionForm">
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">Alasan Penolakan</label>
+                        <textarea class="form-control" id="rejectionReason" name="rejection_reason" rows="3" 
+                                  placeholder="Jelaskan alasan penolakan..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmRejection">Tolak</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRequestId = null;
+
+function verifyRequest(requestId) {
+    currentRequestId = requestId;
+    $('#verificationModal').modal('show');
+}
+
+function rejectRequest(requestId) {
+    currentRequestId = requestId;
+    $('#rejectionModal').modal('show');
+}
+
+function generateLetter(requestId) {
+    if (confirm('Apakah Anda yakin ingin membuat surat dari permintaan ini?')) {
+        // Submit form to generate letter
+        const form = $('<form method="post"></form>');
+        form.attr('action', '{% url "admin_panel:letters:letter_request_detail" 0 %}'.replace('0', requestId));
+        form.append('<input type="hidden" name="action" value="generate_letter">');
+        form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+        $('body').append(form);
+        form.submit();
+    }
+}
+
+$('#confirmVerification').click(function() {
+    if (currentRequestId) {
+        const form = $('<form method="post"></form>');
+        form.attr('action', '{% url "admin_panel:letters:letter_request_detail" 0 %}'.replace('0', currentRequestId));
+        form.append('<input type="hidden" name="action" value="verify">');
+        form.append('<input type="hidden" name="verification_notes" value="' + $('#verificationNotes').val() + '">');
+        form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+        $('body').append(form);
+        form.submit();
+    }
+});
+
+$('#confirmRejection').click(function() {
+    if (currentRequestId && $('#rejectionReason').val().trim()) {
+        const form = $('<form method="post"></form>');
+        form.attr('action', '{% url "admin_panel:letters:letter_request_detail" 0 %}'.replace('0', currentRequestId));
+        form.append('<input type="hidden" name="action" value="reject">');
+        form.append('<input type="hidden" name="rejection_reason" value="' + $('#rejectionReason').val() + '">');
+        form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+        $('body').append(form);
+        form.submit();
+    } else {
+        alert('Alasan penolakan harus diisi');
+    }
+});
+
+// Reset forms when modals are closed
+$('#verificationModal').on('hidden.bs.modal', function() {
+    $('#verificationNotes').val('');
+    currentRequestId = null;
+});
+
+$('#rejectionModal').on('hidden.bs.modal', function() {
+    $('#rejectionReason').val('');
+    currentRequestId = null;
+});
+</script>
+{% endblock %}

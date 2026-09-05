@@ -1,0 +1,626 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .backup-form {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .backup-form h4 {
+        color: #495057;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #007bff;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .form-section h5 {
+        color: #495057;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+    
+    .option-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .option-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .option-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 4px rgba(0,123,255,0.1);
+    }
+    
+    .option-item input[type="checkbox"] {
+        transform: scale(1.2);
+        margin-right: 10px;
+    }
+    
+    .option-item label {
+        font-weight: 500;
+        margin: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    
+    .option-item .help-text {
+        font-size: 0.85em;
+        color: #6c757d;
+        margin-top: 5px;
+        margin-left: 25px;
+    }
+    
+    .app-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .app-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .app-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 4px rgba(0,123,255,0.1);
+    }
+    
+    .app-item input[type="checkbox"] {
+        transform: scale(1.3);
+        margin-right: 10px;
+    }
+    
+    .app-item label {
+        font-weight: 500;
+        margin: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .app-item i {
+        font-size: 1.2em;
+        margin-right: 8px;
+    }
+    
+    .preview-section {
+        background: #e8f4fd;
+        border: 1px solid #bee5eb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        display: none;
+    }
+    
+    .preview-section h6 {
+        color: #0c5460;
+        margin-bottom: 15px;
+    }
+    
+    .preview-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+    
+    .preview-item {
+        background: white;
+        border: 1px solid #bee5eb;
+        border-radius: 6px;
+        padding: 15px;
+    }
+    
+    .preview-item strong {
+        color: #0c5460;
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    .preview-item span {
+        color: #495057;
+    }
+    
+    .form-actions {
+        background: #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    
+    .btn-create {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+        font-weight: 600;
+        padding: 12px 30px;
+        font-size: 1.1em;
+    }
+    
+    .btn-create:hover {
+        background: #218838;
+        border-color: #1e7e34;
+    }
+    
+    .btn-create:disabled {
+        background: #6c757d;
+        border-color: #6c757d;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        font-weight: 600;
+        padding: 12px 30px;
+        font-size: 1.1em;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        border-color: #545b62;
+    }
+    
+    .warning-card {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .warning-card h5 {
+        color: #856404;
+        margin-bottom: 15px;
+    }
+    
+    .warning-card ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .warning-card li {
+        color: #856404;
+        margin-bottom: 8px;
+    }
+    
+    .progress-section {
+        display: none;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .progress-bar {
+        height: 25px;
+        background: #007bff;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        text-align: center;
+        margin-top: 10px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-plus-circle"></i> {{ page_title }}</h2>
+                <a href="{% url 'core:database_backup_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Daftar Backup
+                </a>
+            </div>
+            
+            <!-- Warning -->
+            <div class="warning-card">
+                <h5><i class="fas fa-exclamation-triangle"></i> Informasi Penting</h5>
+                <ul>
+                    <li>Backup akan dibuat dengan format JSON dan dikompresi dengan gzip</li>
+                    <li>File backup akan disimpan di direktori <code>backups/</code></li>
+                    <li>Proses backup mungkin memakan waktu beberapa menit tergantung ukuran database</li>
+                    <li>Pastikan ada ruang disk yang cukup untuk menyimpan backup</li>
+                    <li>Backup lama akan otomatis dihapus jika melebihi batas yang ditentukan</li>
+                </ul>
+            </div>
+            
+            <form method="post" id="backupForm">
+                {% csrf_token %}
+                
+                <!-- Basic Options -->
+                <div class="backup-form">
+                    <h4><i class="fas fa-cog"></i> Opsi Backup</h4>
+                    
+                    <div class="form-section">
+                        <h5><i class="fas fa-sliders-h"></i> Pengaturan Umum</h5>
+                        
+                        <!-- Format Selection -->
+                        <div class="mb-4">
+                            <label for="format" class="form-label"><strong>Format Backup:</strong></label>
+                            <select class="form-select" id="format" name="format">
+                                <option value="json">JSON (Django Fixture)</option>
+                                <option value="xml">XML (Django Fixture)</option>
+                                <option value="yaml">YAML (Django Fixture)</option>
+                                <option value="sql">SQL (Native Database)</option>
+                            </select>
+                            <div class="form-text">Pilih format backup yang diinginkan</div>
+                        </div>
+                        
+                        <div class="option-grid">
+                            <div class="option-item">
+                                <label for="compress">
+                                    <input type="checkbox" id="compress" name="compress" checked>
+                                    <i class="fas fa-compress"></i> Kompresi Backup
+                                </label>
+                                <div class="help-text">Kompresi file backup dengan gzip untuk menghemat ruang</div>
+                            </div>
+                            <div class="option-item">
+                                <label for="include_media">
+                                    <input type="checkbox" id="include_media" name="include_media">
+                                    <i class="fas fa-images"></i> Include Media Files
+                                </label>
+                                <div class="help-text">Sertakan file media dalam backup (opsional)</div>
+                            </div>
+                            <div class="option-item">
+                                <label for="cleanup_old">
+                                    <input type="checkbox" id="cleanup_old" name="cleanup_old" checked>
+                                    <i class="fas fa-trash"></i> Hapus Backup Lama
+                                </label>
+                                <div class="help-text">Otomatis hapus backup lama untuk menghemat ruang</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SQL Options (hidden by default) -->
+                    <div class="form-section" id="sqlOptions" style="display: none;">
+                        <h5><i class="fas fa-database"></i> Opsi SQL Backup</h5>
+                        <div class="option-grid">
+                            <div class="option-item">
+                                <label for="sql_data_only">
+                                    <input type="checkbox" id="sql_data_only" name="sql_data_only">
+                                    <i class="fas fa-table"></i> Data Only
+                                </label>
+                                <div class="help-text">Hanya backup data tanpa struktur tabel</div>
+                            </div>
+                            <div class="option-item">
+                                <label for="sql_structure_only">
+                                    <input type="checkbox" id="sql_structure_only" name="sql_structure_only">
+                                    <i class="fas fa-sitemap"></i> Structure Only
+                                </label>
+                                <div class="help-text">Hanya backup struktur tabel tanpa data</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label for="sql_options" class="form-label"><strong>Opsi Tambahan:</strong></label>
+                            <input type="text" class="form-control" id="sql_options" name="sql_options" placeholder="Contoh: --single-transaction --routines">
+                            <div class="form-text">Opsi tambahan untuk mysqldump/pg_dump (opsional)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- App Selection -->
+                    <div class="form-section">
+                        <h5><i class="fas fa-cubes"></i> Pilih App yang akan di-Backup</h5>
+                        <p class="text-muted">Pilih aplikasi yang akan disertakan dalam backup. Kosongkan semua untuk backup semua app.</p>
+                        
+                        <div class="app-grid">
+                            <div class="app-item">
+                                <label for="include_core">
+                                    <input type="checkbox" id="include_core" name="include_apps" value="core" checked>
+                                    <i class="fas fa-cog"></i> Core
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_references">
+                                    <input type="checkbox" id="include_references" name="include_apps" value="references" checked>
+                                    <i class="fas fa-database"></i> References
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_beneficiaries">
+                                    <input type="checkbox" id="include_beneficiaries" name="include_apps" value="beneficiaries" checked>
+                                    <i class="fas fa-hand-holding-heart"></i> Beneficiaries
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_business">
+                                    <input type="checkbox" id="include_business" name="include_apps" value="business">
+                                    <i class="fas fa-store"></i> Business
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_complaints">
+                                    <input type="checkbox" id="include_complaints" name="include_apps" value="complaints" checked>
+                                    <i class="fas fa-exclamation-triangle"></i> Complaints
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_documents">
+                                    <input type="checkbox" id="include_documents" name="include_apps" value="documents" checked>
+                                    <i class="fas fa-file-alt"></i> Documents
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_tourism">
+                                    <input type="checkbox" id="include_tourism" name="include_apps" value="tourism" checked>
+                                    <i class="fas fa-camera"></i> Tourism
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_posyandu">
+                                    <input type="checkbox" id="include_posyandu" name="include_apps" value="posyandu" checked>
+                                    <i class="fas fa-heartbeat"></i> Posyandu
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_news">
+                                    <input type="checkbox" id="include_news" name="include_apps" value="news" checked>
+                                    <i class="fas fa-newspaper"></i> News
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_organization">
+                                    <input type="checkbox" id="include_organization" name="include_apps" value="organization" checked>
+                                    <i class="fas fa-building"></i> Organization
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_layanan">
+                                    <input type="checkbox" id="include_layanan" name="include_apps" value="layanan" checked>
+                                    <i class="fas fa-concierge-bell"></i> Layanan
+                                </label>
+                            </div>
+                            <div class="app-item">
+                                <label for="include_letters">
+                                    <input type="checkbox" id="include_letters" name="include_apps" value="letters" checked>
+                                    <i class="fas fa-envelope"></i> Letters
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview -->
+                    <div class="preview-section" id="previewSection">
+                        <h6><i class="fas fa-eye"></i> Preview Backup</h6>
+                        <div class="preview-info">
+                            <div class="preview-item">
+                                <strong>Format:</strong>
+                                <span id="previewFormat">JSON</span>
+                            </div>
+                            <div class="preview-item">
+                                <strong>Kompresi:</strong>
+                                <span id="previewCompress">Ya</span>
+                            </div>
+                            <div class="preview-item">
+                                <strong>Include Media:</strong>
+                                <span id="previewMedia">Tidak</span>
+                            </div>
+                            <div class="preview-item">
+                                <strong>Cleanup Old:</strong>
+                                <span id="previewCleanup">Ya</span>
+                            </div>
+                            <div class="preview-item">
+                                <strong>Apps yang dipilih:</strong>
+                                <span id="previewApps">Semua app</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Section -->
+                    <div class="progress-section" id="progressSection">
+                        <h6><i class="fas fa-spinner fa-spin"></i> Membuat Backup...</h6>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Memulai backup...</div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="button" class="btn btn-outline-info" onclick="updatePreview()">
+                                    <i class="fas fa-eye"></i> Preview
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                                    <i class="fas fa-undo"></i> Reset Form
+                                </button>
+                            </div>
+                            <div>
+                                <a href="{% url 'core:database_backup_list' %}" class="btn btn-cancel">
+                                    <i class="fas fa-times"></i> Batal
+                                </a>
+                                <button type="submit" class="btn btn-create" id="createBtn">
+                                    <i class="fas fa-plus"></i> Buat Backup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Update preview
+function updatePreview() {
+    const format = document.getElementById('format').value;
+    const compress = document.getElementById('compress').checked;
+    const media = document.getElementById('include_media').checked;
+    const cleanup = document.getElementById('cleanup_old').checked;
+    
+    // Get selected apps
+    const selectedApps = [];
+    const appCheckboxes = document.querySelectorAll('input[name="include_apps"]:checked');
+    appCheckboxes.forEach(checkbox => {
+        selectedApps.push(checkbox.value);
+    });
+    
+    // Update preview
+    document.getElementById('previewFormat').textContent = format.toUpperCase();
+    document.getElementById('previewCompress').textContent = compress ? 'Ya' : 'Tidak';
+    document.getElementById('previewMedia').textContent = media ? 'Ya' : 'Tidak';
+    document.getElementById('previewCleanup').textContent = cleanup ? 'Ya' : 'Tidak';
+    
+    if (selectedApps.length === 0) {
+        document.getElementById('previewApps').textContent = 'Semua app';
+    } else if (selectedApps.length === appCheckboxes.length) {
+        document.getElementById('previewApps').textContent = 'Semua app';
+    } else {
+        document.getElementById('previewApps').textContent = selectedApps.join(', ');
+    }
+    
+    // Show preview section
+    document.getElementById('previewSection').style.display = 'block';
+}
+
+// Reset form
+function resetForm() {
+    if (confirm('Apakah Anda yakin ingin mereset form? Semua data yang sudah diisi akan hilang.')) {
+        document.getElementById('backupForm').reset();
+        document.getElementById('previewSection').style.display = 'none';
+        document.getElementById('progressSection').style.display = 'none';
+    }
+}
+
+// Form submission
+document.getElementById('backupForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!confirm('Apakah Anda yakin ingin membuat backup dengan konfigurasi ini?')) {
+        return;
+    }
+    
+    // Show loading state
+    const button = document.getElementById('createBtn');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Membuat Backup...';
+    button.disabled = true;
+    
+    // Show progress section
+    document.getElementById('progressSection').style.display = 'block';
+    
+    // Simulate progress
+    let progress = 0;
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        
+        progressBar.style.width = progress + '%';
+        
+        if (progress < 30) {
+            progressText.textContent = 'Menyiapkan backup...';
+        } else if (progress < 60) {
+            progressText.textContent = 'Mengekspor data...';
+        } else if (progress < 90) {
+            progressText.textContent = 'Mengompresi file...';
+        }
+    }, 800);
+    
+    // Prepare form data
+    const formData = new FormData(this);
+    
+    // Submit form
+    fetch('{% url "core:database_backup_create" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(response => {
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        progressText.textContent = 'Backup selesai!';
+        
+        if (response.ok) {
+            setTimeout(() => {
+                window.location.href = '{% url "core:database_backup_list" %}';
+            }, 1000);
+        } else {
+            // Get error details from response
+            return response.text().then(text => {
+                throw new Error(`Backup gagal (${response.status}): ${text}`);
+            });
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        console.error('Backup error:', error);
+        alert('❌ Error: ' + error.message);
+        button.innerHTML = originalText;
+        button.disabled = false;
+        document.getElementById('progressSection').style.display = 'none';
+    });
+});
+
+// Handle format change
+document.getElementById('format').addEventListener('change', function() {
+    const format = this.value;
+    const sqlOptions = document.getElementById('sqlOptions');
+    
+    if (format === 'sql') {
+        sqlOptions.style.display = 'block';
+    } else {
+        sqlOptions.style.display = 'none';
+        // Uncheck SQL-specific options when not using SQL format
+        document.getElementById('sql_data_only').checked = false;
+        document.getElementById('sql_structure_only').checked = false;
+    }
+    
+    setTimeout(updatePreview, 100);
+});
+
+// Auto-update preview when form changes
+document.getElementById('backupForm').addEventListener('change', function() {
+    setTimeout(updatePreview, 100);
+});
+
+// Initial preview update
+setTimeout(updatePreview, 100);
+</script>
+{% endblock %}

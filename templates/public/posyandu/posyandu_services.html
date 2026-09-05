@@ -1,0 +1,671 @@
+{% extends 'public/base.html' %} 
+{% load static %}
+{% block extra_css %} 
+{% endblock extra_css %} 
+
+{% block content %} 
+<main class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen"> 
+
+    <!-- 1. HERO SECTION -->
+    <header class="relative h-64 sm:h-80 md:h-96 lg:h-[500px] overflow-hidden"> 
+        {% if hero_image_url %}
+        <img src="{{ hero_image_url }}" alt="Posyandu Hero" class="w-full h-full object-cover">
+        {% else %}
+        <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <i class="fas fa-heartbeat text-4xl sm:text-6xl text-white opacity-50"></i>
+        </div>
+        {% endif %}
+        
+        <!-- Navigation Bar -->
+        <nav class="absolute top-0 left-0 right-0 z-10"> 
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+                <div class="flex justify-center space-x-8 py-4"> 
+                    <a href="{% url 'posyandu:public_posyandu_home' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"> 
+                        <i class="fas fa-home mr-2"></i> Beranda Posyandu 
+                    </a> 
+                    <a href="{% url 'posyandu:public_posyandu_schedule' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white hover:text-blue-200 hover:bg-white/10 rounded-lg transition-colors duration-200"> 
+                        <i class="fas fa-calendar-alt mr-2"></i> Jadwal Posyandu 
+                    </a> 
+                    <a href="{% url 'posyandu:public_health_info' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white hover:text-blue-200 hover:bg-white/10 rounded-lg transition-colors duration-200"> 
+                        <i class="fas fa-chart-line mr-2"></i> Info Kesehatan 
+                    </a> 
+                    <a href="{% url 'posyandu:public_stunting_info' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white hover:text-blue-200 hover:bg-white/10 rounded-lg transition-colors duration-200"> 
+                        <i class="fas fa-exclamation-triangle mr-2"></i> Info Stunting 
+                    </a> 
+                </div> 
+            </div> 
+        </nav>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8 text-white">
+            <div class="max-w-7xl mx-auto text-center">
+                <div class="inline-flex items-center px-4 py-2 bg-white/20 text-white rounded-full text-sm font-medium mb-4"> 
+                    <i class="fas fa-heartbeat mr-2"></i> Layanan Kesehatan Masyarakat 
+                </div> 
+                <!-- H1 untuk judul utama halaman -->
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight text-white"> 
+                    Posyandu <span class="text-blue-400">Kesehatan</span> 
+                </h1> 
+                <p class="text-sm sm:text-base lg:text-lg opacity-90 max-w-3xl mx-auto mb-6 text-white"> 
+                    Layanan kesehatan terpadu untuk balita, ibu hamil, dan monitoring stunting di Desa Pulosarok 
+                </p> 
+                <div class="flex flex-col sm:flex-row gap-4 justify-center"> 
+                    <a href="#services" class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"> 
+                        <i class="fas fa-stethoscope mr-2"></i> Lihat Layanan 
+                    </a> 
+                    <a href="{% url 'posyandu:public_posyandu_schedule' %}" class="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-medium rounded-lg border border-blue-600 hover:bg-blue-50 transition-colors duration-200"> 
+                        <i class="fas fa-calendar-alt mr-2"></i> Jadwal Posyandu 
+                    </a> 
+                </div> 
+            </div> 
+        </div> 
+    </header> 
+
+    <!-- 3. STATISTICS SECTION -->
+    <section id="statistics" class="py-8 md:py-12"> 
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+            <h2 class="sr-only">Statistik Posyandu</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"> 
+                <!-- Stat Card 1: Total Balita -->
+                <article class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-xl"> 
+                    <div class="flex items-center justify-between"> 
+                        <div> 
+                            <p class="text-blue-100 text-sm font-medium">Total Balita</p> 
+                            <p class="text-2xl md:text-3xl font-bold" id="total-balita">-</p> 
+                        </div> 
+                        <div class="bg-white bg-opacity-20 p-3 rounded-lg"> 
+                            <i class="fas fa-baby text-xl"></i> 
+                        </div> 
+                    </div> 
+                </article>
+                <!-- Stat Card 2: Ibu Hamil -->
+                <article class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-xl"> 
+                    <div class="flex items-center justify-between"> 
+                        <div> 
+                            <p class="text-blue-100 text-sm font-medium">Ibu Hamil</p> 
+                            <p class="text-2xl md:text-3xl font-bold" id="total-ibu-hamil">-</p> 
+                        </div> 
+                        <div class="bg-white bg-opacity-20 p-3 rounded-lg"> 
+                            <i class="fas fa-female text-xl"></i> 
+                        </div> 
+                    </div> 
+                </article> 
+                <!-- Stat Card 3: Kasus Stunting -->
+                <article class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-xl"> 
+                    <div class="flex items-center justify-between"> 
+                        <div> 
+                            <p class="text-blue-100 text-sm font-medium">Kasus Stunting</p> 
+                            <p class="text-2xl md:text-3xl font-bold" id="total-stunting">-</p> 
+                        </div> 
+                        <div class="bg-white bg-opacity-20 p-3 rounded-lg"> 
+                            <i class="fas fa-chart-line text-xl"></i> 
+                        </div> 
+                    </div> 
+                </article> 
+                <!-- Stat Card 4: Lokasi Posyandu -->
+                <article class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-xl"> 
+                    <div class="flex items-center justify-between"> 
+                        <div> 
+                            <p class="text-blue-100 text-sm font-medium">Lokasi Posyandu</p> 
+                            <p class="text-2xl md:text-3xl font-bold" id="total-locations">-</p> 
+                        </div> 
+                        <div class="bg-white bg-opacity-20 p-3 rounded-lg"> 
+                            <i class="fas fa-map-marker-alt text-xl"></i> 
+                        </div> 
+                    </div> 
+                </article> 
+            </div> 
+        </div> 
+    </section> 
+
+    <!-- 4. SERVICES SECTION -->
+    <section id="services" class="py-12 md:py-16"> 
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+            <div class="text-center mb-12"> 
+                <!-- H2 untuk sub-judul bagian -->
+                <h2 class="text-2xl md:text-4xl font-bold text-gray-900 mb-4"> Layanan <span class="text-blue-600">Posyandu</span> </h2> 
+                <p class="text-gray-600 max-w-2xl mx-auto"> Berbagai layanan kesehatan yang tersedia di posyandu desa kami </p> 
+            </div> 
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"> 
+                
+                <!-- Layanan 1: Kesehatan Balita -->
+                <article class="bg-white rounded-xl p-6 md:p-8 border border-gray-200 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:border-blue-500"> 
+                    <div class="bg-green-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6"> 
+                        <i class="fas fa-baby text-2xl text-green-600"></i> 
+                    </div> 
+                    <!-- H3 untuk judul layanan -->
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Kesehatan Balita</h3> 
+                    <p class="text-gray-600 mb-6"> Pemeriksaan rutin kesehatan balita, imunisasi, dan monitoring tumbuh kembang anak </p> 
+                    <ul class="space-y-2 mb-6"> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Penimbangan dan pengukuran </li> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Imunisasi lengkap </li> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Konsultasi gizi </li> 
+                    </ul> 
+                    <a href="{% url 'posyandu:public_health_info' %}" class="inline-flex items-center text-blue-600 font-medium hover:text-blue-700"> Selengkapnya <i class="fas fa-arrow-right ml-2"></i> </a> 
+                </article> 
+                
+                <!-- Layanan 2: Kesehatan Ibu Hamil -->
+                <article class="bg-white rounded-xl p-6 md:p-8 border border-gray-200 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:border-blue-500"> 
+                    <div class="bg-pink-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6"> 
+                        <i class="fas fa-female text-2xl text-pink-600"></i> 
+                    </div> 
+                    <!-- H3 untuk judul layanan -->
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Kesehatan Ibu Hamil</h3> 
+                    <p class="text-gray-600 mb-6"> Pemeriksaan kehamilan, konsultasi gizi ibu hamil, dan persiapan persalinan </p> 
+                    <ul class="space-y-2 mb-6"> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Pemeriksaan rutin kehamilan </li> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Konsultasi gizi </li> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Edukasi kesehatan </li> 
+                    </ul> 
+                    <a href="{% url 'posyandu:public_health_info' %}" class="inline-flex items-center text-blue-600 font-medium hover:text-blue-700"> Selengkapnya <i class="fas fa-arrow-right ml-2"></i> </a> 
+                </article> 
+                
+                <!-- Layanan 3: Monitoring Stunting -->
+                <article class="bg-white rounded-xl p-6 md:p-8 border border-gray-200 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:border-blue-500"> 
+                    <div class="bg-orange-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6"> 
+                        <i class="fas fa-chart-line text-2xl text-orange-600"></i> 
+                    </div> 
+                    <!-- H3 untuk judul layanan -->
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Monitoring Stunting</h3> 
+                    <p class="text-gray-600 mb-6"> Pemantauan dan pencegahan stunting pada balita dengan program gizi terintegrasi </p> 
+                    <ul class="space-y-2 mb-6"> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Screening stunting </li> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Program gizi khusus </li> 
+                        <li class="flex items-center text-sm text-gray-600"> <i class="fas fa-check text-green-500 mr-2"></i> Edukasi orang tua </li> 
+                    </ul> 
+                    <a href="{% url 'posyandu:public_stunting_info' %}" class="inline-flex items-center text-blue-600 font-medium hover:text-blue-700"> Selengkapnya <i class="fas fa-arrow-right ml-2"></i> </a> 
+                </article> 
+            </div> 
+        </div> 
+    </section> 
+
+    <!-- 5. MAIN CONTENT SECTION (LOKASI & SIDEBAR) -->
+    <section id="locations-and-info" class="py-12 md:py-16 bg-white"> 
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"> 
+                
+                <!-- Lokasi Posyandu (Main Content Area) -->
+                <div class="lg:col-span-2"> 
+                    <div class="text-center mb-8"> 
+                        <!-- H2 untuk sub-judul bagian -->
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4 flex items-center justify-center"> 
+                            <i class="fas fa-map-marker-alt text-red-600 mr-3"></i> Lokasi Posyandu 
+                        </h2> 
+                        <p class="text-gray-600"> Posyandu tersebar di berbagai dusun untuk memudahkan akses layanan kesehatan </p> 
+                    </div> 
+                    <!-- Daftar Lokasi -->
+                    <div class="space-y-4" id="posyandu-locations"> 
+                        <!-- Locations will be loaded via JavaScript --> 
+                    </div> 
+                    <!-- Pagination -->
+                    <div id="posyandu-pagination" class="mt-6"> 
+                        <!-- Pagination will be loaded via JavaScript --> 
+                    </div> 
+                </div> 
+                
+                <!-- Sidebar (Aside Content Area) -->
+                <aside class="lg:col-span-1 space-y-6"> 
+                    
+                    <!-- Jadwal Mendatang -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6"> 
+                        <!-- H3 untuk judul sidebar -->
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"> 
+                            <i class="fas fa-calendar-alt text-green-600 mr-2"></i> Jadwal Mendatang 
+                        </h3> 
+                        <div class="space-y-3" id="upcoming-schedules"> 
+                            <!-- Schedules will be loaded via JavaScript --> 
+                        </div> 
+                    </div> 
+                    
+                    <!-- Layanan Posyandu (Daftar Cepat) -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6"> 
+                        <!-- H3 untuk judul sidebar -->
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"> 
+                            <i class="fas fa-stethoscope text-blue-600 mr-2"></i> Layanan Posyandu 
+                        </h3> 
+                        <div class="space-y-3"> 
+                            <div class="flex items-center space-x-3 text-sm"> 
+                                <i class="fas fa-baby text-pink-600"></i> <span class="text-gray-700">Pemeriksaan Bayi & Balita</span> 
+                            </div> 
+                            <div class="flex items-center space-x-3 text-sm"> 
+                                <i class="fas fa-syringe text-green-600"></i> <span class="text-gray-700">Imunisasi</span> 
+                            </div> 
+                            <div class="flex items-center space-x-3 text-sm"> 
+                                <i class="fas fa-weight text-blue-600"></i> <span class="text-gray-700">Penimbangan & Pengukuran</span> 
+                            </div> 
+                            <div class="flex items-center space-x-3 text-sm"> 
+                                <i class="fas fa-female text-purple-600"></i> <span class="text-gray-700">Kesehatan Ibu Hamil</span> 
+                            </div> 
+                            <div class="flex items-center space-x-3 text-sm"> 
+                                <i class="fas fa-utensils text-orange-600"></i> <span class="text-gray-700">Konsultasi Gizi</span> 
+                            </div> 
+                        </div> 
+                    </div> 
+                    
+                    <!-- Kontak Posyandu -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6"> 
+                        <!-- H3 untuk judul sidebar -->
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"> 
+                            <i class="fas fa-phone text-red-600 mr-2"></i> Kontak Posyandu 
+                        </h3> 
+                        <div class="space-y-3"> 
+                            <div class="flex items-center space-x-3 text-sm"> 
+                                <i class="fas fa-phone text-red-600"></i> <span class="text-gray-700">+62 812-3456-7890</span> 
+                            </div> 
+                            <div class="flex items-center space-x-3 text-sm"> 
+                                <i class="fas fa-envelope text-blue-600"></i> <span class="text-gray-700">posyandu@pulosarok.desa.id</span> 
+                            </div> 
+                            <div class="flex items-center space-x-3 text-sm"> 
+                                <i class="fas fa-clock text-orange-600"></i> <span class="text-gray-700">Senin - Jumat: 08:00 - 16:00</span> 
+                            </div> 
+                        </div> 
+                    </div> 
+                </aside> 
+            </div> 
+        </div> 
+    </section> 
+
+    <!-- 6. SCHEDULE TABLE SECTION (Detailed Schedule) -->
+    <section id="schedule" class="py-12 md:py-16"> 
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+            <div class="text-center mb-12"> 
+                <!-- H2 untuk sub-judul bagian -->
+                <h2 class="text-2xl md:text-4xl font-bold text-gray-900 mb-4"> Jadwal <span class="text-blue-600">Posyandu</span> </h2> 
+                <p class="text-gray-600 max-w-2xl mx-auto"> Jadwal kegiatan posyandu di berbagai lokasi </p> 
+            </div> 
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden"> 
+                <div class="overflow-x-auto"> 
+                    <table class="w-full"> 
+                        <thead class="bg-gray-50"> 
+                            <tr> 
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th> 
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th> 
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th> 
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kegiatan</th> 
+                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th> 
+                            </tr> 
+                        </thead> 
+                        <tbody id="schedule-table" class="bg-white divide-y divide-gray-200"> 
+                            <!-- Schedule data will be loaded via JavaScript --> 
+                        </tbody> 
+                    </table> 
+                </div> 
+                <!-- Schedule Pagination Container --> 
+                <div id="schedule-pagination" class="px-4 py-3 bg-gray-50 border-t border-gray-200"> 
+                    <!-- Pagination will be loaded via JavaScript --> 
+                </div> 
+            </div> 
+        </div> 
+    </section> 
+
+    <!-- 7. CONTACT SECTION (FOOTER) -->
+    <footer class="py-12 md:py-16 bg-blue-600"> 
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+            <div class="text-center"> 
+                <h2 class="text-2xl md:text-4xl font-bold text-white mb-4"> Butuh Bantuan? </h2> 
+                <p class="text-blue-100 max-w-2xl mx-auto mb-8"> Hubungi kader posyandu atau petugas kesehatan untuk informasi lebih lanjut </p> 
+                <div class="flex flex-col sm:flex-row gap-4 justify-center"> 
+                    <a href="tel:+6281234567890" class="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-medium rounded-lg hover:bg-gray-100 transition-colors duration-200"> 
+                        <i class="fas fa-phone mr-2"></i> Hubungi Kader 
+                    </a> 
+                    <a href="https://wa.me/6281234567890" target="_blank" class="inline-flex items-center px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors duration-200"> 
+                        <i class="fab fa-whatsapp mr-2"></i> WhatsApp 
+                    </a> 
+                </div> 
+            </div> 
+        </div> 
+    </footer> 
+
+</main> 
+
+{% endblock content %} 
+
+{% block extra_js %} 
+<script> 
+    // Load health statistics
+    fetch('/posyandu/api/health-stats/') 
+    .then(response => response.json()) 
+    .then(data => { 
+        document.getElementById('total-balita').textContent = data.total_balita || '0'; 
+        document.getElementById('total-ibu-hamil').textContent = data.total_ibu_hamil || '0'; 
+        document.getElementById('total-stunting').textContent = data.total_stunting || '0'; 
+    }) 
+    .catch(error => console.error('Error loading health stats:', error)); 
+
+    // Load posyandu locations with pagination
+    let currentPage = 1; 
+    const itemsPerPage = 10; 
+
+    function loadPosyanduLocations(page = 1) { 
+        fetch(`/posyandu/api/locations/?page=${page}&per_page=${itemsPerPage}`) 
+        .then(response => response.json()) 
+        .then(data => { 
+            const container = document.getElementById('posyandu-locations'); 
+            const locations = data.results || []; 
+            
+            // Perbarui total locations
+            document.getElementById('total-locations').textContent = data.pagination?.total_count || locations.length || '0'; 
+            
+            // Clear previous content 
+            container.innerHTML = ''; 
+            
+            if (locations.length === 0) { 
+                container.innerHTML = ` 
+                    <div class="text-center py-8"> 
+                        <i class="fas fa-map-marker-alt text-gray-400 text-4xl mb-4"></i> 
+                        <p class="text-gray-500">Belum ada lokasi posyandu yang tersedia</p> 
+                    </div> 
+                `; 
+                return; 
+            } 
+
+            // Render locations 
+            locations.forEach(location => { 
+                const locationCard = document.createElement('article'); // Menggunakan <article>
+                locationCard.className = 'bg-white rounded-2xl shadow-lg p-6 border border-gray-200 mb-4'; 
+                locationCard.innerHTML = ` 
+                    <header class="flex items-start justify-between mb-4"> 
+                        <div class="flex items-center"> 
+                            <div class="bg-red-100 w-12 h-12 rounded-lg flex items-center justify-center mr-4"> 
+                                <i class="fas fa-heart text-red-600"></i> 
+                            </div> 
+                            <div> 
+                                <h3 class="font-semibold text-gray-900 text-lg">${location.name || 'Nama Tidak Tersedia'}</h3> 
+                                <p class="text-sm text-gray-600">${location.address || 'Alamat Tidak Tersedia'}</p> 
+                            </div> 
+                        </div> 
+                    </header>
+                    <div class="space-y-2 mb-4"> 
+                        <div class="flex items-center text-sm text-gray-600"> 
+                            <i class="fas fa-clock mr-2 text-orange-600"></i> <span>Senin - Jumat: 08:00 - 12:00</span> 
+                        </div> 
+                        <div class="flex items-center text-sm text-gray-600"> 
+                            <i class="fas fa-phone mr-2 text-green-600"></i> <span>${location.contact_phone || '082392115909'}</span> 
+                        </div> 
+                        ${location.capacity ? ` 
+                            <div class="flex items-center text-sm text-gray-600"> 
+                                <i class="fas fa-users mr-2 text-blue-600"></i> <span>Kapasitas: ${location.capacity} orang</span> 
+                            </div> 
+                        ` : ''} 
+                    </div> 
+                    <footer class="flex items-center justify-between"> 
+                        <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"> Aktif </span> 
+                        <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"> Detail </button> 
+                    </footer> 
+                `; 
+                container.appendChild(locationCard); 
+            }); 
+            
+            // Render pagination 
+            renderPagination(data.pagination); 
+        }) 
+        .catch(error => { 
+            console.error('Error loading locations:', error); 
+            const container = document.getElementById('posyandu-locations'); 
+            container.innerHTML = ` 
+                <div class="text-center py-8"> 
+                    <i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-4"></i> 
+                    <p class="text-red-500">Gagal memuat data lokasi posyandu</p> 
+                </div> 
+            `; 
+        }); 
+    } 
+
+    function renderPagination(pagination) { 
+        const paginationContainer = document.getElementById('posyandu-pagination'); 
+        if (!paginationContainer || !pagination) return; 
+        
+        const { current_page, total_pages, has_next, has_previous } = pagination; 
+        
+        if (total_pages <= 1) { 
+            paginationContainer.innerHTML = ''; 
+            return; 
+        } 
+        
+        let paginationHTML = '<div class="flex justify-center items-center space-x-2 mt-6">'; 
+
+        // Previous button 
+        if (has_previous) { 
+            paginationHTML += ` 
+                <button onclick="loadPosyanduLocations(${current_page - 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700">
+                    <i class="fas fa-chevron-left"></i> 
+                </button> 
+            `; 
+        } 
+        
+        // Page numbers 
+        const startPage = Math.max(1, current_page - 2); 
+        const endPage = Math.min(total_pages, current_page + 2); 
+        
+        for (let i = startPage; i <= endPage; i++) { 
+            const isActive = i === current_page; 
+            paginationHTML += ` 
+                <button onclick="loadPosyanduLocations(${i})" class="px-3 py-2 text-sm font-medium rounded-lg ${ 
+                    isActive ? 'text-white bg-red-600 hover:bg-red-700' : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700' 
+                }"> 
+                    ${i} 
+                </button> 
+            `; 
+        } 
+        
+        // Next button 
+        if (has_next) { 
+            paginationHTML += ` 
+                <button onclick="loadPosyanduLocations(${current_page + 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700">
+                    <i class="fas fa-chevron-right"></i> 
+                </button> 
+            `; 
+        } 
+        
+        paginationHTML += '</div>'; 
+        paginationContainer.innerHTML = paginationHTML; 
+    } 
+
+    // Load initial data 
+    loadPosyanduLocations(1); 
+
+    // Schedule pagination variables
+    let currentSchedulePage = 1; 
+    const schedulesPerPage = 10; 
+
+    // Load upcoming schedules for sidebar (no pagination)
+    fetch('/posyandu/api/schedules/?per_page=3') 
+    .then(response => response.json()) 
+    .then(data => { 
+        const upcomingContainer = document.getElementById('upcoming-schedules'); 
+        const schedules = data.results || []; 
+        
+        upcomingContainer.innerHTML = schedules.map(schedule => { 
+            const scheduleDate = schedule.schedule_date; 
+            const activityType = schedule.activity_type || schedule.title || 'Kegiatan'; 
+            const locationName = schedule.location_name || 'Lokasi Tidak Tersedia'; 
+            
+            let dayNumber = '?'; 
+            try { 
+                if (scheduleDate) { 
+                    const date = new Date(scheduleDate); 
+                    if (!isNaN(date.getTime())) { 
+                        dayNumber = date.getDate(); 
+                    } 
+                } 
+            } catch (e) { 
+                console.warn('Invalid date:', scheduleDate); 
+            } 
+            
+            return ` 
+                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg" role="listitem"> 
+                    <div class="bg-green-100 w-8 h-8 rounded-full flex items-center justify-center"> 
+                        <span class="text-xs font-semibold text-green-600">${dayNumber}</span> 
+                    </div> 
+                    <div class="flex-1"> 
+                        <p class="text-sm font-medium text-gray-900">${activityType}</p> 
+                        <p class="text-xs text-gray-600">${locationName}</p> 
+                    </div> 
+                </div> 
+            `; 
+        }).join(''); 
+    }) 
+    .catch(error => console.error('Error loading upcoming schedules:', error)); 
+
+    // Load schedule table with pagination
+    function loadScheduleTable(page = 1) { 
+        fetch(`/posyandu/api/schedules/?page=${page}&per_page=${schedulesPerPage}`) 
+        .then(response => response.json()) 
+        .then(data => { 
+            const tbody = document.getElementById('schedule-table'); 
+            const schedules = data.results || []; 
+            
+            // Clear previous content 
+            tbody.innerHTML = ''; 
+            
+            if (schedules.length === 0) { 
+                tbody.innerHTML = ` 
+                    <tr> 
+                        <td colspan="5" class="px-4 md:px-6 py-8 text-center text-gray-500"> 
+                            <i class="fas fa-calendar-alt text-2xl mb-2"></i> 
+                            <p>Belum ada jadwal posyandu yang tersedia</p> 
+                        </td> 
+                    </tr> 
+                `; 
+                return; 
+            } 
+
+            // Render schedule rows 
+            schedules.forEach(schedule => { 
+                const scheduleDate = schedule.schedule_date; 
+                const startTime = schedule.start_time || '09:00'; 
+                const endTime = schedule.end_time || '13:00'; 
+                const locationName = schedule.location_name || 'Lokasi Tidak Tersedia'; 
+                const activityType = schedule.activity_type || schedule.title || 'Kegiatan'; 
+                const status = schedule.status || 'scheduled'; 
+                
+                let formattedDate = 'Tanggal Tidak Valid'; 
+                try { 
+                    if (scheduleDate) { 
+                        const date = new Date(scheduleDate); 
+                        if (!isNaN(date.getTime())) { 
+                            formattedDate = date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }); 
+                        } 
+                    } 
+                } catch (e) { 
+                    console.warn('Invalid date:', scheduleDate); 
+                } 
+                
+                const statusClass = status === 'active' || status === 'ongoing' 
+                    ? 'bg-green-100 text-green-800' 
+                    : status === 'completed' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-800';
+                
+                const statusText = status === 'active' || status === 'ongoing' 
+                    ? 'Aktif' 
+                    : status === 'completed' 
+                    ? 'Selesai' 
+                    : 'Dijadwalkan';
+
+                const row = document.createElement('tr'); 
+                row.className = 'hover:bg-gray-50';
+                
+                row.innerHTML = ` 
+                    <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900"> 
+                        ${formattedDate} 
+                    </td> 
+                    <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900"> 
+                        ${startTime} - ${endTime} 
+                    </td> 
+                    <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900"> 
+                        ${locationName} 
+                    </td> 
+                    <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-gray-900"> 
+                        ${activityType} 
+                    </td> 
+                    <td class="px-4 md:px-6 py-4 whitespace-nowrap"> 
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClass}"> 
+                            ${statusText} 
+                        </span> 
+                    </td> 
+                `; 
+                tbody.appendChild(row); 
+            }); 
+
+            // Render schedule pagination 
+            renderSchedulePagination(data.pagination); 
+        }) 
+        .catch(error => { 
+            console.error('Error loading schedules:', error); 
+            const tbody = document.getElementById('schedule-table'); 
+            tbody.innerHTML = ` 
+                <tr> 
+                    <td colspan="5" class="px-4 md:px-6 py-8 text-center text-red-500"> 
+                        <i class="fas fa-exclamation-triangle text-2xl mb-2"></i> 
+                        <p>Gagal memuat jadwal posyandu</p> 
+                    </td> 
+                </tr> 
+            `; 
+        }); 
+    } 
+
+    function renderSchedulePagination(pagination) { 
+        const paginationContainer = document.getElementById('schedule-pagination'); 
+        if (!paginationContainer || !pagination) return; 
+        
+        const { current_page, total_pages, has_next, has_previous, total_count } = pagination; 
+        
+        if (total_pages <= 1) { 
+            paginationContainer.innerHTML = ` 
+                <div class="flex justify-between items-center"> 
+                    <div class="text-sm text-gray-700"> Menampilkan ${total_count} jadwal </div> 
+                </div> 
+            `; 
+            return; 
+        } 
+
+        let paginationHTML = ` 
+            <div class="flex justify-between items-center"> 
+                <div class="text-sm text-gray-700"> Menampilkan ${((current_page - 1) * schedulesPerPage) + 1}-${Math.min(current_page * schedulesPerPage, total_count)} dari ${total_count} jadwal </div> 
+                <div class="flex items-center space-x-2"> 
+        `; 
+
+        // Previous button 
+        if (has_previous) { 
+            paginationHTML += ` 
+                <button onclick="loadScheduleTable(${current_page - 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700">
+                    <i class="fas fa-chevron-left"></i> 
+                </button> 
+            `; 
+        } 
+
+        // Page numbers 
+        const startPage = Math.max(1, current_page - 2); 
+        const endPage = Math.min(total_pages, current_page + 2); 
+        
+        for (let i = startPage; i <= endPage; i++) { 
+            const isActive = i === current_page; 
+            paginationHTML += ` 
+                <button onclick="loadScheduleTable(${i})" class="px-3 py-2 text-sm font-medium rounded-lg ${ 
+                    isActive ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700' 
+                }"> 
+                    ${i} 
+                </button> 
+            `; 
+        } 
+        
+        // Next button 
+        if (has_next) { 
+            paginationHTML += ` 
+                <button onclick="loadScheduleTable(${current_page + 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700">
+                    <i class="fas fa-chevron-right"></i> 
+                </button> 
+            `; 
+        } 
+        
+        paginationHTML += ` 
+                </div> 
+            </div> 
+        `; 
+        paginationContainer.innerHTML = paginationHTML; 
+    } 
+
+    // Load initial schedule data 
+    loadScheduleTable(1); 
+</script> 
+{% endblock extra_js %}

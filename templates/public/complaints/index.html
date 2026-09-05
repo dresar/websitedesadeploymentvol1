@@ -1,0 +1,735 @@
+{% extends 'public/base.html' %}
+{% load static %}
+<!-- Custom template filter for adding CSS classes -->
+{% load widget_tweaks %}
+
+{% block extra_css %}
+<style>
+    /* Hero Image Optimizations - Smaller */
+    .hero-section {
+        min-height: 40vh;
+        position: relative;
+        background-attachment: fixed;
+    }
+
+    .hero-section .absolute {
+        will-change: transform;
+    }
+
+    /* Hero Image Background - Simplified */
+    .hero-section .absolute:first-child {
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    /* Mobile-first responsive design */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 2rem 1rem !important;
+            min-height: 35vh !important;
+        }
+
+        .hero-title {
+            font-size: 1.5rem !important;
+            line-height: 1.2 !important;
+            margin-bottom: 0.75rem !important;
+        }
+
+        .hero-subtitle {
+            font-size: 0.8rem !important;
+            margin-bottom: 1rem !important;
+            line-height: 1.4 !important;
+        }
+
+        .hero-buttons {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+            max-width: 100% !important;
+        }
+
+        .hero-button {
+            width: 100% !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.8rem !important;
+            min-height: 40px !important;
+        }
+    }
+
+    /* Tablet optimizations */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .hero-section {
+            min-height: 45vh;
+        }
+
+        .hero-title {
+            font-size: 2.5rem !important;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem !important;
+        }
+    }
+
+    /* Desktop optimizations */
+    @media (min-width: 1025px) {
+        .hero-section {
+            min-height: 50vh;
+        }
+
+        .hero-title {
+            font-size: 3rem !important;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem !important;
+        }
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+
+    .stats-card {
+        padding: 0.75rem !important;
+    }
+
+    .stats-number {
+        font-size: 1.25rem !important;
+    }
+
+    .stats-text {
+        font-size: 0.7rem !important;
+    }
+
+    .form-container {
+        padding: 0.75rem !important;
+    }
+
+    .form-section {
+        padding: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    .form-title {
+        font-size: 1.1rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+    }
+
+    .form-label {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.375rem !important;
+    }
+
+    .form-input {
+        padding: 0.625rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    .form-textarea {
+        min-height: 100px !important;
+        font-size: 0.8rem !important;
+    }
+
+    .sidebar {
+        margin-top: 1.5rem !important;
+    }
+
+    .sidebar-card {
+        padding: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    .submit-button {
+        width: 100% !important;
+        padding: 0.75rem !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* Ultra mobile (phones in portrait) */
+    @media (max-width: 480px) {
+        .hero-title {
+            font-size: 1.25rem !important;
+        }
+
+        .hero-section {
+            min-height: 30vh !important;
+            padding: 1.5rem 0.75rem !important;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .stats-card {
+            padding: 0.5rem !important;
+        }
+
+        .form-container {
+            padding: 0.5rem !important;
+        }
+
+        .form-section {
+            padding: 0.5rem !important;
+        }
+    }
+
+    /* Custom select dropdown arrow - minimal */
+    select[class*="appearance-none"] {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1rem 1rem;
+        padding-right: 2rem;
+    }
+
+
+    /* Minimal form field focus states */
+    input:focus,
+    textarea:focus,
+    select:focus {
+        outline: none;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
+        border-color: #3b82f6;
+    }
+
+    /* Minimal error styling */
+    .is-invalid {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2) !important;
+    }
+
+    .is-valid {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2) !important;
+    }
+
+    /* Minimal file input styling */
+    input[type="file"] {
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+
+    input[type="file"]::-webkit-file-upload-button {
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        margin-right: 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    input[type="file"]::-webkit-file-upload-button:hover {
+        background: #e5e7eb;
+    }
+
+
+    /* Mobile-optimized textarea */
+    @media (max-width: 768px) {
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            max-height: 200px;
+        }
+    }
+
+    /* Touch-friendly buttons */
+    @media (max-width: 768px) {
+        button,
+        .btn {
+            min-height: 40px;
+            min-width: 40px;
+        }
+    }
+
+    /* Light theme optimizations */
+    .stats-card {
+        background-color: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .form-section {
+        background-color: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .sidebar-card {
+        background-color: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    /* Mobile light theme */
+    @media (max-width: 768px) {
+        .stats-card,
+        .form-section,
+        .sidebar-card {
+            padding: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<!-- Hero Section with Background Image - Mobile Optimized -->
+<div class="relative hero-section py-12 md:py-20 lg:py-24 overflow-hidden">
+    <!-- Background Image with Blur and Dark Overlay -->
+    {% if hero_image_url %}
+    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ hero_image_url }}');"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-600/80 to-purple-700/80"></div>
+    {% else %}
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700"></div>
+    {% endif %}
+
+    <!-- Content -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-white">
+            <h1 class="hero-title text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 md:mb-6">
+                <i class="fas fa-exclamation-triangle mr-2 sm:mr-3 text-sm sm:text-base md:text-lg lg:text-xl"></i>
+                <span class="block sm:inline">{% if hero_title %}{{ hero_title }}{% else %}Keluhan & Pengaduan{% endif %}</span>
+            </h1>
+            <p class="hero-subtitle text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 opacity-90 max-w-3xl mx-auto">
+                {% if hero_subtitle %}{{ hero_subtitle }}{% else %}Laporkan masalah Anda dengan mudah dan aman. Kami siap membantu menyelesaikan setiap keluhan dengan cepat dan profesional.{% endif %}
+            </p>
+            <div class="hero-buttons flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md mx-auto">
+                <a href="#form"
+                    class="hero-button bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 text-sm sm:text-base shadow-lg hover:shadow-xl">
+                    <i class="fas fa-plus mr-2"></i>Buat Keluhan
+                </a>
+                <a href="{% url 'complaints:complaint_tracking' %}"
+                    class="hero-button bg-transparent border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-all duration-300 text-sm sm:text-base backdrop-blur-sm">
+                    <i class="fas fa-search mr-2"></i>Lacak Status
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <!-- Quick Stats - Mobile Optimized -->
+    <div class="stats-grid grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 md:mb-16">
+        <div
+            class="stats-card bg-white rounded-lg md:rounded-xl p-4 md:p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200">
+            <div
+                class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-4">
+                <i class="fas fa-file-alt text-white text-sm sm:text-base md:text-xl"></i>
+            </div>
+            <h3 class="stats-number text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">1,234</h3>
+            <p class="stats-text text-xs sm:text-sm text-gray-600">Total Keluhan</p>
+        </div>
+        <div
+            class="stats-card bg-white rounded-lg md:rounded-xl p-4 md:p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200">
+            <div
+                class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-4">
+                <i class="fas fa-check-circle text-white text-sm sm:text-base md:text-xl"></i>
+            </div>
+            <h3 class="stats-number text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">987</h3>
+            <p class="stats-text text-xs sm:text-sm text-gray-600">Selesai</p>
+        </div>
+        <div
+            class="stats-card bg-white rounded-lg md:rounded-xl p-4 md:p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200">
+            <div
+                class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-4">
+                <i class="fas fa-clock text-white text-sm sm:text-base md:text-xl"></i>
+            </div>
+            <h3 class="stats-number text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">156</h3>
+            <p class="stats-text text-xs sm:text-sm text-gray-600">Diproses</p>
+        </div>
+        <div
+            class="stats-card bg-white rounded-lg md:rounded-xl p-4 md:p-6 text-center shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200">
+            <div
+                class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-4">
+                <i class="fas fa-star text-white text-sm sm:text-base md:text-xl"></i>
+            </div>
+            <h3 class="stats-number text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">4.8</h3>
+            <p class="stats-text text-xs sm:text-sm text-gray-600">Rating</p>
+        </div>
+    </div>
+
+    <!-- Form Section - Mobile Optimized -->
+    <div id="form" class="form-container grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+        <!-- Complaint Form -->
+        <div class="lg:col-span-2">
+            <div
+                class="bg-white rounded-xl md:rounded-2xl p-4 md:p-8 shadow-xl border border-gray-200 hover:shadow-2xl transition-all duration-300">
+                <h2 class="form-title text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 md:mb-6">
+                    <i class="fas fa-edit text-purple-600 mr-2 md:mr-3 text-sm md:text-base"></i> Formulir Keluhan
+                </h2>
+
+                <form method="post" enctype="multipart/form-data" class="space-y-4 md:space-y-8">
+                    {% csrf_token %}
+
+                    <!-- Personal Information - Mobile Optimized -->
+                    <div class="form-section bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-200">
+                        <h3 class="form-title text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
+                            <i class="fas fa-user text-blue-500 mr-2 md:mr-3 text-sm md:text-base"></i> Informasi Pelapor
+                            <div class="ml-auto w-8 md:w-12 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                        </h3>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            <div class="space-y-2">
+                                <label for="{{ form.reporter_name.id_for_label }}"
+                                    class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                    Nama Lengkap <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.reporter_name|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                            </div>
+                            <div class="space-y-2">
+                                <label for="{{ form.reporter_email.id_for_label }}"
+                                    class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                    Email <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.reporter_email|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                            </div>
+                        </div>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-4 md:mt-6">
+                            <div class="space-y-2">
+                                <label for="{{ form.reporter_phone.id_for_label }}"
+                                    class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                    Nomor Telepon
+                                </label>
+                                {{ form.reporter_phone|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                            </div>
+                            <div class="space-y-2">
+                                <label for="{{ form.location.id_for_label }}"
+                                    class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                    Lokasi Kejadian <span class="text-gray-500 text-xs">(opsional)</span>
+                                </label>
+                                {{ form.location|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-6 space-y-2">
+                            <label for="{{ form.reporter_address.id_for_label }}"
+                                class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                Alamat Lengkap
+                            </label>
+                            {{ form.reporter_address|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                        </div>
+                    </div>
+
+                    <!-- Complaint Details - Mobile Optimized -->
+                    <div class="form-section bg-white rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-200">
+                        <h3 class="form-title text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6 flex items-center">
+                            <i class="fas fa-clipboard-list text-purple-500 mr-2 md:mr-3 text-sm md:text-base"></i> Detail Keluhan
+                            <div class="ml-auto w-8 md:w-12 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                        </h3>
+                        <div class="space-y-4 md:space-y-6">
+                            <div class="space-y-2">
+                                <label for="{{ form.category.id_for_label }}"
+                                    class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                    Kategori Keluhan <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.category|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                            </div>
+                            <div class="space-y-2">
+                                <label for="{{ form.title.id_for_label }}"
+                                    class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                    Judul Keluhan <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.title|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                            </div>
+                            <div class="space-y-2">
+                                <label for="{{ form.description.id_for_label }}"
+                                    class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                    Deskripsi Keluhan <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.description|add_class:"form-textarea w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                            </div>
+                            <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                <div class="space-y-2">
+                                    <label for="{{ form.incident_date.id_for_label }}"
+                                        class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                        Tanggal Kejadian
+                                    </label>
+                                    {{ form.incident_date|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="{{ form.priority.id_for_label }}"
+                                        class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                        Prioritas
+                                    </label>
+                                    {{ form.priority|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="{{ form.attachment.id_for_label }}"
+                                    class="form-label block text-xs md:text-sm font-medium text-gray-700">
+                                    File Lampiran <span class="text-gray-500 text-xs">(Opsional)</span>
+                                </label>
+                                {{ form.attachment|add_class:"form-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Errors -->
+                    {% if form.errors %}
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                        <h4 class="text-red-800 font-bold mb-3 flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-2"></i> Terjadi Kesalahan
+                        </h4>
+                        <ul class="text-red-700 text-sm space-y-2">
+                            {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <li class="flex items-start">
+                                <i class="fas fa-times-circle mr-2 mt-0.5 text-red-500"></i> {{ error }}
+                            </li>
+                            {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <!-- Submit Button - Mobile Optimized -->
+                    <div class="flex justify-center md:justify-end">
+                        <button type="submit"
+                            class="submit-button bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700">
+                            <i class="fas fa-paper-plane mr-2"></i> Kirim Keluhan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar - Mobile Optimized -->
+        <div class="sidebar space-y-4 md:space-y-6">
+            <!-- Guidelines - Mobile Optimized -->
+            <div
+                class="sidebar-card bg-white rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
+                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+                    <i class="fas fa-info-circle text-blue-500 mr-2 text-sm md:text-base"></i> Panduan Keluhan
+                </h3>
+                <ul class="space-y-2 md:space-y-3 text-xs md:text-sm text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 md:mt-1 text-xs md:text-sm"></i>
+                        <span>Isi data diri dengan lengkap dan benar</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 md:mt-1 text-xs md:text-sm"></i>
+                        <span>Deskripsikan masalah dengan jelas</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 md:mt-1 text-xs md:text-sm"></i>
+                        <span>Sertakan lokasi kejadian jika memungkinkan</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 md:mt-1 text-xs md:text-sm"></i>
+                        <span>Pilih prioritas sesuai tingkat urgensi</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Contact Info - Mobile Optimized -->
+            <div
+                class="sidebar-card bg-white rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
+                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+                    <i class="fas fa-phone text-green-500 mr-2 text-sm md:text-base"></i> Kontak Darurat
+                </h3>
+                <div class="space-y-2 md:space-y-3 text-xs md:text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-phone text-gray-500 mr-2 md:mr-3 text-xs md:text-sm"></i>
+                        <span class="text-gray-600">(0274) 123-4567</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-envelope text-gray-500 mr-2 md:mr-3 text-xs md:text-sm"></i>
+                        <span class="text-gray-600 break-all">keluhan@pulosarok.desa.id</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-clock text-gray-500 mr-2 md:mr-3 text-xs md:text-sm"></i>
+                        <span class="text-gray-600">24 Jam</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Info - Mobile Optimized -->
+            <div
+                class="sidebar-card bg-white rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
+                <h3 class="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
+                    <i class="fas fa-chart-line text-purple-500 mr-2 text-sm md:text-base"></i> Status Keluhan
+                </h3>
+                <div class="space-y-2 text-xs md:text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Menunggu</span>
+                        <span class="px-2 md:px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">Pending</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Ditinjau</span>
+                        <span class="px-2 md:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">Review</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Diproses</span>
+                        <span class="px-2 md:px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-semibold">Progress</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Selesai</span>
+                        <span class="px-2 md:px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Resolved</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Mobile-optimized form validation
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                // Basic validation - minimal for mobile
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                        field.classList.remove('is-valid');
+                    } else {
+                        field.classList.add('is-valid');
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                if (isValid) {
+                    // Show loading state - mobile optimized
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    // Store original text for restoration if needed (though we submit directly)
+                    // const originalText = submitBtn.innerHTML; 
+                    submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengirim...';
+                    submitBtn.disabled = true;
+
+                    // Submit form
+                    form.submit();
+                } else {
+                    // Show simple error message for mobile
+                    // Using an inline modal/message box is better than alert(), but preserving the original behavior for minimal change
+                    console.error('Mohon lengkapi semua field yang wajib diisi.');
+                    // alert('Mohon lengkapi semua field yang wajib diisi.'); 
+                }
+            });
+        }
+
+        // Minimal input validation for mobile
+        const inputs = document.querySelectorAll('input, textarea, select');
+        inputs.forEach(input => {
+            input.addEventListener('input', function () {
+                this.classList.remove('is-invalid');
+                if (this.value.trim()) {
+                    this.classList.add('is-valid');
+                } else if (this.hasAttribute('required')) {
+                    this.classList.remove('is-valid');
+                }
+            });
+
+            input.addEventListener('blur', function () {
+                if (this.value.trim() && this.hasAttribute('required')) {
+                    this.classList.add('is-valid');
+                    this.classList.remove('is-invalid');
+                } else if (this.hasAttribute('required') && !this.value.trim()) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                }
+            });
+        });
+
+        // Smooth scroll to form - mobile optimized
+        const formLink = document.querySelector('a[href="#form"]');
+        if (formLink) {
+            formLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.getElementById('form').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+        }
+
+        // Mobile viewport optimization
+        if (window.innerWidth <= 768) {
+            // Disable hover effects on mobile
+            const hoverElements = document.querySelectorAll('.hover\\:shadow-xl, .hover\\:-translate-y-1');
+            hoverElements.forEach(el => {
+                el.classList.remove('hover:shadow-xl', 'hover:-translate-y-1');
+            });
+
+            // Optimize touch interactions
+            const buttons = document.querySelectorAll('button, .btn');
+            buttons.forEach(btn => {
+                btn.style.minHeight = '44px';
+                btn.style.minWidth = '44px';
+            });
+
+            // Disable parallax on mobile for better performance
+            const heroSection = document.querySelector('.hero-section');
+            if (heroSection) {
+                heroSection.style.backgroundAttachment = 'scroll';
+            }
+        }
+
+        // Light parallax effect for desktop
+        if (window.innerWidth > 768) {
+            window.addEventListener('scroll', function () {
+                const scrolled = window.pageYOffset;
+                const heroSection = document.querySelector('.hero-section');
+                if (heroSection) {
+                    const background = heroSection.querySelector('.absolute:first-child');
+                    if (background) {
+                        const speed = scrolled * 0.5;
+                        background.style.transform = `scale(1.1) translateY(${speed}px)`;
+                    }
+                }
+            });
+        }
+
+        // Optimize hero image loading with fallback
+        const heroSection = document.querySelector('.hero-section');
+        if (heroSection) {
+            const heroImage = heroSection.querySelector('.absolute:first-child');
+            if (heroImage) {
+                // Add loading state
+                heroImage.style.opacity = '0';
+                heroImage.style.transition = 'opacity 0.5s ease';
+
+                // Check if image loads successfully
+                const img = new Image();
+                img.onload = function () {
+                    heroImage.style.opacity = '1';
+                };
+                img.onerror = function () {
+                    // If image fails to load, use gradient fallback
+                    heroImage.style.backgroundImage = 'none';
+                    heroImage.style.opacity = '1';
+                };
+
+                // Extract image URL from background-image style
+                const bgImage = heroImage.style.backgroundImage;
+                if (bgImage && bgImage !== 'none') {
+                    const urlMatch = bgImage.match(/url\(['"]?(.*?)['"]?\)/);
+                    if (urlMatch && urlMatch[1]) {
+                        img.src = urlMatch[1];
+                    } else {
+                        heroImage.style.opacity = '1';
+                    }
+                } else {
+                    heroImage.style.opacity = '1';
+                }
+            }
+        }
+    });
+</script>
+{% endblock extra_js %}

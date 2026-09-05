@@ -1,0 +1,860 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Database Reset Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .module-group {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: #f9f9f9;
+    }
+    
+    .module-group h5 {
+        color: #333;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+    }
+    
+    .module-checkboxes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 10px;
+    }
+    
+    .module-checkbox {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        transition: all 0.3s ease;
+    }
+    
+    .module-checkbox:hover {
+        background: #f0f8ff;
+        border-color: #007bff;
+    }
+    
+    .module-checkbox input[type="checkbox"] {
+        margin-right: 10px;
+        transform: scale(1.2);
+    }
+    
+    .module-checkbox label {
+        margin: 0;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .reset-type-tabs {
+        margin-bottom: 30px;
+    }
+    
+    .reset-type-tabs .nav-link {
+        border-radius: 8px 8px 0 0;
+        font-weight: 600;
+    }
+    
+    .reset-type-tabs .nav-link.active {
+        background: #007bff;
+        color: white;
+    }
+    
+    .config-summary {
+        background: #e8f4fd;
+        border: 1px solid #bee5eb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .config-summary h6 {
+        color: #0c5460;
+        margin-bottom: 15px;
+    }
+    
+    .selected-modules {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .selected-module {
+        background: #007bff;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .btn-execute {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .btn-execute:hover {
+        background: #c82333;
+        border-color: #bd2130;
+    }
+    
+    .btn-backup {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .btn-backup:hover {
+        background: #218838;
+        border-color: #1e7e34;
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-running {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-failed {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .execution-log {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-database"></i> Database Reset Management</h2>
+                <div>
+                    <a href="{% url 'core:database_reset_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Buat Konfigurasi Baru
+                    </a>
+                    <a href="{% url 'core:database_backup_list' %}" class="btn btn-success">
+                        <i class="fas fa-download"></i> Kelola Backup
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-bolt fa-2x text-warning mb-2"></i>
+                            <h5>Quick Reset</h5>
+                            <p class="text-muted">Reset data dengan konfigurasi cepat</p>
+                            <button class="btn btn-warning btn-sm" onclick="showQuickResetModal()">
+                                Reset Cepat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-save fa-2x text-success mb-2"></i>
+                            <h5>Backup Sekarang</h5>
+                            <p class="text-muted">Buat backup database saat ini</p>
+                            <button class="btn btn-success btn-sm" onclick="createBackup()">
+                                Buat Backup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-history fa-2x text-info mb-2"></i>
+                            <h5>Riwayat Reset</h5>
+                            <p class="text-muted">Lihat semua aktivitas reset</p>
+                            <a href="{% url 'core:database_reset_list' %}" class="btn btn-info btn-sm">
+                                Lihat Riwayat
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reset Configurations List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs"></i> Konfigurasi Reset Database</h5>
+                </div>
+                <div class="card-body">
+                    {% if configs %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nama Konfigurasi</th>
+                                        <th>Tipe Reset</th>
+                                        <th>Modul</th>
+                                        <th>Status</th>
+                                        <th>Dibuat</th>
+                                        <th>Dieksekusi</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for config in configs %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ config.name }}</strong>
+                                            {% if config.description %}
+                                                <br><small class="text-muted">{{ config.description|truncatechars:50 }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ config.get_reset_type_display }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="selected-modules">
+                                                {% for module in config.get_selected_modules %}
+                                                    <span class="selected-module">{{ module }}</span>
+                                                {% empty %}
+                                                    <span class="text-muted">Semua Data</span>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-{{ config.status }}">
+                                                {{ config.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {{ config.created_at|date:"d/m/Y H:i" }}
+                                            <br><small class="text-muted">oleh {{ config.created_by.username }}</small>
+                                        </td>
+                                        <td>
+                                            {% if config.executed_at %}
+                                                {{ config.executed_at|date:"d/m/Y H:i" }}
+                                                {% if config.executed_by %}
+                                                    <br><small class="text-muted">oleh {{ config.executed_by.username }}</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Belum dieksekusi</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'core:database_reset_detail' config.id %}" 
+                                                   class="btn btn-outline-primary" title="Detail">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'core:database_reset_edit' config.id %}" 
+                                                   class="btn btn-outline-warning" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% if config.status == 'pending' %}
+                                                    <button class="btn btn-outline-success" 
+                                                            onclick="executeReset({{ config.id }})" 
+                                                            title="Eksekusi">
+                                                        <i class="fas fa-play"></i>
+                                                    </button>
+                                                {% endif %}
+                                                <button class="btn btn-outline-danger" 
+                                                        onclick="showDeleteModal({{ config.id }}, '{{ config.name|escapejs }}')" 
+                                                        title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Belum ada konfigurasi reset</h5>
+                            <p class="text-muted">Buat konfigurasi reset pertama Anda untuk mengelola database</p>
+                            <a href="{% url 'core:database_reset_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Buat Konfigurasi Pertama
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Reset Modal -->
+<div class="modal fade" id="quickResetModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-bolt"></i> Quick Reset Database</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="quickResetForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Nama Konfigurasi:</label>
+                        <input type="text" class="form-control" name="name" 
+                               value="Quick Reset - {{ 'now'|date:'Y-m-d H:i' }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tipe Reset:</label>
+                        <select class="form-control" name="reset_type" id="resetType">
+                            <option value="selective">Reset Selektif</option>
+                            <option value="full">Reset Lengkap</option>
+                        </select>
+                    </div>
+                    
+                    <div id="moduleSelection" class="module-group">
+                        <h5><i class="fas fa-cubes"></i> Pilih Modul yang akan di-Reset</h5>
+                        <div class="module-checkboxes">
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_penduduk" name="reset_penduduk">
+                                <label for="reset_penduduk">Data Penduduk</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_dusun" name="reset_dusun">
+                                <label for="reset_dusun">Data Dusun</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_lorong" name="reset_lorong">
+                                <label for="reset_lorong">Data Lorong</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_rt_rw" name="reset_rt_rw">
+                                <label for="reset_rt_rw">Data RT/RW</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_keluarga" name="reset_keluarga">
+                                <label for="reset_keluarga">Data Keluarga</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_pelajar" name="reset_pelajar">
+                                <label for="reset_pelajar">Data Pelajar</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_disabilitas" name="reset_disabilitas">
+                                <label for="reset_disabilitas">Data Disabilitas</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_beneficiaries" name="reset_beneficiaries">
+                                <label for="reset_beneficiaries">Data Penerima Bantuan</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_business" name="reset_business">
+                                <label for="reset_business">Data Usaha</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_complaints" name="reset_complaints">
+                                <label for="reset_complaints">Data Keluhan</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_documents" name="reset_documents">
+                                <label for="reset_documents">Data Dokumen</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_tourism" name="reset_tourism">
+                                <label for="reset_tourism">Data Wisata</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_posyandu" name="reset_posyandu">
+                                <label for="reset_posyandu">Data Posyandu</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_news" name="reset_news">
+                                <label for="reset_news">Data Berita</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_organization" name="reset_organization">
+                                <label for="reset_organization">Data Organisasi</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_layanan" name="reset_layanan">
+                                <label for="reset_layanan">Data Layanan</label>
+                            </div>
+                            <div class="module-checkbox">
+                                <input type="checkbox" id="reset_letters" name="reset_letters">
+                                <label for="reset_letters">Data Surat Menyurat</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="backup_before_reset" 
+                                   name="backup_before_reset" checked>
+                            <label class="form-check-label" for="backup_before_reset">
+                                Buat backup sebelum reset
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="keep_users" 
+                                   name="keep_users" checked>
+                            <label class="form-check-label" for="keep_users">
+                                Tetap simpan data pengguna
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="keep_settings" 
+                                   name="keep_settings" checked>
+                            <label class="form-check-label" for="keep_settings">
+                                Tetap simpan pengaturan
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" onclick="executeQuickReset()">
+                    <i class="fas fa-play"></i> Eksekusi Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Konfirmasi Hapus</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning"></i>
+                    <strong>Peringatan!</strong> Tindakan ini tidak dapat dibatalkan.
+                </div>
+                <p>Apakah Anda yakin ingin menghapus konfigurasi reset berikut?</p>
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title" id="deleteConfigName"></h6>
+                        <p class="card-text text-muted" id="deleteConfigDetails"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                    <i class="fas fa-trash"></i> Ya, Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Execute Confirmation Modal -->
+<div class="modal fade" id="executeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-play-circle"></i> Konfirmasi Eksekusi Reset</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>PERINGATAN!</strong> Operasi reset database akan menghapus data secara permanen dan tidak dapat dibatalkan!
+                </div>
+                <p>Apakah Anda yakin ingin mengeksekusi konfigurasi reset berikut?</p>
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title" id="executeConfigName"></h6>
+                        <p class="card-text" id="executeConfigDetails"></p>
+                    </div>
+                </div>
+                <div class="form-check mt-3">
+                    <input type="checkbox" class="form-check-input" id="confirmExecute">
+                    <label class="form-check-label" for="confirmExecute">
+                        Saya memahami bahwa operasi ini tidak dapat dibatalkan
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-warning" onclick="confirmExecute()" disabled id="executeBtn">
+                    <i class="fas fa-play"></i> Ya, Eksekusi Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Confirmation Modal -->
+<div class="modal fade" id="backupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-save"></i> Konfirmasi Backup</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin membuat backup database saat ini?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Backup akan disimpan di direktori <code>backups/</code> dengan nama file otomatis.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmBackup()">
+                    <i class="fas fa-save"></i> Ya, Buat Backup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showQuickResetModal() {
+    $('#quickResetModal').modal('show');
+}
+
+function executeQuickReset() {
+    const form = document.getElementById('quickResetForm');
+    const formData = new FormData(form);
+    
+    // Validate form
+    const resetType = formData.get('reset_type');
+    if (resetType === 'selective') {
+        const checkedModules = form.querySelectorAll('input[type="checkbox"]:checked');
+        const moduleCheckboxes = Array.from(checkedModules).filter(cb => 
+            cb.name.startsWith('reset_') && cb.name !== 'reset_type'
+        );
+        
+        if (moduleCheckboxes.length === 0) {
+            alert('Pilih minimal satu modul untuk reset selektif!');
+            return;
+        }
+    }
+    
+    // Show confirmation
+    if (!confirm('Apakah Anda yakin ingin melakukan reset database? Operasi ini tidak dapat dibatalkan!')) {
+        return;
+    }
+    
+    // Execute reset
+    fetch('{% url "core:database_reset_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        },
+        body: JSON.stringify({
+            action: 'quick_reset',
+            data: Object.fromEntries(formData)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Reset berhasil dieksekusi!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+// Global variables for modals
+let currentConfigId = null;
+let currentConfigName = null;
+
+function executeReset(configId) {
+    // Get config details from table row
+    const row = document.querySelector(`button[onclick*="${configId}"]`).closest('tr');
+    const configName = row.querySelector('td:first-child strong').textContent;
+    const resetType = row.querySelector('.badge').textContent;
+    const modules = Array.from(row.querySelectorAll('.selected-module')).map(el => el.textContent).join(', ');
+    
+    currentConfigId = configId;
+    currentConfigName = configName;
+    
+    // Populate execute modal
+    document.getElementById('executeConfigName').textContent = configName;
+    document.getElementById('executeConfigDetails').innerHTML = `
+        <strong>Tipe Reset:</strong> ${resetType}<br>
+        <strong>Modul:</strong> ${modules || 'Semua Data'}<br>
+        <strong>Status:</strong> <span class="badge badge-warning">Pending</span>
+    `;
+    
+    // Reset checkbox and button
+    document.getElementById('confirmExecute').checked = false;
+    document.getElementById('executeBtn').disabled = true;
+    
+    // Show modal
+    $('#executeModal').modal('show');
+}
+
+function confirmExecute() {
+    if (!document.getElementById('confirmExecute').checked) {
+        alert('Silakan centang konfirmasi terlebih dahulu!');
+        return;
+    }
+    
+    // Show loading state
+    const btn = document.getElementById('executeBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengeksekusi...';
+    btn.disabled = true;
+    
+    fetch('{% url "core:database_reset_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            action: 'execute_reset',
+            config_id: currentConfigId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        $('#executeModal').modal('hide');
+        if (data.success) {
+            showSuccessMessage('Reset berhasil dieksekusi!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorMessage('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        $('#executeModal').modal('hide');
+        showErrorMessage('Error: ' + error.message);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function showDeleteModal(configId, configName) {
+    currentConfigId = configId;
+    currentConfigName = configName;
+    
+    // Get config details from table row
+    const row = document.querySelector(`button[onclick*="showDeleteModal(${configId}"]`).closest('tr');
+    const resetType = row.querySelector('.badge').textContent;
+    const modules = Array.from(row.querySelectorAll('.selected-module')).map(el => el.textContent).join(', ');
+    const status = row.querySelector('.status-badge').textContent;
+    const createdAt = row.querySelectorAll('td')[4].textContent.trim();
+    
+    // Populate delete modal
+    document.getElementById('deleteConfigName').textContent = configName;
+    document.getElementById('deleteConfigDetails').innerHTML = `
+        <strong>Tipe Reset:</strong> ${resetType}<br>
+        <strong>Modul:</strong> ${modules || 'Semua Data'}<br>
+        <strong>Status:</strong> ${status}<br>
+        <strong>Dibuat:</strong> ${createdAt}
+    `;
+    
+    // Show modal
+    $('#deleteModal').modal('show');
+}
+
+function confirmDelete() {
+    // Show loading state
+    const btn = document.querySelector('#deleteModal .btn-danger');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
+    btn.disabled = true;
+    
+    fetch('{% url "core:database_reset_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            action: 'delete_config',
+            config_id: currentConfigId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        $('#deleteModal').modal('hide');
+        if (data.success) {
+            showSuccessMessage('Konfigurasi berhasil dihapus!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorMessage('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        $('#deleteModal').modal('hide');
+        showErrorMessage('Error: ' + error.message);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function createBackup() {
+    $('#backupModal').modal('show');
+}
+
+function confirmBackup() {
+    // Show loading state
+    const btn = document.querySelector('#backupModal .btn-success');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Membuat Backup...';
+    btn.disabled = true;
+    
+    fetch('{% url "core:database_backup_create" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => {
+        $('#backupModal').modal('hide');
+        if (response.ok) {
+            showSuccessMessage('Backup berhasil dibuat!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorMessage('Error saat membuat backup');
+        }
+    })
+    .catch(error => {
+        $('#backupModal').modal('hide');
+        showErrorMessage('Error: ' + error.message);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// Utility functions for messages
+function showSuccessMessage(message) {
+    // Create and show success alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle"></i> ${message}
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+function showErrorMessage(message) {
+    // Create and show error alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i> ${message}
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 7 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 7000);
+}
+
+// Handle reset type change
+document.getElementById('resetType').addEventListener('change', function() {
+    const moduleSelection = document.getElementById('moduleSelection');
+    if (this.value === 'full') {
+        moduleSelection.style.display = 'none';
+    } else {
+        moduleSelection.style.display = 'block';
+    }
+});
+
+// Handle execute confirmation checkbox
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmExecute');
+    const executeBtn = document.getElementById('executeBtn');
+    
+    if (confirmCheckbox && executeBtn) {
+        confirmCheckbox.addEventListener('change', function() {
+            executeBtn.disabled = !this.checked;
+        });
+    }
+});
+</script>
+{% endblock %}

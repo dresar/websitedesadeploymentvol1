@@ -1,0 +1,292 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Daftar Review Wisata{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-list.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-list-compact.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="tourism-list-container">
+    <form style="display: none;">
+        {% csrf_token %}
+    </form>
+    <div class="tourism-list-wrapper">
+        <!-- Tombol Kembali -->
+        <a href="{% url 'admin_panel:tourism_dashboard' %}" class="td-back-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border-radius: 6px; text-decoration: none; margin-bottom: 1.5rem; transition: all 0.2s ease;">
+            <i class="fas fa-arrow-left"></i>
+            Kembali ke Dashboard Wisata
+        </a>
+
+        <div class="tourism-page-header">
+            <div class="tourism-page-header-content">
+                <h1 class="tourism-page-title">
+                    <i class="fas fa-star"></i>
+                    Daftar Review Wisata
+                </h1>
+                <p class="tourism-page-subtitle">Kelola semua review wisata Desa Pulosarok</p>
+            </div>
+        </div>
+
+        <div class="tourism-filter-container">
+            <div class="tourism-filter-header">
+                <h6 class="tourism-filter-title">
+                    <i class="fas fa-filter"></i>
+                    Filter & Pencarian
+                </h6>
+            </div>
+            <form method="get" class="tourism-filter-grid">
+                <div class="tourism-filter-group">
+                    <label for="search" class="tourism-filter-label">
+                        <i class="fas fa-search"></i>
+                        Pencarian
+                    </label>
+                    <input type="text" class="tourism-filter-input" id="search" name="search"
+                           value="{{ search_query }}" placeholder="Cari review...">
+                </div>
+                <div class="tourism-filter-group">
+                    <label for="rating" class="tourism-filter-label">
+                        <i class="fas fa-star"></i>
+                        Rating
+                    </label>
+                    <select class="tourism-filter-select" id="rating" name="rating">
+                        <option value="">Semua Rating</option>
+                        <option value="5" {% if rating_filter == '5' %}selected{% endif %}>5 Bintang</option>
+                        <option value="4" {% if rating_filter == '4' %}selected{% endif %}>4 Bintang</option>
+                        <option value="3" {% if rating_filter == '3' %}selected{% endif %}>3 Bintang</option>
+                        <option value="2" {% if rating_filter == '2' %}selected{% endif %}>2 Bintang</option>
+                        <option value="1" {% if rating_filter == '1' %}selected{% endif %}>1 Bintang</option>
+                    </select>
+                </div>
+                <div class="tourism-filter-group">
+                    <label for="location" class="tourism-filter-label">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Lokasi Wisata
+                    </label>
+                    <select class="tourism-filter-select" id="location" name="location">
+                        <option value="">Semua Lokasi</option>
+                        {% for location in locations %}
+                            <option value="{{ location.id }}" {% if location_filter == location.id|stringformat:"s" %}selected{% endif %}>
+                                {{ location.title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="tourism-filter-group">
+                    <label for="sort" class="tourism-filter-label">
+                        <i class="fas fa-sort"></i>
+                        Urutkan
+                    </label>
+                    <select class="tourism-filter-select" id="sort" name="sort">
+                        <option value="-created_at" {% if current_sort == '-created_at' %}selected{% endif %}>Terbaru</option>
+                        <option value="created_at" {% if current_sort == 'created_at' %}selected{% endif %}>Terlama</option>
+                        <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Rating Tertinggi</option>
+                        <option value="-rating" {% if current_sort == '-rating' %}selected{% endif %}>Rating Terendah</option>
+                    </select>
+                </div>
+                <div class="tourism-filter-group">
+                    <div class="tourism-filter-actions">
+                        <button type="submit" class="tourism-btn tourism-btn-primary tourism-btn-sm">
+                            <i class="fas fa-search"></i>
+                            Filter
+                        </button>
+                        <a href="{% url 'admin_panel:tourism_reviews_list' %}" class="tourism-btn tourism-btn-secondary tourism-btn-sm">
+                            <i class="fas fa-times"></i>
+                            Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="tourism-card-grid tourism-grid-2">
+            {% for review in page_obj.object_list %}
+            <div class="tourism-card tourism-animate-fade-in">
+                <div class="tourism-card-body">
+                    <div class="tourism-card-header">
+                        <div>
+                            <h6 class="tourism-card-title">{{ review.tourism_location.title|truncatechars:30 }}</h6>
+                            <p class="tourism-card-text-muted">{{ review.tourism_location.address|truncatechars:50 }}</p>
+                        </div>
+                        <div class="tourism-action-group">
+                            {% if not review.is_approved %}
+                                <button class="tourism-action-btn tourism-action-btn-success"
+                                        onclick="approveReview({{ review.id }})" title="Setujui">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            {% else %}
+                                <button class="tourism-action-btn tourism-action-btn-warning"
+                                        onclick="rejectReview({{ review.id }})" title="Tolak">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            {% endif %}
+                            <a href="{% url 'admin_panel:tourism_review_detail' review.id %}"
+                               class="tourism-action-btn tourism-action-btn-view" title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_panel:tourism_review_edit' review.id %}"
+                               class="tourism-action-btn tourism-action-btn-edit" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="tourism-action-btn tourism-action-btn-delete"
+                                    onclick="deleteReview({{ review.id }})" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tourism-rating-container tourism-mb-3">
+                        <div class="tourism-rating-stars">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                    <i class="fas fa-star tourism-rating-star"></i>
+                                {% else %}
+                                    <i class="far fa-star tourism-rating-star empty"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="tourism-rating-value">{{ review.rating }}/5</span>
+                    </div>
+
+                    <p class="tourism-card-text tourism-mb-3">{{ review.comment|truncatechars:150 }}</p>
+
+                    <div class="tourism-info-grid tourism-mb-3">
+                        <div class="tourism-info-item">
+                            <span class="tourism-info-label">Pengguna</span>
+                            <span class="tourism-info-value">
+                                {% if review.user %}
+                                    {{ review.user.get_full_name|default:review.user.username }}
+                                {% else %}
+                                    Anonim
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="tourism-info-item">
+                            <span class="tourism-info-label">Status</span>
+                            {% if review.is_approved %}
+                                <span class="tourism-badge tourism-badge-success">Disetujui</span>
+                            {% else %}
+                                <span class="tourism-badge tourism-badge-warning">Pending</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tourism-card-footer">
+                    <span class="tourism-card-text-muted">
+                        <i class="fas fa-calendar"></i>
+                        {{ review.created_at|date:"d/m/Y H:i" }}
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="tourism-empty-state" style="grid-column: 1 / -1;">
+                <div class="tourism-empty-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <h5 class="tourism-empty-title">Belum ada review wisata</h5>
+                <p class="tourism-empty-text">Review akan muncul setelah pengunjung memberikan rating dan komentar.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <div class="tourism-pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn"><i class="fas fa-angle-double-left"></i> First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn"><i class="fas fa-angle-left"></i> Prev</a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="tourism-pagination-btn active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn">Next <i class="fas fa-angle-right"></i></a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if rating_filter %}&rating={{ rating_filter }}{% endif %}{% if location_filter %}&location={{ location_filter }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="tourism-pagination-btn">Last <i class="fas fa-angle-double-right"></i></a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+function approveReview(reviewId) {
+    if (confirm('Apakah Anda yakin ingin menyetujui review ini?')) {
+        fetch(`{% url 'admin_panel:tourism_review_approve' 0 %}`.replace('0', reviewId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Gagal menyetujui review: ' + (data.error || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyetujui review');
+        });
+    }
+}
+
+function rejectReview(reviewId) {
+    if (confirm('Apakah Anda yakin ingin menolak review ini?')) {
+        fetch(`{% url 'admin_panel:tourism_review_reject' 0 %}`.replace('0', reviewId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Gagal menolak review: ' + (data.error || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menolak review');
+        });
+    }
+}
+
+function deleteReview(reviewId) {
+    if (confirm('Apakah Anda yakin ingin menghapus review ini?\n\nTindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.')) {
+        fetch(`{% url 'admin_panel:tourism_review_delete' 0 %}`.replace('0', reviewId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Gagal menghapus review: ' + (data.error || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menghapus review');
+        });
+    }
+}
+</script>
+{% endblock %}

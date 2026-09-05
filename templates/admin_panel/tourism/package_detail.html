@@ -1,0 +1,417 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block page_title %}Detail Paket Wisata{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/tourism/tourism-detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="td-wrapper">
+
+    <a href="{% url 'admin_panel:tourism_packages_list' %}" class="td-back-btn">
+        <i class="fas fa-arrow-left"></i>
+        Kembali ke Daftar Paket
+    </a>
+
+    <div class="td-header">
+        <div class="td-header-content">
+            <div class="td-icon-wrapper">
+                <i class="fas fa-box"></i>
+            </div>
+
+            <div class="td-header-info">
+                <h1>{{ package.title }}</h1>
+                <p class="td-header-subtitle">{{ package.description|striptags|truncatewords:20 }}</p>
+
+                <div class="td-meta-row">
+                    <div class="td-meta-item">
+                        <i class="fas fa-tag"></i>
+                        <span>{{ package.get_package_type_display }}</span>
+                    </div>
+                    <div class="td-meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ package.duration }}</span>
+                    </div>
+                    <div class="td-meta-item">
+                        <i class="fas fa-{% if package.is_active %}check-circle{% else %}times-circle{% endif %}"></i>
+                        <span>{% if package.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="td-actions">
+                <a href="{% url 'admin_panel:tourism_package_edit' package.id %}" class="td-btn td-btn-primary">
+                    <i class="fas fa-edit"></i>
+                    Edit
+                </a>
+                <button onclick="deletePackage({{ package.id }})" class="td-btn td-btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="td-stats-grid">
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-primary">
+                <i class="fas fa-{% if package.is_active %}check-circle{% else %}times-circle{% endif %}"></i>
+            </div>
+            <div class="td-stat-label">Status</div>
+            <div class="td-stat-value">{% if package.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</div>
+        </div>
+
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-warning">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="td-stat-label">Featured</div>
+            <div class="td-stat-value">{% if package.is_featured %}Ya{% else %}Tidak{% endif %}</div>
+        </div>
+
+        <div class="td-stat-card">
+            <div class="td-stat-icon td-stat-icon-info">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="td-stat-label">Maks Peserta</div>
+            <div class="td-stat-value">{{ package.max_participants|default:"∞" }}</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informasi Paket
+                    </h3>
+                </div>
+
+                <div class="td-info-grid">
+                    <div class="td-info-row">
+                        <div class="td-info-label">Jenis Paket:</div>
+                        <div class="td-info-value">
+                            <span class="td-badge td-badge-info">{{ package.get_package_type_display }}</span>
+                        </div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Lokasi:</div>
+                        <div class="td-info-value">
+                            <a href="{% url 'admin_panel:tourism_location_detail' package.tourism_location.id %}" class="td-btn td-btn-info td-btn-sm">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ package.tourism_location.title }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Durasi:</div>
+                        <div class="td-info-value">{{ package.duration }}</div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Harga:</div>
+                        <div class="td-info-value td-info-value-large">
+                            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                                <span style="color: #1e40af; font-weight: 700;">{{ package.price|currency_idr }}</span>
+                                <span style="font-size: 0.85rem; color: #10b981; font-weight: 500;">
+                                    <i class="fas fa-dollar-sign"></i> {{ package.price|idr_to_usd|format_usd }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if package.whatsapp %}
+                    <div class="td-info-row">
+                        <div class="td-info-label">WhatsApp:</div>
+                        <div class="td-info-value">
+                            <a href="https://wa.me/{{ package.whatsapp }}" target="_blank" class="td-btn td-btn-success td-btn-sm">
+                                <i class="fab fa-whatsapp"></i>
+                                {{ package.whatsapp }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Maks Peserta:</div>
+                        <div class="td-info-value">{{ package.max_participants|default:"Tidak terbatas" }}</div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Min Peserta:</div>
+                        <div class="td-info-value">{{ package.min_participants|default:"1" }}</div>
+                    </div>
+
+                    <div class="td-info-row">
+                        <div class="td-info-label">Deadline Booking:</div>
+                        <div class="td-info-value">{{ package.booking_deadline }} hari sebelum keberangkatan</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deskripsi Lengkap Section -->
+            {% if package.description %}
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-align-left"></i>
+                        Deskripsi Lengkap
+                    </h3>
+                </div>
+                <div class="td-content">
+                    {{ package.description|safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if package.includes or package.excludes %}
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-list-check"></i>
+                        Yang Termasuk & Tidak Termasuk
+                    </h3>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="td-info-label">Yang Termasuk:</h6>
+                        {% if package.includes %}
+                            <div class="td-cards-grid" style="grid-template-columns: 1fr;">
+                                {% for include in package.includes %}
+                                    <span class="td-badge td-badge-success">{{ include }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="td-info-value">Tidak ada informasi</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <h6 class="td-info-label">Yang Tidak Termasuk:</h6>
+                        {% if package.excludes %}
+                            <div class="td-cards-grid" style="grid-template-columns: 1fr;">
+                                {% for exclude in package.excludes %}
+                                    <span class="td-badge td-badge-danger">{{ exclude }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="td-info-value">Tidak ada informasi</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if package.itinerary %}
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-route"></i>
+                        Itinerary
+                    </h3>
+                </div>
+
+                <ol>
+                    {% for item in package.itinerary %}
+                        <li class="td-mb-sm">{{ item }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+            {% endif %}
+
+            {% if package.image or package.hero_image %}
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-images"></i>
+                        Gambar Paket
+                    </h3>
+                </div>
+
+                <div class="td-image-gallery">
+                    {% if package.image %}
+                    <div class="td-image-gallery-item">
+                        <img src="{{ package.image.url }}" alt="{{ package.title }}">
+                    </div>
+                    {% endif %}
+
+                    {% if package.hero_image %}
+                    <div class="td-image-gallery-item">
+                        <img src="{{ package.hero_image.url }}" alt="{{ package.title }} Hero">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if galleries %}
+            <div class="td-section">
+                <div class="td-section-header">
+                    <h3 class="td-section-title">
+                        <i class="fas fa-images"></i>
+                        Galeri Paket
+                    </h3>
+                </div>
+
+                <div class="td-image-gallery">
+                    {% for gallery in galleries %}
+                    <div class="td-image-gallery-item">
+                        {% if gallery.image %}
+                            <img src="{{ gallery.image.url }}" alt="{{ gallery.title }}">
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="td-sidebar">
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-tools"></i>
+                        Aksi Cepat
+                    </h6>
+                    <div class="td-actions-list">
+                        <a href="{% url 'admin_panel:tourism_package_edit' package.id %}" class="td-btn td-btn-warning">
+                            <i class="fas fa-edit"></i>
+                            Edit Paket
+                        </a>
+
+                        <a href="{% url 'admin_panel:tourism_location_detail' package.tourism_location.id %}" class="td-btn td-btn-info">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Lihat Lokasi
+                        </a>
+
+                        <a href="{% url 'tourism:package_detail_by_slug' package.slug %}" class="td-btn td-btn-primary" target="_blank">
+                            <i class="fas fa-external-link-alt"></i>
+                            Lihat di Website
+                        </a>
+
+                        {% if package.whatsapp %}
+                        <a href="https://wa.me/{{ package.whatsapp }}?text=Halo, saya tertarik dengan paket {{ package.title }}"
+                           class="td-btn td-btn-success" target="_blank">
+                            <i class="fab fa-whatsapp"></i>
+                            Hubungi WhatsApp
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-info-circle"></i>
+                        Detail Paket
+                    </h6>
+                    <div class="td-info-grid">
+                        <div class="td-info-row">
+                            <div class="td-info-label">Dibuat:</div>
+                            <div class="td-info-value">{{ package.created_at|date:"d M Y H:i" }}</div>
+                        </div>
+
+                        {% if package.updated_at %}
+                        <div class="td-info-row">
+                            <div class="td-info-label">Diperbarui:</div>
+                            <div class="td-info-value">{{ package.updated_at|date:"d M Y H:i" }}</div>
+                        </div>
+                        {% endif %}
+
+                        <div class="td-info-row">
+                            <div class="td-info-label">Mata Uang:</div>
+                            <div class="td-info-value">{{ package.currency }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if package.video or package.youtube_link or package.hero_video or package.hero_youtube %}
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-video"></i>
+                        Media
+                    </h6>
+                    <div class="td-actions-list">
+                        {% if package.youtube_link %}
+                        <a href="{{ package.youtube_link }}" target="_blank" class="td-btn td-btn-danger td-btn-sm">
+                            <i class="fab fa-youtube"></i>
+                            Video Paket
+                        </a>
+                        {% endif %}
+
+                        {% if package.hero_youtube %}
+                        <a href="{{ package.hero_youtube }}" target="_blank" class="td-btn td-btn-danger td-btn-sm">
+                            <i class="fab fa-youtube"></i>
+                            Video Hero
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="td-sidebar-section">
+                    <h6 class="td-sidebar-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Statistik
+                    </h6>
+                    <div class="td-stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                        <div class="td-stat-card">
+                            <div class="td-stat-value">{{ package.max_participants|default:"∞" }}</div>
+                            <div class="td-stat-label">Maks Peserta</div>
+                        </div>
+
+                        <div class="td-stat-card">
+                            <div class="td-stat-value">{{ package.min_participants|default:"1" }}</div>
+                            <div class="td-stat-label">Min Peserta</div>
+                        </div>
+
+                        <div class="td-stat-card">
+                            <div class="td-stat-value">{{ package.booking_deadline }}</div>
+                            <div class="td-stat-label">Hari Deadline</div>
+                        </div>
+
+                        <div class="td-stat-card">
+                            <div class="td-stat-value">{{ package.duration|truncatewords:2 }}</div>
+                            <div class="td-stat-label">Durasi</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>function deletePackage(packageId) {
+    if (confirm('Apakah Anda yakin ingin menghapus paket ini?\n\nTindakan ini tidak dapat dibatalkan.')) {
+        fetch(`{% url 'admin_panel:tourism_package_delete' 0 %}`.replace('0', packageId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '{% url "admin_panel:tourism_packages_list" %}';
+            } else {
+                showError('Gagal menghapus paket: ' + (data.error || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Terjadi kesalahan saat menghapus paket');
+        });
+    }
+}
+</script>
+{% endblock extra_js %}

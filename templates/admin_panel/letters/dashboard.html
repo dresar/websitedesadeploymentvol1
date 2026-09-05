@@ -1,0 +1,1384 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %}Dashboard Manajemen Surat{% endblock %}
+{% block page_description %}Ringkasan statistik dan aktivitas surat terbaru{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Dashboard Page Styles */
+.admin-dashboard {
+    padding: 2rem 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-info h1 {
+    color: #495057;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.header-info p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.header-meta {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.time-info, .date-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Stats Cards Container */
+.stats-cart-container,
+.info-cart-container,
+.analytics-cart-container,
+.activities-cart-container,
+.system-info-cart-container {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.cart-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.cart-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.cart-subtitle {
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-cart {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-cart:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.stat-cart-primary {
+    border-left: 4px solid #007bff;
+}
+
+.stat-cart-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.stat-cart-success {
+    border-left: 4px solid #28a745;
+}
+
+.stat-cart-info {
+    border-left: 4px solid #17a2b8;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-cart-primary .stat-icon {
+    background: #007bff;
+}
+
+.stat-cart-warning .stat-icon {
+    background: #ffc107;
+}
+
+.stat-cart-success .stat-icon {
+    background: #28a745;
+}
+
+.stat-cart-info .stat-icon {
+    background: #17a2b8;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #495057;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.stat-trend {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-cart {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.info-cart:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.info-cart-primary {
+    border-left: 4px solid #007bff;
+}
+
+.info-cart-success {
+    border-left: 4px solid #28a745;
+}
+
+.info-cart-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.info-cart-danger {
+    border-left: 4px solid #dc3545;
+}
+
+.info-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.info-cart-primary .info-icon {
+    background: #007bff;
+}
+
+.info-cart-success .info-icon {
+    background: #28a745;
+}
+
+.info-cart-warning .info-icon {
+    background: #ffc107;
+}
+
+.info-cart-danger .info-icon {
+    background: #dc3545;
+}
+
+.info-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.info-label {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.info-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.info-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-indicator.active {
+    background: #28a745;
+}
+
+.status-indicator.online {
+    background: #007bff;
+}
+
+.status-indicator.pending {
+    background: #ffc107;
+}
+
+.status-indicator.secure {
+    background: #28a745;
+}
+
+.status-indicator.updated {
+    background: #17a2b8;
+}
+
+/* Analytics Grid */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.chart-cart,
+.progress-cart {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.chart-header,
+.progress-header {
+    margin-bottom: 1.5rem;
+}
+
+.chart-title,
+.progress-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+.chart-subtitle,
+.progress-subtitle {
+    color: #6c757d;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.chart-container {
+    height: 300px;
+    margin-bottom: 1rem;
+}
+
+.chart-legend {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.legend-label {
+    flex: 1;
+    color: #495057;
+    font-weight: 500;
+}
+
+.legend-value {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+/* Progress Items */
+.progress-item {
+    margin-bottom: 2rem;
+}
+
+.progress-item:last-child {
+    margin-bottom: 0;
+}
+
+.progress-info {
+    margin-bottom: 1rem;
+}
+
+.progress-label {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.progress-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.progress-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.progress-current {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #495057;
+}
+
+.progress-total {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.progress-percentage {
+    color: #495057;
+    font-weight: 600;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.progress-bar-container {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Activities Grid */
+.activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.activity-cart {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.activity-header {
+    margin-bottom: 1.5rem;
+}
+
+.activity-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+.activity-subtitle {
+    color: #6c757d;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    transition: background 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #e9ecef;
+}
+
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title-text {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.activity-time {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.activity-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+/* System Info Grid */
+.system-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.system-info-cart {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.system-info-cart:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.system-info-cart .info-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #6c757d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+}
+
+.system-info-cart .info-label {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.system-info-cart .info-value {
+    color: #495057;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.system-info-cart .info-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* Floating Action Button */
+.floating-fab-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+}
+
+.fab-main {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.fab-main:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+.fab-main.active {
+    background: #dc3545;
+    transform: rotate(45deg);
+}
+
+.fab-menu {
+    position: absolute;
+    bottom: 70px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.fab-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.fab-item {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.fab-item:hover {
+    background: #007bff;
+    color: white;
+    transform: scale(1.1);
+}
+
+.fab-item a {
+    color: inherit;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .admin-dashboard {
+        padding: 1rem 0;
+    }
+    
+    .dashboard-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .header-meta {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .stats-cart-container,
+    .info-cart-container,
+    .analytics-cart-container,
+    .activities-cart-container,
+    .system-info-cart-container {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .analytics-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .activities-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .system-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stat-cart,
+    .info-cart,
+    .chart-cart,
+    .progress-cart,
+    .activity-cart,
+    .system-info-cart {
+        padding: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .info-number {
+        font-size: 1.5rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .floating-fab-container {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    .fab-main {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .fab-item {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .dashboard-header {
+        padding: 1rem;
+    }
+    
+    .stats-cart-container,
+    .info-cart-container,
+    .analytics-cart-container,
+    .activities-cart-container,
+    .system-info-cart-container {
+        padding: 1rem;
+    }
+    
+    .stat-cart,
+    .info-cart,
+    .chart-cart,
+    .progress-cart,
+    .activity-cart,
+    .system-info-cart {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.75rem;
+    }
+    
+    .info-number {
+        font-size: 1.25rem;
+    }
+    
+    .chart-container {
+        height: 200px;
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .activity-content {
+        order: 2;
+    }
+    
+    .activity-status {
+        order: 3;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-envelope"></i>
+                    Dashboard Manajemen Surat
+                </h1>
+                <p class="dashboard-subtitle">Ringkasan statistik dan aktivitas surat terbaru</p>
+            </div>
+            <div class="header-meta">
+                <div class="time-info">
+                    <i class="fas fa-clock"></i>
+                    <span id="current-time"></span>
+                </div>
+                <div class="date-info">
+                    <i class="fas fa-calendar"></i>
+                    <span id="current-date"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-chart-bar"></i>
+                Statistik Surat
+            </h2>
+            <p class="cart-subtitle">Ringkasan data surat dan dokumen desa</p>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-cart stat-cart-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ stats.total_letters|intcomma }}</div>
+                    <div class="stat-label">Total Surat</div>
+                    <div class="stat-description">Semua surat yang telah dibuat</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>100%</span>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ stats.pending_letters|intcomma }}</div>
+                    <div class="stat-label">Menunggu</div>
+                    <div class="stat-description">Surat yang sedang diproses</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>Pending</span>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-success">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ stats.completed_letters|intcomma }}</div>
+                    <div class="stat-label">Selesai</div>
+                    <div class="stat-description">Surat yang telah selesai</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-check"></i>
+                    <span>{{ stats.completion_rate }}%</span>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-info">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ stats.completion_rate }}%</div>
+                    <div class="stat-label">Tingkat Penyelesaian</div>
+                    <div class="stat-description">Persentase surat selesai</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-percentage"></i>
+                    <span>Rate</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="info-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-info-circle"></i>
+                Informasi Tambahan
+            </h2>
+            <p class="cart-subtitle">Data statistik bulanan dan mingguan</p>
+        </div>
+        <div class="info-grid">
+            <div class="info-cart info-cart-primary">
+                <div class="info-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-number">{{ stats.monthly_letters|intcomma }}</div>
+                    <div class="info-label">Bulan Ini</div>
+                    <div class="info-description">Surat dibuat bulan ini</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator active"></span>
+                    <span>Aktif</span>
+                </div>
+            </div>
+
+            <div class="info-cart info-cart-success">
+                <div class="info-icon">
+                    <i class="fas fa-calendar-week"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-number">{{ stats.weekly_letters|intcomma }}</div>
+                    <div class="info-label">Minggu Ini</div>
+                    <div class="info-description">Surat dibuat minggu ini</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator online"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+
+            <div class="info-cart info-cart-warning">
+                <div class="info-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-number">{{ stats.daily_letters|intcomma }}</div>
+                    <div class="info-label">Hari Ini</div>
+                    <div class="info-description">Surat dibuat hari ini</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator pending"></span>
+                    <span>Pending</span>
+                </div>
+            </div>
+
+            <div class="info-cart info-cart-danger">
+                <div class="info-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-number">{{ urgent_letters|length }}</div>
+                    <div class="info-label">Mendesak</div>
+                    <div class="info-description">Surat yang perlu perhatian</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator pending"></span>
+                    <span>Urgent</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Cards -->
+    <div class="analytics-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-chart-pie"></i>
+                Analytics & Grafik
+            </h2>
+            <p class="cart-subtitle">Visualisasi data dan tren surat</p>
+        </div>
+        <div class="analytics-grid">
+            <!-- Popular Letter Types Chart -->
+            <div class="chart-cart">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Jenis Surat Terpopuler
+                    </h3>
+                    <p class="chart-subtitle">5 jenis surat paling banyak dibuat</p>
+                </div>
+                <div class="chart-body">
+                    {% if popular_letter_types %}
+                    <div class="chart-container">
+                        <canvas id="popularTypesChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        {% for letter_type in popular_letter_types %}
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--primary-blue);"></div>
+                            <span class="legend-label">{{ letter_type.name }}</span>
+                            <span class="legend-value">{{ letter_type.letter_count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-chart-pie"></i>
+                        <p>Belum ada data jenis surat</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Progress Chart -->
+            <div class="progress-cart">
+                <div class="progress-header">
+                    <h3 class="progress-title">
+                        <i class="fas fa-tasks"></i>
+                        Progress Penyelesaian
+                    </h3>
+                    <p class="progress-subtitle">Status penyelesaian surat</p>
+                </div>
+                <div class="progress-body">
+                    <div class="progress-item">
+                        <div class="progress-info">
+                            <div class="progress-label">Surat Selesai</div>
+                            <div class="progress-description">Surat yang telah selesai diproses</div>
+                        </div>
+                        <div class="progress-stats">
+                            <span class="progress-current">{{ stats.completed_letters|intcomma }}</span>
+                            <span class="progress-total">/ {{ stats.total_letters|intcomma }}</span>
+                            <span class="progress-percentage">{{ stats.completion_rate }}%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill bg-success" style="width: {{ stats.completion_rate }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="progress-item">
+                        <div class="progress-info">
+                            <div class="progress-label">Surat Pending</div>
+                            <div class="progress-description">Surat yang sedang diproses</div>
+                        </div>
+                        <div class="progress-stats">
+                            <span class="progress-current">{{ stats.pending_letters|intcomma }}</span>
+                            <span class="progress-total">/ {{ stats.total_letters|intcomma }}</span>
+                            <span class="progress-percentage">{{ stats.pending_letters|floatformat:0 }}%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill bg-warning" style="width: {{ stats.pending_letters|floatformat:0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activities Cards -->
+    <div class="activities-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-history"></i>
+                Aktivitas & Aktivitas Terbaru
+            </h2>
+            <p class="cart-subtitle">Riwayat aktivitas dan surat terbaru</p>
+        </div>
+        <div class="activities-grid">
+            <!-- Urgent Letters -->
+            <div class="activity-cart">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Surat Mendesak
+                    </h3>
+                    <p class="activity-subtitle">Surat yang perlu perhatian segera</p>
+                </div>
+                <div class="activity-body">
+                    {% if urgent_letters %}
+                        {% for letter in urgent_letters %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-exclamation"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title-text">{{ letter.subject|truncatechars:50 }}</div>
+                                <div class="activity-time">
+                                    {{ letter.applicant.nama }} • {{ letter.letter_type.name }} • {{ letter.submission_date|timesince }} lalu
+                                </div>
+                            </div>
+                            <div class="activity-status">
+                                <span class="status-badge status-danger">Urgent</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <p>Tidak ada surat mendesak saat ini</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="activity-cart">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-history"></i>
+                        Aktivitas Terbaru
+                    </h3>
+                    <p class="activity-subtitle">Riwayat aktivitas sistem</p>
+                </div>
+                <div class="activity-body">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-{{ activity.action|default:'info' }}"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title-text">{{ activity.get_action_display }}</div>
+                                <div class="activity-time">
+                                    {{ activity.performed_by.get_full_name|default:activity.performed_by.username }} • {{ activity.performed_at|timesince }} lalu
+                                </div>
+                            </div>
+                            <div class="activity-status">
+                                <span class="status-badge status-info">{{ activity.action|default:'info' }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>Belum ada aktivitas</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Info Cards -->
+    <div class="system-info-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-cogs"></i>
+                Informasi Sistem
+            </h2>
+            <p class="cart-subtitle">Status dan informasi sistem surat</p>
+        </div>
+        <div class="system-info-grid">
+            <div class="system-info-cart">
+                <div class="info-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Status Sistem</div>
+                    <div class="info-value">Online</div>
+                    <div class="info-description">Sistem berjalan normal</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator online"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+
+            <div class="system-info-cart">
+                <div class="info-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Keamanan</div>
+                    <div class="info-value">Aktif</div>
+                    <div class="info-description">Sistem keamanan aktif</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator secure"></span>
+                    <span>Secure</span>
+                </div>
+            </div>
+
+            <div class="system-info-cart">
+                <div class="info-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Update Terakhir</div>
+                    <div class="info-value">Hari Ini</div>
+                    <div class="info-description">Data terbaru tersedia</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator updated"></span>
+                    <span>Updated</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Button -->
+<div class="floating-fab-container">
+    <div class="fab-main" id="fabMain">
+        <i class="fas fa-plus"></i>
+    </div>
+    <div class="fab-menu" id="fabMenu">
+        <div class="fab-item" data-tooltip="Daftar Surat">
+            <a href="{% url 'admin_panel:letters:admin_letter_list' %}">
+                <i class="fas fa-list"></i>
+            </a>
+        </div>
+        <div class="fab-item" data-tooltip="Buat Surat Baru">
+            <a href="{% url 'admin_panel:letters:admin_letter_create' %}">
+                <i class="fas fa-plus"></i>
+            </a>
+        </div>
+        <div class="fab-item" data-tooltip="Kelola Jenis Surat">
+            <a href="{% url 'admin_panel:letters:admin_letter_type_list' %}">
+                <i class="fas fa-tags"></i>
+            </a>
+        </div>
+        <div class="fab-item" data-tooltip="Template Surat">
+            <a href="{% url 'admin_panel:letters:admin_template_list' %}">
+                <i class="fas fa-file-alt"></i>
+            </a>
+        </div>
+        <div class="fab-item" data-tooltip="Analytics">
+            <a href="{% url 'admin_panel:letters:admin_analytics' %}">
+                <i class="fas fa-chart-line"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update time and date
+    function updateDateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('id-ID', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        const dateString = now.toLocaleDateString('id-ID', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        document.getElementById('current-time').textContent = timeString;
+        document.getElementById('current-date').textContent = dateString;
+    }
+    
+    // Update time every second
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    // Floating Action Button
+    const fabMain = document.getElementById('fabMain');
+    const fabMenu = document.getElementById('fabMenu');
+    
+    fabMain.addEventListener('click', function() {
+        fabMain.classList.toggle('active');
+        fabMenu.classList.toggle('active');
+    });
+    
+    // Close FAB menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!fabMain.contains(e.target) && !fabMenu.contains(e.target)) {
+            fabMain.classList.remove('active');
+            fabMenu.classList.remove('active');
+        }
+    });
+    
+    // Initialize Chart.js for popular letter types
+    {% if popular_letter_types %}
+    const ctx = document.getElementById('popularTypesChart').getContext('2d');
+    const chartData = {
+        labels: [
+            {% for letter_type in popular_letter_types %}
+            '{{ letter_type.name|escapejs }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for letter_type in popular_letter_types %}
+                {{ letter_type.letter_count }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#4A90E2',
+                '#28a745',
+                '#ffc107',
+                '#dc3545',
+                '#17a2b8'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '60%'
+        }
+    });
+    {% endif %}
+    
+    // Add loading states
+    document.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', function() {
+            this.classList.add('loading');
+        });
+    });
+    
+    // Auto-hide alerts
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

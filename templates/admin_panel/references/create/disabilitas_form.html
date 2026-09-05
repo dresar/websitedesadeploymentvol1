@@ -1,0 +1,401 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{% if disabilitas %}Edit Disabilitas{% else %}Tambah Disabilitas{% endif %} - Admin Panel{% endblock %}
+{% block page_title %}{% if disabilitas %}Edit Disabilitas{% else %}Tambah Disabilitas{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/references/references-form.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/references/references-general.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="penduduk-form-wrapper">
+
+    <div class="penduduk-form-header">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center">
+                    <div class="mb-3 mb-lg-0">
+                        <h1 class="h2 mb-2">
+                            <i class="fas fa-{{ form_icon|default:'plus' }} penduduk-text-primary"></i>
+                            {{ form_title|default:"Tambah Disabilitas" }}
+                        </h1>
+                        <p class="penduduk-text-muted mb-0">{{ form_subtitle|default:"Lengkapi data disabilitas baru" }}</p>
+                    </div>
+                    <div class="penduduk-form-btn-group">
+                        <a href="{% url 'admin_panel:references_disabilitas_list' %}" class="penduduk-form-btn penduduk-form-btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Kembali
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="disabilitasForm" method="post" novalidate>
+        {% csrf_token %}
+        {% if disabilitas %}
+        <input type="hidden" name="disabilitas_id" value="{{ disabilitas.id }}">
+        {% endif %}
+
+        <div class="penduduk-form-row row">
+
+            <div class="col-lg-8 col-12">
+                <div class="penduduk-form-card card">
+                    <div class="card-header">
+                        <h6>
+                            <i class="fas fa-wheelchair"></i>
+                            Informasi Disabilitas
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+
+                            <div class="col-12 penduduk-form-field">
+                                <label for="disPendudukSearch" class="form-label">
+                                    Nama/NIK Penduduk <span class="text-danger">*</span>
+                                </label>
+                                <input type="hidden" name="penduduk_id" id="disPendudukId" value="{% if disabilitas %}{{ disabilitas.penduduk_id }}{% endif %}">
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="disPendudukSearch"
+                                           placeholder="Ketik nama atau NIK penduduk..."
+                                           value="{% if disabilitas %}{{ disabilitas.penduduk.name }} - {{ disabilitas.penduduk.nik }}{% endif %}"
+                                           autocomplete="off" required>
+                                    <div id="disPendudukDropdown" class="dropdown-menu" style="display: none; width: 100%; max-height: 300px; overflow-y: auto; z-index: 1000;">
+
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Penduduk harus dipilih.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-12 penduduk-form-field">
+                                <label for="disability_type_id" class="form-label">
+                                    Jenis Disabilitas <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control" id="disability_type_id" name="disability_type_id" required>
+                                    <option value="">Pilih Jenis</option>
+                                    {% for t in type_options %}
+                                    <option value="{{ t.id }}" {% if disabilitas and disabilitas.disability_type_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Jenis disabilitas harus dipilih.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-12 penduduk-form-field">
+                                <label for="severity" class="form-label">
+                                    Tingkat Keparahan
+                                </label>
+                                <select class="form-control" id="severity" name="severity">
+                                    <option value="RINGAN" {% if disabilitas and disabilitas.severity == 'RINGAN' %}selected{% endif %}>Ringan</option>
+                                    <option value="SEDANG" {% if disabilitas and disabilitas.severity == 'SEDANG' %}selected{% endif %}>Sedang</option>
+                                    <option value="BERAT" {% if disabilitas and disabilitas.severity == 'BERAT' %}selected{% endif %}>Berat</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 col-12 penduduk-form-field">
+                                <label for="diagnosis_date" class="form-label">
+                                    Tanggal Diagnosis
+                                </label>
+                                <input type="date" class="form-control" id="diagnosis_date" name="diagnosis_date"
+                                       value="{% if disabilitas and disabilitas.diagnosis_date %}{{ disabilitas.diagnosis_date|date:'Y-m-d' }}{% endif %}">
+                            </div>
+
+                            <div class="col-md-6 col-12 penduduk-form-field">
+                                <label class="form-label">Kebutuhan Bantuan</label>
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="needs_assistance" name="needs_assistance"
+                                           {% if disabilitas and disabilitas.needs_assistance %}checked{% endif %}>
+                                    <label class="form-check-label" for="needs_assistance">
+                                        Ya, membutuhkan bantuan
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 penduduk-form-field">
+                                <label for="description" class="form-label">
+                                    Deskripsi
+                                </label>
+                                <textarea class="form-control" id="description" name="description" rows="3"
+                                          placeholder="Deskripsi kondisi disabilitas...">{% if disabilitas %}{{ disabilitas.description }}{% endif %}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-12">
+
+                <div class="penduduk-form-card card mb-4">
+                    <div class="card-header">
+                        <h6>
+                            <i class="fas fa-toggle-on"></i>
+                            Status
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="is_active" name="is_active"
+                                       {% if not disabilitas or disabilitas.is_active %}checked{% endif %}>
+                                <label class="custom-control-label" for="is_active">
+                                    Data Aktif
+                                </label>
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            Data yang tidak aktif tidak akan muncul dalam laporan.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="penduduk-form-card card">
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="penduduk-form-btn penduduk-form-btn-primary">
+                                <i class="fas fa-save"></i>
+                                Simpan Data
+                            </button>
+                            <a href="{% url 'admin_panel:references_disabilitas_list' %}" class="penduduk-form-btn penduduk-form-btn-danger">
+                                <i class="fas fa-times"></i>
+                                Batal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+    var searchTimeout;
+    var input = $('#disPendudukSearch');
+    var hidden = $('#disPendudukId');
+    var dropdown = $('#disPendudukDropdown');
+
+    function clearDropdown() {
+        dropdown.empty().hide();
+    }
+
+    function fetchPendudukData(query) {
+        if (!query || query.length < 2) {
+            clearDropdown();
+            return;
+        }
+
+        dropdown.html('<div class="dropdown-item"><i class="fas fa-spinner fa-spin mr-2"></i>Mencari...</div>').show();
+
+        $.ajax({
+            url: '{% url "admin_panel:api_references_residents_search" %}',
+            method: 'GET',
+            data: { q: query },
+            success: function(response) {
+                console.log('API Response:', response);
+                clearDropdown();
+
+                if (!response) {
+                    console.error('Empty response from API');
+                    dropdown.html('<div class="dropdown-item text-danger">Error: Response kosong dari server</div>').show();
+                    return;
+                }
+
+                if (response.success === false) {
+                    console.error('API returned error:', response.message || 'Unknown error');
+                    dropdown.html('<div class="dropdown-item text-danger">Error: ' + (response.message || 'Tidak dapat memuat data') + '</div>').show();
+                    return;
+                }
+
+                if (!response.data) {
+                    console.error('No data property in response:', response);
+                    dropdown.html('<div class="dropdown-item text-danger">Error: Data tidak ditemukan dalam response</div>').show();
+                    return;
+                }
+
+                if (!Array.isArray(response.data)) {
+                    console.error('Data is not an array:', response.data);
+                    dropdown.html('<div class="dropdown-item text-danger">Error: Format data tidak valid</div>').show();
+                    return;
+                }
+
+                var results = response.data;
+                if (results.length > 0) {
+                    results.slice(0, 10).forEach(function(item) {
+                        var itemId = item.id || '';
+                        var itemName = item.name || 'Nama tidak tersedia';
+                        var itemNik = item.nik || '';
+                        var nikDisplay = item.nik || '-';
+                        var dusunDisplay = item.dusun || '-';
+
+                        var dropdownItem = $(`
+                            <div class="dropdown-item penduduk-item" data-id="${itemId}" data-name="${itemName}" data-nik="${itemNik}">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-placeholder me-2">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold">${itemName}</div>
+                                        <small class="text-muted">NIK: ${nikDisplay} | ${dusunDisplay}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                        dropdown.append(dropdownItem);
+                    });
+                    dropdown.show();
+                } else {
+                    dropdown.html('<div class="dropdown-item text-muted">Tidak ada penduduk ditemukan</div>').show();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', {
+                    status: status,
+                    error: error,
+                    response: xhr.responseText
+                });
+                clearDropdown();
+                dropdown.html('<div class="dropdown-item text-danger">Error: Gagal terhubung ke server (' + status + ')</div>').show();
+            }
+        });
+    }
+
+    input.on('input', function() {
+        clearTimeout(searchTimeout);
+        var query = $(this).val().trim();
+        searchTimeout = setTimeout(function() {
+            fetchPendudukData(query);
+        }, 300);
+    });
+
+    dropdown.on('click', '.penduduk-item', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        var nik = $(this).data('nik');
+
+        hidden.val(id);
+        input.val(name + ' - ' + nik);
+        clearDropdown();
+
+        input.removeClass('is-invalid');
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#disPendudukSearch, #disPendudukDropdown').length) {
+            clearDropdown();
+        }
+    });
+
+    $('#disabilitasForm').on('submit', function(e) {
+        var pendudukId = hidden.val();
+        var disabilityTypeId = $('#disability_type_id').val();
+        var isValid = true;
+
+        $('.form-control').removeClass('is-invalid');
+        $('.invalid-feedback').hide();
+
+        if (!pendudukId) {
+            input.addClass('is-invalid');
+            input.siblings('.invalid-feedback').show();
+            isValid = false;
+        }
+
+        if (!disabilityTypeId) {
+            $('#disability_type_id').addClass('is-invalid');
+            $('#disability_type_id').siblings('.invalid-feedback').show();
+            isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            showAlert('Mohon lengkapi semua field yang wajib diisi.', 'error');
+            return false;
+        }
+    });
+});
+
+function showAlert(message, type) {
+
+    $('.notification-toast').remove();
+
+    let bgColor, icon, title;
+    if (type === 'success') {
+        bgColor = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+        icon = 'fa-check-circle';
+        title = 'Berhasil';
+    } else if (type === 'error') {
+        bgColor = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+        icon = 'fa-times-circle';
+        title = 'Error';
+    } else if (type === 'warning') {
+        bgColor = 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)';
+        icon = 'fa-exclamation-triangle';
+        title = 'Peringatan';
+    } else {
+        bgColor = 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)';
+        icon = 'fa-info-circle';
+        title = 'Informasi';
+    }
+
+    const toast = $(`
+        <div class="notification-toast" style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${bgColor};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            min-width: 300px;
+            max-width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        ">
+            <div class="d-flex align-items-center">
+                <i class="fas ${icon} fa-lg mr-3"></i>
+                <div class="flex-grow-1">
+                    <div class="font-weight-bold mb-1">${title}</div>
+                    <div class="small">${message}</div>
+                </div>
+                <button type="button" class="btn-close text-white ml-2" style="
+                    background: none;
+                    border: none;
+                    font-size: 1.2rem;
+                    opacity: 0.8;
+                    cursor: pointer;
+                ">&times;</button>
+            </div>
+        </div>
+    `);
+
+    $('body').append(toast);
+
+    setTimeout(() => {
+        toast.css('transform', 'translateX(0)');
+    }, 100);
+
+    setTimeout(() => {
+        toast.css('transform', 'translateX(100%)');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3000);
+
+    toast.find('.btn-close').on('click', function() {
+        toast.css('transform', 'translateX(100%)');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    });
+}
+</script>
+{% endblock extra_js %}
+

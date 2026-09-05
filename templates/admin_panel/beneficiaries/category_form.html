@@ -1,0 +1,458 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/beneficiaries/beneficiaries.css' %}">
+<style>
+
+.admin-forms {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.page-header {
+    background: #ffffff;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+}
+
+.form-card {
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.form-card .card-body {
+    padding: 3rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.form-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.form-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+}
+
+.form-section-title i {
+    margin-right: 0.75rem;
+    color: #007bff;
+}
+
+.form-group {
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    display: block;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    width: 100%;
+    background-color: #fff;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    background-color: #fff;
+}
+
+.form-control::placeholder {
+    color: #6c757d;
+    opacity: 1;
+    font-style: italic;
+    font-size: 1rem;
+}
+
+.form-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.75rem;
+}
+
+.form-check {
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+.form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-left: -2rem;
+    margin-top: 0.125rem;
+    border: 2px solid #e9ecef;
+    border-radius: 0.25rem;
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #2c3e50;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+.btn {
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.btn-outline-secondary {
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    background: white;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 0;
+    border-top: 2px solid #e9ecef;
+    margin-top: 3rem;
+    gap: 1rem;
+}
+
+.action-buttons .btn {
+    padding: 1rem 2rem;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    min-height: 50px;
+    min-width: 150px;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
+    color: white;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+@media (max-width: 768px) {
+    .admin-forms {
+        padding: 1rem 0;
+    }
+
+    .page-header {
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    .action-buttons .btn {
+        width: 100%;
+    }
+
+    .form-control {
+        font-size: 1rem;
+        padding: 0.875rem 1rem;
+    }
+
+    .form-section-title {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .form-card .card-body {
+        padding: 1rem;
+    }
+
+    .page-header {
+        padding: 1rem;
+    }
+
+    .form-control {
+        font-size: 0.95rem;
+        padding: 0.75rem 0.875rem;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="admin-forms">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-12 col-xl-10 col-lg-11">
+
+                <div class="mb-3">
+                    <a href="{% url 'admin_panel:categories_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar
+                    </a>
+                </div>
+
+                <div class="page-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4>
+                                {% if category %}Edit Kategori Bantuan{% else %}Tambah Kategori Bantuan{% endif %}
+                            </h4>
+                            <p class="text-muted mb-0">
+                                {% if category %}
+                                    Mengedit kategori: {{ category.name }}
+                                {% else %}
+                                    Membuat kategori baru
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <span class="badge badge-{% if category %}info{% else %}success{% endif %}">
+                                {% if category %}
+                                    <i class="fas fa-edit mr-1"></i>Mengedit
+                                {% else %}
+                                    <i class="fas fa-plus mr-1"></i>Membuat Baru
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="card-body">
+                        <form id="categoryForm" method="post">
+                            {% csrf_token %}
+
+                            <div class="form-section">
+                                <h6 class="form-section-title">
+                                    <i class="fas fa-tag mr-2"></i>Informasi Kategori
+                                </h6>
+                                <div class="form-group">
+                                    <label for="categoryName" class="form-label">Nama Kategori <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="categoryName" name="name" value="{% if category %}{{ category.name }}{% endif %}" required>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Masukkan nama kategori bantuan yang jelas dan mudah dipahami (contoh: Bantuan Tunai, Bantuan Pangan, dll).
+                                    </small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="categoryDescription" class="form-label">Deskripsi Kategori</label>
+                                    {{ form.description }}
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Jelaskan detail kategori bantuan ini, tujuan, dan informasi penting lainnya.
+                                    </small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="categoryCriteria" class="form-label">Kriteria Penerima</label>
+                                    {{ form.criteria }}
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Tuliskan kriteria yang harus dipenuhi untuk menjadi penerima bantuan dalam kategori ini.
+                                    </small>
+                                </div>
+                                <div class="form-group">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="categoryIsActive" name="is_active" {% if not category or category.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="categoryIsActive">Kategori Aktif</label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Centang jika kategori ini aktif dan dapat digunakan untuk pendaftaran penerima bantuan baru.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="action-buttons">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i>Simpan{% if category %} Perubahan{% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>
+// Notification functions
+function showSuccess(message) {
+    showAlert(message, 'success');
+}
+
+function showError(message) {
+    showAlert(message, 'danger');
+}
+
+function showAlert(message, type = 'info') {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Add to body
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Form submission
+    const form = document.getElementById('categoryForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...';
+            
+            const formData = new FormData(form);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return null;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return; // Already redirected
+                
+                if (data.success || data.status === 'success') {
+                    showSuccess(data.message || 'Kategori berhasil disimpan');
+                    setTimeout(() => {
+                        window.location.href = '{% url "admin_panel:categories_list" %}';
+                    }, 1000);
+                } else {
+                    showError(data.message || 'Gagal menyimpan kategori');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Terjadi kesalahan saat menyimpan kategori');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+});
+</script>
+{% endblock extra_js %}
+

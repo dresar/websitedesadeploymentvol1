@@ -1,0 +1,203 @@
+{% extends 'public/base.html' %} 
+{% load static %} 
+
+{% block content %} 
+
+<!-- Bagian Header Profil (Foto, Nama, Jabatan) -->
+<section class="py-4 sm:py-6 md:py-8 bg-gradient-to-br from-blue-50 to-indigo-100"> 
+    
+    <!-- Perbaikan: Menghilangkan class/tag yang salah di awal section -->
+    <div class="container mx-auto px-3 sm:px-4 lg:px-6">
+        <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
+            
+            <!-- Foto Pejabat -->
+            <div class="flex-shrink-0"> 
+                {% if official.photo %} 
+                <img 
+                    src="{{ official.photo.url }}"
+                    alt="{{ official.name }}"
+                    class="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover shadow-lg border-4 border-white"
+                > 
+                {% else %}
+                <div
+                    class="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+                    <i class="fas fa-user text-white text-2xl md:text-3xl"></i> 
+                </div> 
+                {% endif %} 
+            </div>
+            
+            <!-- Nama dan Jabatan -->
+            <div class="flex-1 text-center md:text-left">
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 mb-2"> 
+                    {{ official.name }} 
+                </h1>
+                <p class="text-lg sm:text-xl text-blue-600 font-semibold mb-3"> 
+                    {{ official.get_position_display }} 
+                </p> 
+                
+                {% if official.dusun %} 
+                <p class="text-sm text-gray-600 mb-4"> 
+                    <i class="fas fa-map-marker-alt mr-2"></i>{{ official.dusun }} 
+                </p> 
+                {% endif %} 
+                
+                <!-- Status Keaktifan -->
+                <div class="flex items-center justify-center md:justify-start space-x-4"> 
+                    <span
+                        class="px-3 py-1 rounded-full text-xs font-semibold 
+                        {% if official.is_active %}bg-green-100 text-green-800 
+                        {% else %}bg-red-100 text-red-800 
+                        {% endif %}">
+                        {% if official.is_active %}Aktif{% else %}Non Aktif{% endif %} 
+                    </span> 
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Akhir Header Profil -->
+
+<!-- Bagian Detail Informasi (Pribadi & Jabatan) -->
+<section class="py-4 sm:py-6 md:py-8 bg-white">
+    <div class="container mx-auto px-3 sm:px-4 lg:px-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Kartu Informasi Pribadi -->
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4 md:p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center"> 
+                    <i class="fas fa-user mr-2 text-blue-600"></i> Informasi Pribadi 
+                </h3>
+                <div class="space-y-3"> 
+                    {% if official.birth_date %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-calendar text-gray-400 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">Tanggal Lahir:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">
+                            {{ official.birth_date|date:"d F Y" }}
+                        </span> 
+                    </div> 
+                    {% endif %} 
+                    
+                    {% if official.gender %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-{% if official.gender == 'L' %}male{% else %}female{% endif %} text-gray-400 w-5"></i>
+                        <span class="text-sm text-gray-600 ml-3">Jenis Kelamin:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">
+                            {% if official.gender == 'L' %}Laki-laki{% else %}Perempuan{% endif %}
+                        </span> 
+                    </div> 
+                    {% endif %} 
+                    
+                    {% if official.education %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-graduation-cap text-gray-400 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">Pendidikan:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">{{ official.education }}</span> 
+                    </div> 
+                    {% endif %} 
+                    
+                    {% if official.occupation %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-briefcase text-gray-400 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">Pekerjaan:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">{{ official.occupation }}</span> 
+                    </div> 
+                    {% endif %} 
+                </div>
+            </div>
+            
+            <!-- Kartu Informasi Jabatan -->
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4 md:p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center"> 
+                    <i class="fas fa-user-tie mr-2 text-green-600"></i> Informasi Jabatan 
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex items-center"> 
+                        <i class="fas fa-briefcase text-gray-400 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">Jabatan:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">{{ official.get_position_display }}</span>
+                    </div> 
+                    
+                    {% if official.start_date %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-calendar-check text-gray-400 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">Mulai Tugas:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">
+                            {{ official.start_date|date:"d F Y" }}
+                        </span> 
+                    </div> 
+                    {% endif %} 
+                    
+                    {% if official.end_date %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-calendar-times text-gray-400 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">Selesai Tugas:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">
+                            {{ official.end_date|date:"d F Y" }}
+                        </span>
+                    </div> 
+                    {% endif %}
+                </div>
+            </div>
+        </div> 
+        
+        <!-- Kartu Kontak dan Pengalaman (Opsional) -->
+        {% if official.phone or official.mobile or official.email or official.experience %} 
+        <div class="mt-6">
+            <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4 md:p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center"> 
+                    <i class="fas fa-phone mr-2 text-purple-600"></i> Informasi Kontak & Tugas 
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4"> 
+                    
+                    {% if official.phone %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-phone text-blue-500 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">Telepon:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">{{ official.phone }}</span> 
+                    </div> 
+                    {% endif %} 
+                    
+                    {% if official.mobile %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-mobile-alt text-green-500 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">HP:</span> 
+                        <span class="text-sm font-semibold text-gray-900 ml-2">{{ official.mobile }}</span> 
+                    </div> 
+                    {% endif %} 
+                    
+                    {% if official.email %} 
+                    <div class="flex items-center"> 
+                        <i class="fas fa-envelope text-blue-500 w-5"></i> 
+                        <span class="text-sm text-gray-600 ml-3">Email:</span> 
+                        <a href="mailto:{{ official.email }}"
+                            class="text-sm font-semibold text-blue-600 ml-2 hover:underline"> 
+                            {{ official.email }} 
+                        </a>
+                    </div> 
+                    {% endif %} 
+                </div> 
+                
+                {% if official.experience %} 
+                <div class="mt-4">
+                    <h4 class="text-sm font-semibold text-gray-900 mb-2">Pengalaman:</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">{{ official.experience }}</p>
+                </div> 
+                {% endif %}
+            </div>
+        </div> 
+        {% endif %} 
+        
+        <!-- Tombol Kembali -->
+        <div class="mt-6 text-center"> 
+            <a href="{% url 'village_profile:officials' %}"
+                class="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors">
+                <i class="fas fa-arrow-left"></i> Kembali ke Struktur Organisasi Desa 
+            </a> 
+        </div>
+        
+    </div>
+</section> 
+<!-- Akhir Bagian Detail Informasi -->
+
+{% endblock content %}

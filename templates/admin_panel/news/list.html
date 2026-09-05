@@ -1,0 +1,542 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Manajemen Berita{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/news/news_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="news-list-page">
+    <div class="container-fluid px-3 px-md-4">
+        
+        <!-- Page Header -->
+        <div class="news-list-header">
+            <div class="news-list-header-content">
+                <div class="news-list-title-wrapper">
+                    <h1 class="news-list-main-title">
+                        <i class="fas fa-newspaper"></i>
+                        Manajemen Berita
+                    </h1>
+                    <p class="news-list-subtitle">Kelola dan pantau semua berita website</p>
+                </div>
+                <div class="news-list-actions">
+                    <a href="{% url 'admin_panel:news_create' %}" class="news-list-header-btn news-list-header-btn-primary">
+                        <i class="fas fa-plus"></i>Tambah Berita
+                    </a>
+                    <a href="{% url 'admin_panel:news_dashboard' %}" class="news-list-header-btn news-list-header-btn-outline">
+                        <i class="fas fa-chart-pie"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="news-filter-section">
+            <h5 class="news-filter-title">
+                <i class="fas fa-filter"></i>
+                Filter & Pencarian
+            </h5>
+            <form method="GET" id="filterForm" class="news-filter-form">
+                <div class="news-filter-group">
+                    <label for="search" class="news-filter-label">
+                        <i class="fas fa-search"></i> Pencarian
+                    </label>
+                    <div class="news-filter-input-icon-wrapper">
+                        <i class="fas fa-search news-filter-input-icon"></i>
+                        <input type="text" class="news-filter-input news-filter-input-with-icon" 
+                               id="search" name="search" value="{{ current_filters.search }}" 
+                               placeholder="Cari judul berita...">
+                    </div>
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="status" class="news-filter-label">Status</label>
+                    <select class="news-filter-select" id="status" name="status">
+                        <option value="">Semua Status</option>
+                        <option value="published" {% if current_filters.status == 'published' %}selected{% endif %}>Dipublikasi</option>
+                        <option value="draft" {% if current_filters.status == 'draft' %}selected{% endif %}>Draft</option>
+                    </select>
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="category" class="news-filter-label">Kategori</label>
+                    <select class="news-filter-select" id="category" name="category">
+                        <option value="">Semua Kategori</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if current_filters.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="news-filter-actions">
+                    <button type="submit" class="news-filter-btn news-filter-btn-primary">
+                        <i class="fas fa-search"></i> Cari
+                    </button>
+                    <a href="{% url 'admin_panel:news_list' %}" class="news-filter-btn news-filter-btn-reset">
+                        <i class="fas fa-redo"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="news-stats-bar">
+            <div class="news-stats-info">
+                <div class="news-stats-badge">
+                    <i class="fas fa-newspaper"></i>
+                    <span>{{ news.paginator.count }} Berita</span>
+                </div>
+                <div class="news-stats-text">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Menampilkan {{ news|length }} dari {{ news.paginator.count }} berita</span>
+                </div>
+            </div>
+            <div class="news-view-toggle">
+                <button type="button" class="news-view-btn active" id="gridViewBtn">
+                    <i class="fas fa-th"></i> Grid
+                </button>
+                <button type="button" class="news-view-btn" id="listViewBtn">
+                    <i class="fas fa-list"></i> List
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid View -->
+        <div id="gridView" class="news-grid-view">
+            {% for item in news %}
+            <div class="news-item-card">
+                <!-- Image -->
+                <div class="news-item-image-wrapper">
+                    {% if item.featured_image %}
+                    <img src="{{ item.featured_image.url }}" 
+                         alt="{{ item.title }}" 
+                         class="news-item-image"
+                         loading="lazy"
+                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'news-item-image-placeholder\'><i class=\'fas fa-image\'></i></div>';">
+                    {% else %}
+                    <div class="news-item-image-placeholder">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Badges -->
+                    <div class="news-item-badges">
+                        <span class="news-item-status-badge news-item-status-{% if item.status == 'published' %}published{% elif item.status == 'draft' %}draft{% else %}archived{% endif %}">
+                            {{ item.get_status_display }}
+                        </span>
+                        <span class="news-item-number-badge">{{ forloop.counter0|add:news.start_index|default:forloop.counter }}</span>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="news-item-content">
+                    <h5 class="news-item-title">
+                        <a href="{% url 'admin_panel:news_detail' item.pk %}">
+                            {{ item.title }}
+                        </a>
+                    </h5>
+
+                    <p class="news-item-excerpt">{{ item.excerpt|default:"Tidak ada ringkasan"|truncatechars:120 }}</p>
+
+                    <!-- Meta -->
+                    <div class="news-item-meta">
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-user news-item-meta-icon"></i>
+                            <span>{{ item.author.username }}</span>
+                        </div>
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-calendar news-item-meta-icon"></i>
+                            <span>{{ item.created_at|date:"d M Y" }}</span>
+                        </div>
+                        {% if item.category %}
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-folder news-item-meta-icon"></i>
+                            <span>{{ item.category.name }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="news-item-stats">
+                        <div class="news-item-stat">
+                            <i class="fas fa-eye"></i>
+                            <span class="news-item-stat-number">{{ item.view_count|default:0 }}</span>
+                        </div>
+                        <div class="news-item-stat">
+                            <i class="fas fa-heart"></i>
+                            <span class="news-item-stat-number">{{ item.like_count|default:0 }}</span>
+                        </div>
+                        <div class="news-item-stat">
+                            <i class="fas fa-comment"></i>
+                            <span class="news-item-stat-number">{{ item.comment_count|default:0 }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="news-item-actions">
+                        <a href="{% url 'admin_panel:news_detail' item.pk %}" 
+                           class="news-item-action-btn news-item-action-view">
+                            <i class="fas fa-eye"></i> Lihat
+                        </a>
+                        <a href="{% url 'admin_panel:news_edit' item.pk %}" 
+                           class="news-item-action-btn news-item-action-edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button class="news-item-action-btn news-item-action-delete delete-btn" 
+                                data-id="{{ item.id }}" data-title="{{ item.title }}">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="news-empty-state">
+                    <i class="fas fa-newspaper news-empty-state-icon"></i>
+                    <h3 class="news-empty-state-title">Tidak ada berita ditemukan</h3>
+                    <p class="news-empty-state-text">Mulai dengan membuat berita pertama Anda atau sesuaikan filter pencarian.</p>
+                    <a href="{% url 'admin_panel:news_create' %}" class="news-empty-state-action">
+                        <i class="fas fa-plus"></i> Tambah Berita Pertama
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- List View (Table) -->
+        <div id="listView" class="news-list-view d-none">
+            <div class="table-responsive">
+                <table class="news-list-table">
+                    <thead>
+                        <tr>
+                            <th width="50">No</th>
+                            <th>Judul</th>
+                            <th>Kategori</th>
+                            <th>Penulis</th>
+                            <th>Status</th>
+                            <th>Stats</th>
+                            <th>Tanggal</th>
+                            <th width="180">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in news %}
+                        <tr>
+                            <td>
+                                <span class="news-item-number-badge">{{ forloop.counter0|add:news.start_index|default:forloop.counter }}</span>
+                            </td>
+                            <td>
+                                <div class="news-list-table-title-wrapper">
+                                    {% if item.featured_image %}
+                                    <img src="{{ item.featured_image.url }}" 
+                                         alt="{{ item.title }}" 
+                                         class="news-list-table-image"
+                                         loading="lazy"
+                                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'news-list-table-image-placeholder\'><i class=\'fas fa-image\'></i></div>';">
+                                    {% else %}
+                                    <div class="news-list-table-image-placeholder">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="news-list-table-title-content">
+                                        <div class="news-list-table-title">
+                                            <a href="{% url 'admin_panel:news_detail' item.pk %}">
+                                                {{ item.title|truncatechars:50 }}
+                                            </a>
+                                        </div>
+                                        <div class="news-list-table-excerpt">
+                                            {{ item.excerpt|default:"Tidak ada ringkasan"|truncatechars:60 }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if item.category %}
+                                <span class="badge badge-primary">{{ item.category.name }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="news-list-table-author">
+                                    <div class="news-list-table-author-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <span class="news-list-table-author-name">{{ item.author.username }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="news-item-status-badge news-item-status-{% if item.status == 'published' %}published{% elif item.status == 'draft' %}draft{% else %}archived{% endif %}">
+                                    {{ item.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="news-list-table-stats">
+                                    <div class="news-list-table-stat-row">
+                                        <i class="fas fa-eye news-list-table-stat-icon"></i>
+                                        <span>{{ item.view_count|default:0 }}</span>
+                                    </div>
+                                    <div class="news-list-table-stat-row">
+                                        <i class="fas fa-heart news-list-table-stat-icon"></i>
+                                        <span>{{ item.like_count|default:0 }}</span>
+                                        <i class="fas fa-comment news-list-table-stat-icon"></i>
+                                        <span>{{ item.comment_count|default:0 }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="news-list-table-date">
+                                    <div class="news-list-table-date-main">{{ item.created_at|date:"d M Y" }}</div>
+                                    <div class="news-list-table-date-time">{{ item.created_at|date:"H:i" }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="news-list-table-actions">
+                                    <a href="{% url 'admin_panel:news_detail' item.pk %}" 
+                                       class="news-item-action-btn news-item-action-view">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'admin_panel:news_edit' item.pk %}" 
+                                       class="news-item-action-btn news-item-action-edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="news-item-action-btn news-item-action-delete delete-btn" 
+                                            data-id="{{ item.id }}" data-title="{{ item.title }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="news-empty-state">
+                                    <i class="fas fa-newspaper news-empty-state-icon"></i>
+                                    <h3 class="news-empty-state-title">Tidak ada berita ditemukan</h3>
+                                    <p class="news-empty-state-text">Mulai dengan membuat berita pertama Anda atau sesuaikan filter pencarian.</p>
+                                    <a href="{% url 'admin_panel:news_create' %}" class="news-empty-state-action">
+                                        <i class="fas fa-plus"></i> Tambah Berita Pertama
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if news.has_other_pages %}
+        <div class="news-pagination-wrapper">
+            <ul class="news-pagination">
+                {% if news.has_previous %}
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page=1{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.category %}&category={{ current_filters.category }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ news.previous_page_number }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.category %}&category={{ current_filters.category }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in news.paginator.page_range %}
+                    {% if news.number == num %}
+                    <li class="news-pagination-item active">
+                        <span class="news-pagination-link">{{ num }}</span>
+                    </li>
+                    {% elif num > news.number|add:'-3' and num < news.number|add:'3' %}
+                    <li class="news-pagination-item">
+                        <a class="news-pagination-link" href="?page={{ num }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.category %}&category={{ current_filters.category }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if news.has_next %}
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ news.next_page_number }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.category %}&category={{ current_filters.category }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ news.paginator.num_pages }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.category %}&category={{ current_filters.category }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="news-delete-modal" id="deleteModal">
+    <div class="news-delete-modal-content">
+        <div class="news-delete-modal-header">
+            <h5 class="news-delete-modal-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                Konfirmasi Hapus
+            </h5>
+            <button type="button" class="news-delete-modal-close" onclick="closeDeleteModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="news-delete-modal-body">
+            <p class="news-delete-modal-text">
+                Apakah Anda yakin ingin menghapus berita <strong id="deleteNewsTitle"></strong>?
+            </p>
+            <div class="news-delete-modal-warning">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Tindakan ini tidak dapat dibatalkan.</span>
+            </div>
+        </div>
+        <div class="news-delete-modal-footer">
+            <button type="button" class="news-delete-modal-btn news-delete-modal-btn-cancel" onclick="closeDeleteModal()">
+                Batal
+            </button>
+            <button type="button" class="news-delete-modal-btn news-delete-modal-btn-delete" id="confirmDelete">
+                Hapus
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View Toggle with Smooth Transition
+    const gridViewBtn = document.getElementById('gridViewBtn');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+
+    // Save view preference
+    const savedView = localStorage.getItem('newsListView') || 'grid';
+    
+    // Set initial view
+    if (savedView === 'list') {
+        gridView.classList.add('d-none');
+        listView.classList.remove('d-none');
+        listViewBtn.classList.add('active');
+        gridViewBtn.classList.remove('active');
+    }
+
+    if (gridViewBtn) {
+        gridViewBtn.addEventListener('click', function() {
+            gridView.style.opacity = '0';
+            setTimeout(() => {
+                gridView.classList.remove('d-none');
+                listView.classList.add('d-none');
+                this.classList.add('active');
+                listViewBtn.classList.remove('active');
+                localStorage.setItem('newsListView', 'grid');
+                setTimeout(() => {
+                    gridView.style.opacity = '1';
+                }, 50);
+            }, 150);
+        });
+    }
+
+    if (listViewBtn) {
+        listViewBtn.addEventListener('click', function() {
+            listView.style.opacity = '0';
+            setTimeout(() => {
+                gridView.classList.add('d-none');
+                listView.classList.remove('d-none');
+                this.classList.add('active');
+                gridViewBtn.classList.remove('active');
+                localStorage.setItem('newsListView', 'list');
+                setTimeout(() => {
+                    listView.style.opacity = '1';
+                }, 50);
+            }, 150);
+        });
+    }
+
+    // Add smooth transition style
+    if (gridView) {
+        gridView.style.transition = 'opacity 0.3s ease-in-out';
+    }
+    if (listView) {
+        listView.style.transition = 'opacity 0.3s ease-in-out';
+    }
+
+    // Delete buttons
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const title = this.getAttribute('data-title');
+            openDeleteModal(id, title);
+        });
+    });
+
+    // Image lazy loading fallback
+    document.querySelectorAll('.news-item-image').forEach(img => {
+        img.addEventListener('load', function() {
+            this.style.opacity = '1';
+        });
+        
+        img.addEventListener('error', function() {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'news-item-image-placeholder';
+            placeholder.innerHTML = '<i class="fas fa-image"></i>';
+            this.parentElement.appendChild(placeholder);
+            this.style.display = 'none';
+        });
+    });
+});
+
+function openDeleteModal(id, title) {
+    document.getElementById('deleteNewsTitle').textContent = title;
+    document.getElementById('deleteModal').classList.add('show');
+    
+    document.getElementById('confirmDelete').onclick = function() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            alert('CSRF token tidak ditemukan. Silakan refresh halaman.');
+            return;
+        }
+
+        fetch(`{% url 'admin_panel:news_delete' 0 %}`.replace('0', id), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken.value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menghapus berita: ' + error.message);
+        });
+    };
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('show');
+}
+
+// Close modal on outside click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

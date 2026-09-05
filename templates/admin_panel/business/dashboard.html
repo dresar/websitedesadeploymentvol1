@@ -1,0 +1,370 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-store"></i>Dashboard Usaha
+                </h1>
+                <p class="dashboard-subtitle">Kelola dan pantau data usaha di Desa Pulosari</p>
+            </div>
+            <div class="header-meta">
+                <div class="time-info">
+                    <i class="far fa-clock"></i>
+                    <span id="currentTime">--:--:--</span>
+                </div>
+                <div class="date-info">
+                    <i class="far fa-calendar-alt"></i>
+                    <span id="currentDate">-- --- ----</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-chart-bar"></i>Statistik Usaha
+            </h2>
+            <p class="cart-subtitle">Ringkasan data usaha terkini</p>
+        </div>
+
+        <div class="stats-grid">
+
+            <div class="stat-cart stat-cart-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-industry"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_umkm|default:0 }}</div>
+                    <div class="stat-label">Total UMKM</div>
+                    <div class="stat-description">Usaha mikro, kecil, dan menengah yang terdaftar</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>{{ active_ukm|default:0 }} Aktif</span>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-success">
+                <div class="stat-icon">
+                    <i class="fas fa-tools"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_layanan|default:0 }}</div>
+                    <div class="stat-label">Layanan Jasa</div>
+                    <div class="stat-description">Penyedia layanan jasa yang aktif beroperasi</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>{{ active_layanan|default:0 }} Aktif</span>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-info">
+                <div class="stat-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_koperasi|default:0 }}</div>
+                    <div class="stat-label">Koperasi</div>
+                    <div class="stat-description">Koperasi yang terdaftar dan beroperasi</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>{{ active_koperasi|default:0 }} Aktif</span>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_bumg|default:0 }}</div>
+                    <div class="stat-label">BUMG</div>
+                    <div class="stat-description">Badan Usaha Milik Gampong yang aktif</div>
+                </div>
+                <div class="stat-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>{{ active_bumg|default:0 }} Aktif</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="system-info-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-info-circle"></i>Informasi Sistem
+            </h2>
+            <p class="cart-subtitle">Data tambahan usaha dan persetujuan</p>
+        </div>
+
+        <div class="system-info-grid">
+
+            <div class="system-info-cart">
+                <div class="info-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Total Bisnis</div>
+                    <div class="info-value">{{ total_businesses|default:0 }}</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator active"></span>
+                    <span>Terdaftar</span>
+                </div>
+            </div>
+
+            <div class="system-info-cart">
+                <div class="info-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Disetujui</div>
+                    <div class="info-value">{{ approved_businesses|default:0 }}</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator active"></span>
+                    <span>Aktif</span>
+                </div>
+            </div>
+
+            <div class="system-info-cart">
+                <div class="info-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Menunggu</div>
+                    <div class="info-value">{{ pending_businesses|default:0 }}</div>
+                </div>
+                <div class="info-status">
+                    <span class="status-indicator pending"></span>
+                    <span>Pending</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="activities-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-history"></i>Aktivitas & Statistik
+            </h2>
+            <p class="cart-subtitle">Aktivitas terbaru dan statistik bulanan</p>
+        </div>
+
+        <div class="activities-grid">
+
+            <div class="activity-cart">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-clock"></i>UMKM Terbaru
+                    </h3>
+                    <p class="activity-subtitle">5 usaha terdaftar terakhir</p>
+                </div>
+                <div class="activity-body">
+                    {% for ukm in recent_ukm %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">{{ ukm.nama_usaha }}</div>
+                            <div class="activity-time">{{ ukm.pemilik }} - {{ ukm.jenis_usaha }}</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-success">{{ ukm.skala_usaha }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">
+                        <i class="fas fa-info-circle"></i>
+                        <p>Belum ada data UMKM terbaru</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="activity-cart">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-chart-pie"></i>Statistik Bulan Ini
+                    </h3>
+                    <p class="activity-subtitle">Data pendaftaran dan persetujuan</p>
+                </div>
+                <div class="activity-body">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Pendaftaran Baru</div>
+                            <div class="activity-time">Total bulan ini</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-info">{{ monthly_registrations|default:0 }}</span>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Disetujui</div>
+                            <div class="activity-time">Persetujuan bulan ini</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-success">{{ monthly_approvals|default:0 }}</span>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Minggu Ini</div>
+                            <div class="activity-time">Pendaftaran minggu ini</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-warning">{{ recent_registrations|default:0 }}</span>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Kategori</div>
+                            <div class="activity-time">Total kategori usaha</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-secondary">{{ total_categories|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-bolt"></i>Akses Cepat
+            </h2>
+            <p class="cart-subtitle">Kelola berbagai jenis usaha</p>
+        </div>
+
+        <div class="info-grid">
+
+            <a href="{% url 'admin_panel:umkm_list' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-primary">
+                    <div class="info-icon">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Kelola UMKM</div>
+                        <div class="info-description">Usaha mikro, kecil, dan menengah</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'admin_panel:layanan_jasa_list' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-success">
+                    <div class="info-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Kelola Layanan Jasa</div>
+                        <div class="info-description">Penyedia layanan dan jasa</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'admin_panel:koperasi_list' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-warning">
+                    <div class="info-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Kelola Koperasi</div>
+                        <div class="info-description">Koperasi dan organisasi</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'admin_panel:bumg_list' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-danger">
+                    <div class="info-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Kelola BUMG</div>
+                        <div class="info-description">Badan Usaha Milik Gampong</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'admin_panel:business_categories_list' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-primary">
+                    <div class="info-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Kategori Usaha</div>
+                        <div class="info-description">Kelola kategori dan klasifikasi</div>
+                    </div>
+                </div>
+            </a>
+
+            <div class="info-cart info-cart-success" style="cursor: not-allowed; opacity: 0.6;">
+                <div class="info-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Laporan & Analisis</div>
+                    <div class="info-description">Segera hadir</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>    function updateDateTime() {
+        const now = new Date();
+
+        const timeString = now.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        document.getElementById('currentTime').textContent = timeString;
+
+        const dateString = now.toLocaleDateString('id-ID', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        document.getElementById('currentDate').textContent = dateString;
+    }
+
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+</script>
+{% endblock extra_js %}

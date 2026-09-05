@@ -1,0 +1,597 @@
+{% extends 'public/base.html' %}
+{% load static %}
+{% load currency_filters %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative h-64 sm:h-80 md:h-96 lg:h-[500px] overflow-hidden">
+    {% if location.hero_image %}
+    <img src="{{ location.hero_image.url }}" alt="{{ location.title }}" class="w-full h-full object-cover">
+    {% elif location.main_image %}
+    <img src="{{ location.main_image.url }}" alt="{{ location.title }}" class="w-full h-full object-cover">
+    {% else %}
+    <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+        <i class="fas fa-image text-4xl sm:text-6xl text-white opacity-50"></i>
+    </div>
+    {% endif %}
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+    <div class="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8 text-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                    {{ location.location_type_display }}
+                </span>
+                {% if location.featured %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-500 text-white">
+                    Unggulan
+                </span>
+                {% endif %}
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight">
+                {{ location.title }}
+            </h1>
+            <p class="text-sm sm:text-base lg:text-lg opacity-90 max-w-3xl">
+                {{ location.short_description|safe }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Description -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Deskripsi</h2>
+                <div class="prose max-w-none prose-sm sm:prose-base">
+                    {{ location.full_description|safe }}
+                </div>
+            </div>
+
+            <!-- Gallery -->
+            {% if galleries %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Galeri</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {% for item in galleries %}
+                    {% if item.image %}
+                    <div class="aspect-square rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200" onclick="openGallery({{ forloop.counter0 }})">
+                        <img src="{{ item.image.url }}" alt="{{ item.title }}" class="w-full h-full object-cover">
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Review Form Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-comment-dots text-blue-500 mr-2"></i> Tulis Review Anda
+                </h2>
+                <p class="text-gray-600 mb-6 text-sm sm:text-base">
+                    Bagikan pengalaman Anda mengunjungi {{ location.title }}
+                </p>
+                    <form method="post" action="{% url 'tourism:add_review' slug=location.slug %}"
+                        enctype="multipart/form-data" id="reviewForm" class="space-y-4 sm:space-y-6">
+                        {% csrf_token %}
+
+                        <!-- Nama Pengunjung -->
+                        <div class="space-y-2">
+                            <label for="{{ review_form.visitor_name.id_for_label }}"
+                                class="block text-sm font-semibold text-gray-700">
+                                <i class="fas fa-user text-primary-600 mr-1"></i> Nama Anda <span
+                                    class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                {{ review_form.visitor_name }}
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>
+                            </div>
+                            {% if review_form.visitor_name.errors %}
+                            <p class="text-sm text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>{{ review_form.visitor_name.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Rating -->
+                        <div class="space-y-2">
+                            <label for="{{ review_form.rating.id_for_label }}"
+                                class="block text-sm font-semibold text-gray-700">
+                                <i class="fas fa-star text-primary-600 mr-1"></i> Rating <span
+                                    class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                {{ review_form.rating }}
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-star text-gray-400"></i>
+                                </div>
+                            </div>
+                            {% if review_form.rating.errors %}
+                            <p class="text-sm text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>{{ review_form.rating.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Judul Review -->
+                        <div class="space-y-2">
+                            <label for="{{ review_form.title.id_for_label }}"
+                                class="block text-sm font-semibold text-gray-700">
+                                <i class="fas fa-heading text-primary-600 mr-1"></i> Judul Review <span
+                                    class="text-gray-500 text-xs">(opsional)</span>
+                            </label>
+                            <div class="relative">
+                                {{ review_form.title }}
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-heading text-gray-400"></i>
+                                </div>
+                            </div>
+                            {% if review_form.title.errors %}
+                            <p class="text-sm text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>{{ review_form.title.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Komentar -->
+                        <div class="space-y-2">
+                            <label for="{{ review_form.comment.id_for_label }}"
+                                class="block text-sm font-semibold text-gray-700">
+                                <i class="fas fa-comment text-primary-600 mr-1"></i> Komentar <span
+                                    class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                {{ review_form.comment }}
+                            </div>
+                            {% if review_form.comment.errors %}
+                            <p class="text-sm text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>{{ review_form.comment.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Upload Gambar -->
+                        <div class="space-y-2">
+                            <label for="{{ review_form.image.id_for_label }}"
+                                class="block text-sm font-semibold text-gray-700">
+                                <i class="fas fa-image text-primary-600 mr-1"></i> Upload Gambar <span
+                                    class="text-gray-500 text-xs">(opsional)</span>
+                            </label>
+                            <div class="relative">
+                                <div class="flex items-center justify-center w-full">
+                                    <label for="{{ review_form.image.id_for_label }}"
+                                        class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                            <p class="mb-2 text-sm text-gray-500">
+                                                <span class="font-semibold">Klik untuk upload</span> atau drag & drop
+                                            </p>
+                                            <p class="text-xs text-gray-500">JPG, PNG, WebP (MAX. 5MB)</p>
+                                        </div>
+                                        {{ review_form.image }}
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="imagePreview" class="mt-3 hidden">
+                                <div class="relative inline-block">
+                                    <img id="previewImg" src="" alt="Preview"
+                                        class="rounded-lg max-w-full max-h-48 object-cover border-2 border-gray-300">
+                                    <button type="button" onclick="removeImagePreview()"
+                                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% if review_form.image.errors %}
+                            <p class="text-sm text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>{{ review_form.image.errors.0 }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                            <button type="reset"
+                                class="w-full sm:w-auto px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium flex items-center justify-center">
+                                <i class="fas fa-times mr-2"></i> Reset Form
+                            </button>
+                            <button type="submit"
+                                class="w-full sm:w-auto px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold transition-all duration-200 flex items-center justify-center text-lg shadow-lg hover:shadow-xl transform hover:scale-105">
+                                <i class="fas fa-paper-plane mr-2"></i> Kirim Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            <!-- Reviews List Section -->
+            {% if reviews %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-comments text-blue-500 mr-2"></i> Review Pengunjung <span
+                        class="text-sm font-normal text-gray-500">({{ reviews.paginator.count }})</span>
+                </h2>
+                    <div class="space-y-4 sm:space-y-6">
+                        {% for review in reviews %}
+                        <div class="review-card bg-gray-50 rounded-lg p-4 sm:p-6 border border-gray-200">
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
+                                <div class="flex items-center space-x-2">
+                                    <div class="rating-stars flex">
+                                        {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star text-sm sm:text-base text-yellow-400"></i>
+                                        {% else %}
+                                        <i class="far fa-star text-sm sm:text-base text-gray-300"></i>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <span class="text-sm sm:text-base font-semibold text-gray-900">
+                                        {% if review.user %}{{ review.user.username }}{% else %}Anonim{% endif %}
+                                    </span>
+                                </div>
+                                <span class="text-xs sm:text-sm text-gray-500">
+                                    {{ review.created_at|date:"d M Y" }}
+                                </span>
+                            </div>
+
+                            {% if review.title %}
+                            <h3 class="font-semibold text-gray-900 mb-2 text-sm sm:text-base">{{ review.title }}</h3>
+                            {% endif %}
+
+                            <div class="prose max-w-none text-gray-600 mb-3 text-sm sm:text-base">
+                                {{ review.comment|safe }}
+                            </div>
+
+                            {% if review.image %}
+                            <div class="mt-3">
+                                <img src="{{ review.image.url }}" alt="Review image"
+                                    class="rounded-lg max-w-full sm:max-w-sm max-h-64 object-cover border border-gray-200 shadow-sm">
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination for Reviews -->
+                    {% if reviews.has_other_pages %}
+                    <div class="mt-6 flex justify-center">
+                        <nav class="flex items-center space-x-1 sm:space-x-2">
+                            {% if reviews.has_previous %}
+                            <a href="?page_reviews=1"
+                                class="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                            <a href="?page_reviews={{ reviews.previous_page_number }}"
+                                class="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                            {% endif %}
+
+                            {% for num in reviews.paginator.page_range %}
+                            {% if reviews.number == num %}
+                            <span
+                                class="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white bg-orange-600 border border-orange-600">{{ num }}</span>
+                            {% elif num > reviews.number|add:'-3' and num < reviews.number|add:'3' %}
+                            <a href="?page_reviews={{ num }}"
+                                class="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">{{ num }}</a>
+                            {% endif %}
+                            {% endfor %}
+
+                            {% if reviews.has_next %}
+                            <a href="?page_reviews={{ reviews.next_page_number }}"
+                                class="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 hover:bg-gray-50">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?page_reviews={{ reviews.paginator.num_pages }}"
+                                class="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-lg p-6 text-center">
+                    <i class="fas fa-comments text-4xl text-gray-400 mb-3"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Belum Ada Review</h3>
+                    <p class="text-gray-600">Jadilah yang pertama memberikan review untuk lokasi ini!</p>
+                </div>
+                {% endif %}
+            </div>
+
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Location Info -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-blue-500 mr-2"></i> Informasi Lokasi
+                </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-map-marker-alt text-primary-600 mt-1 text-sm sm:text-base"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-gray-900 text-sm sm:text-base">Alamat</p>
+                                <p class="text-gray-600 text-sm sm:text-base break-words">{{ location.address }}</p>
+                            </div>
+                        </div>
+                        {% if location.opening_hours %}
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-clock text-primary-600 mt-1 text-sm sm:text-base"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-gray-900 text-sm sm:text-base">Jam Buka</p>
+                                <p class="text-gray-600 text-sm sm:text-base">{{ location.opening_hours }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if location.entry_fee %}
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-ticket-alt text-primary-600 mt-1 text-sm sm:text-base"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-gray-900 text-sm sm:text-base">Biaya Masuk</p>
+                                <p class="text-gray-600 text-sm sm:text-base">{{ location.entry_fee|currency_idr }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if location.contact_phone %}
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-phone text-primary-600 mt-1 text-sm sm:text-base"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-gray-900 text-sm sm:text-base">Telepon</p>
+                                <a href="tel:{{ location.contact_phone }}"
+                                    class="text-primary-600 hover:underline text-sm sm:text-base break-all">
+                                    {{ location.contact_phone }}
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if location.website %}
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-globe text-primary-600 mt-1 text-sm sm:text-base"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-gray-900 text-sm sm:text-base">Website</p>
+                                <a href="{{ location.website }}" target="_blank"
+                                    class="text-primary-600 hover:underline text-sm sm:text-base break-all">
+                                    Kunjungi Website
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            <!-- Rating -->
+            {% if location.average_rating > 0 %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-star text-blue-500 mr-2"></i> Rating
+                </h3>
+                    <div class="text-center mb-4">
+                        <div class="text-3xl sm:text-4xl font-bold text-primary-600 mb-2">
+                            {{ location.average_rating|floatformat:1 }}
+                        </div>
+                        <div class="rating-stars text-xl sm:text-2xl mb-2 flex justify-center">
+                            {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= location.average_rating %}
+                            <i class="fas fa-star text-yellow-400"></i>
+                            {% else %}
+                            <i class="far fa-star text-gray-300"></i>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        <p class="text-gray-600 text-sm sm:text-base">
+                            Berdasarkan {{ location.reviews.count }} review
+                        </p>
+                    </div>
+
+                    {% if rating_breakdown %}
+                    <div class="rating-breakdown bg-gray-50 rounded-lg p-3 sm:p-4">
+                        {% for item in rating_breakdown %}
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs sm:text-sm text-gray-600">{{ item.stars }} bintang</span>
+                            <div class="flex-1 mx-2 sm:mx-3">
+                                <div class="rating-bar bg-gray-200 rounded-full h-2">
+                                    <div class="rating-fill bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full h-2 transition-all duration-300"
+                                        style="width: {{ item.percentage }}%"></div>
+                                </div>
+                            </div>
+                            <span class="text-xs sm:text-sm font-semibold text-gray-900">{{ item.count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            <!-- Actions -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-tools text-blue-500 mr-2"></i> Aksi
+                </h3>
+                <div class="space-y-3">
+                    <a href="#reviewForm"
+                        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-star mr-2"></i>Beri Review
+                    </a>
+                    {% if location.contact_phone %}
+                    <a href="tel:{{ location.contact_phone }}"
+                        class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-phone mr-2"></i>Hubungi
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'tourism:location_list' %}"
+                        class="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-arrow-left mr-2"></i>Kembali ke Daftar
+                    </a>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Gallery functionality
+    function openGallery(index) {
+        // Simple gallery implementation
+        const images = document.querySelectorAll('.gallery-item img');
+        if (images[index]) {
+            // You can implement a proper lightbox here
+            window.open(images[index].src, '_blank');
+        }
+    }
+
+    // Image preview functionality
+    function removeImagePreview() {
+        const preview = document.getElementById('imagePreview');
+        const img = document.getElementById('previewImg');
+        const imageInput = document.querySelector('#id_image, [name="image"]');
+        if (preview) preview.classList.add('hidden');
+        if (img) img.src = '';
+        if (imageInput) imageInput.value = '';
+    }
+
+    // Wait for jQuery to be ready
+    function initializePage() {
+        console.log('Location detail page loaded');
+
+        // Initialize page functionality
+
+        // Summernote will be handled by Django Summernote automatically
+
+        // Image preview functionality
+        const imageInput = document.querySelector('#id_image, [name="image"]');
+        if (imageInput) {
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Check file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        // Use modal/custom alert instead of built-in alert
+                        // alert('⚠️ Ukuran file terlalu besar! Maksimal 5MB');
+                        console.error('File size too large');
+                        e.target.value = '';
+                        removeImagePreview();
+                        return;
+                    }
+
+                    // Check file type
+                    if (!file.type.match('image.*')) {
+                        // Use modal/custom alert instead of built-in alert
+                        // alert('⚠️ File harus berupa gambar!');
+                        console.error('File must be an image');
+                        e.target.value = '';
+                        removeImagePreview();
+                        return;
+                    }
+
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.getElementById('imagePreview');
+                        const img = document.getElementById('previewImg');
+                        if (preview && img) {
+                            img.src = e.target.result;
+                            preview.classList.remove('hidden');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Form validation
+        const reviewForm = document.getElementById('reviewForm');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', function(e) {
+                const visitorName = document.querySelector('[name="visitor_name"]');
+                const rating = document.querySelector('[name="rating"]');
+                // Get comment content safely
+                let comment = '';
+                const commentField = document.querySelector('#id_comment, [name="comment"]');
+                if (commentField) {
+                    comment = commentField.value || '';
+                }
+
+                // Simple check for required fields (Name, Rating, Comment)
+                let isValid = true;
+                let errorMessage = 'Mohon lengkapi semua field yang wajib diisi:';
+
+                if (!visitorName || !visitorName.value.trim()) {
+                    isValid = false;
+                    errorMessage += '\n- Nama Pengunjung';
+                    visitorName.classList.add('border-red-500');
+                } else {
+                    visitorName.classList.remove('border-red-500');
+                }
+
+                if (!rating || !rating.value) {
+                    isValid = false;
+                    errorMessage += '\n- Rating';
+                    rating.classList.add('border-red-500');
+                } else {
+                    rating.classList.remove('border-red-500');
+                }
+
+                // Check comment content
+                if (!comment || comment.trim() === '') {
+                    isValid = false;
+                    errorMessage += '\n- Komentar';
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    // Use console.error instead of alert in an iframe environment
+                    console.error('Form Validation Error:', errorMessage);
+                    alert(errorMessage); // Fallback alert for crucial info
+                    return false;
+                }
+            });
+        }
+
+        // Ensure submit button is always visible (redundant but safe check)
+        const submitButton = document.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.style.display = 'block';
+            submitButton.style.visibility = 'visible';
+            submitButton.style.opacity = '1';
+            submitButton.style.position = 'relative';
+            submitButton.style.zIndex = '10';
+        }
+
+        // Ensure form buttons container is visible
+        const formButtons = document.querySelector('.form-buttons');
+        if (formButtons) {
+            formButtons.style.display = 'flex';
+            formButtons.style.visibility = 'visible';
+            formButtons.style.opacity = '1';
+            formButtons.style.position = 'relative';
+            formButtons.style.zIndex = '10';
+        }
+
+        // Mobile optimizations
+        if (window.innerWidth <= 640) {
+            // Add mobile-friendly classes
+            document.querySelectorAll('button, .btn').forEach(btn => {
+                btn.classList.add('touch-friendly');
+            });
+        }
+    }
+
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePage);
+    } else {
+        initializePage();
+    }
+</script>
+{% endblock %}

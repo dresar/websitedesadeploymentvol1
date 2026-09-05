@@ -1,0 +1,510 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Organisasi{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+<style>
+    /* WAJIB 2 GRID di Mobile untuk Semua Cards */
+    @media (max-width: 768px) {
+        .stats-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.75rem !important;
+        }
+        
+        .info-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.75rem !important;
+        }
+        
+        .stat-cart {
+            min-height: 140px;
+        }
+        
+        .info-cart {
+            min-height: 120px;
+        }
+    }
+    
+    /* Extra Small Mobile - TETAP 2 GRID */
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.5rem !important;
+        }
+        
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.5rem !important;
+        }
+        
+        .stat-cart {
+            padding: 0.75rem !important;
+            min-height: 130px;
+        }
+        
+        .stat-icon {
+            width: 35px !important;
+            height: 35px !important;
+            font-size: 1rem !important;
+        }
+        
+        .stat-number {
+            font-size: 1.3rem !important;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem !important;
+        }
+        
+        .stat-description {
+            font-size: 0.7rem !important;
+            line-height: 1.2;
+        }
+        
+        .info-cart {
+            padding: 0.75rem !important;
+            min-height: 110px;
+        }
+        
+        .info-icon {
+            width: 35px !important;
+            height: 35px !important;
+            font-size: 1rem !important;
+        }
+        
+        .info-label {
+            font-size: 0.85rem !important;
+        }
+        
+        .info-description {
+            font-size: 0.7rem !important;
+        }
+    }
+    
+    /* Extra Extra Small (iPhone SE, etc) */
+    @media (max-width: 400px) {
+        .stats-grid,
+        .info-grid {
+            gap: 0.375rem !important;
+        }
+        
+        .stat-cart {
+            padding: 0.625rem !important;
+            min-height: 120px;
+        }
+        
+        .stat-number {
+            font-size: 1.2rem !important;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem !important;
+        }
+        
+        .stat-description {
+            font-size: 0.65rem !important;
+        }
+        
+        .info-cart {
+            padding: 0.625rem !important;
+            min-height: 100px;
+        }
+        
+        .info-label {
+            font-size: 0.8rem !important;
+        }
+        
+        .info-description {
+            font-size: 0.65rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-sitemap"></i>
+                    Dashboard Organisasi
+                </h1>
+                <p class="dashboard-subtitle">Kelola semua organisasi desa dengan mudah</p>
+            </div>
+            <div class="header-meta">
+                <div class="time-info">
+                    <i class="fas fa-clock"></i>
+                    <span id="currentTime"></span>
+                </div>
+                <div class="date-info">
+                    <i class="fas fa-calendar"></i>
+                    <span id="currentDate"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cart Container -->
+    <div class="stats-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-chart-line"></i>
+                Statistik Organisasi
+            </h2>
+            <p class="cart-subtitle">Data organisasi dan lembaga desa</p>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-cart stat-cart-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="totalOrganizations">{{ stats.total|default:0 }}</div>
+                    <div class="stat-label">Total Organisasi</div>
+                    <p class="stat-description">Semua organisasi terdaftar</p>
+                </div>
+            </div>
+            <div class="stat-cart stat-cart-success">
+                <div class="stat-icon">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="perangkatDesaCount">{{ stats.perangkat_desa|default:0 }}</div>
+                    <div class="stat-label">Perangkat Desa</div>
+                    <p class="stat-description">Anggota perangkat desa</p>
+                </div>
+            </div>
+            <div class="stat-cart stat-cart-info">
+                <div class="stat-icon">
+                    <i class="fas fa-female"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="pkkCount">{{ stats.pkk|default:0 }}</div>
+                    <div class="stat-label">Penggerak PKK</div>
+                    <p class="stat-description">Anggota PKK aktif</p>
+                </div>
+            </div>
+            <div class="stat-cart stat-cart-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-users-gear"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="karangTarunaCount">{{ stats.karang_taruna|default:0 }}</div>
+                    <div class="stat-label">Karang Taruna</div>
+                    <p class="stat-description">Anggota karang taruna</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Cart Container -->
+    <div class="info-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-bolt"></i>
+                Akses Cepat
+            </h2>
+            <p class="cart-subtitle">Menu navigasi cepat ke setiap organisasi</p>
+        </div>
+        <div class="info-grid">
+            <a href="{% url 'admin_panel:organization:admin_perangkat_desa_list' %}" class="info-cart info-cart-primary" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Perangkat Desa</div>
+                    <p class="info-description">Kelola perangkat desa</p>
+                </div>
+            </a>
+            <a href="{% url 'admin_panel:organization:admin_pkk_list' %}" class="info-cart info-cart-success" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-female"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">PKK</div>
+                    <p class="info-description">Penggerak PKK</p>
+                </div>
+            </a>
+            <a href="{% url 'admin_panel:organization:admin_karang_taruna_list' %}" class="info-cart info-cart-warning" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-users-gear"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Karang Taruna</div>
+                    <p class="info-description">Organisasi pemuda</p>
+                </div>
+            </a>
+            <a href="{% url 'admin_panel:organization:admin_lembaga_adat_list' %}" class="info-cart info-cart-danger" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-university"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Lembaga Adat</div>
+                    <p class="info-description">Adat istiadat</p>
+                </div>
+            </a>
+            <a href="{% url 'admin_panel:organization:admin_kepemudaan_list' %}" class="info-cart info-cart-primary" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-users-line"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Kepemudaan</div>
+                    <p class="info-description">Organisasi pemuda</p>
+                </div>
+            </a>
+            <a href="{% url 'admin_panel:organization:organization_hierarchy' %}" class="info-cart info-cart-success" style="text-decoration: none; color: inherit;">
+                <div class="info-icon">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <div class="info-content">
+                    <div class="info-label">Struktur</div>
+                    <p class="info-description">Hierarki organisasi</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Activities Cart Container -->
+    <div class="activities-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-history"></i>
+                Aktivitas & Statistik
+            </h2>
+            <p class="cart-subtitle">Aktivitas terbaru dan ringkasan data</p>
+        </div>
+        <div class="activities-grid">
+            <div class="activity-cart">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-clock"></i>
+                        Aktivitas Terbaru
+                    </h3>
+                    <p class="activity-subtitle">Riwayat aktivitas sistem</p>
+                </div>
+                <div class="activity-body">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Data baru ditambahkan</div>
+                            <div class="activity-time">Anggota Karang Taruna baru telah ditambahkan - 2 jam yang lalu</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-success">Baru</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Data diperbarui</div>
+                            <div class="activity-time">Informasi Perangkat Desa telah diperbarui - 4 jam yang lalu</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-info">Update</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Status berubah</div>
+                            <div class="activity-time">Status anggota PKK telah diubah - 6 jam yang lalu</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-warning">Perubahan</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="activity-cart">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Statistik Cepat
+                    </h3>
+                    <p class="activity-subtitle">Ringkasan data organisasi</p>
+                </div>
+                <div class="activity-body">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Total Anggota Aktif</div>
+                            <div class="activity-time">Semua organisasi</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-secondary" id="totalActiveMembers">{{ stats.total_members|default:0 }}</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Perangkat Desa</div>
+                            <div class="activity-time">Anggota aktif</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-success" id="activePerangkatDesa">{{ stats.perangkat_desa|default:0 }}</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-female"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Penggerak PKK</div>
+                            <div class="activity-time">Anggota aktif</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-info" id="activePKK">{{ stats.pkk|default:0 }}</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-users-gear"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Karang Taruna</div>
+                            <div class="activity-time">Anggota aktif</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-warning" id="activeKarangTaruna">{{ stats.karang_taruna|default:0 }}</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title-text">Lembaga Adat</div>
+                            <div class="activity-time">Lembaga aktif</div>
+                        </div>
+                        <div class="activity-status">
+                            <span class="status-badge status-danger" id="activeLembagaAdat">{{ stats.lembaga_adat|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Organization API -->
+<script src="{% static 'js/organization.js' %}"></script>
+
+<script>
+// Organization API is already initialized in organization.js
+
+// Update current time and date
+function updateDateTime() {
+    const now = new Date();
+    
+    // Format time
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    $('#currentTime').text(`${hours}:${minutes}:${seconds} WIB`);
+    
+    // Format date
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const dayName = days[now.getDay()];
+    const day = now.getDate();
+    const month = months[now.getMonth()];
+    const year = now.getFullYear();
+    $('#currentDate').text(`${dayName}, ${day} ${month} ${year}`);
+}
+
+// Load organization statistics (optional refresh via API)
+async function loadOrganizationStats() {
+    try {
+        console.log('🔄 Refreshing stats from API...');
+        const data = await orgAPI.getStats();
+        console.log('Organization Stats:', data);
+        
+        if (data && !data.error) {
+            // Calculate total organizations
+            const totalOrgs = (data.perangkat_desa || 0) + 
+                            (data.penggerak_pkk || 0) + 
+                            (data.karang_taruna || 0) + 
+                            (data.lembaga_adat || 0) + 
+                            (data.kepemudaan || 0);
+            
+            // Update main stats with fade effect
+            $('#totalOrganizations').fadeOut(200, function() {
+                $(this).text(totalOrgs).fadeIn(200);
+            });
+            $('#perangkatDesaCount').fadeOut(200, function() {
+                $(this).text(data.perangkat_desa || 0).fadeIn(200);
+            });
+            $('#pkkCount').fadeOut(200, function() {
+                $(this).text(data.penggerak_pkk || 0).fadeIn(200);
+            });
+            $('#karangTarunaCount').fadeOut(200, function() {
+                $(this).text(data.karang_taruna || 0).fadeIn(200);
+            });
+            
+            // Update quick stats
+            $('#totalActiveMembers').text(data.total_members || 0);
+            $('#activePerangkatDesa').text(data.perangkat_desa || 0);
+            $('#activePKK').text(data.penggerak_pkk || 0);
+            $('#activeKarangTaruna').text(data.karang_taruna || 0);
+            $('#activeLembagaAdat').text(data.lembaga_adat || 0);
+            
+            console.log('✅ Stats refreshed from API');
+        } else {
+            console.warn('⚠️ API returned no data, keeping server-side values');
+        }
+    } catch (error) {
+        console.warn('⚠️ API refresh failed, keeping server-side values:', error.message);
+        // Keep existing server-side data
+    }
+}
+
+// Refresh stats manually
+function refreshStats() {
+    loadOrganizationStats();
+    alert('Data berhasil diperbarui!');
+}
+
+// Initialize on document ready
+$(document).ready(function() {
+    console.log('🚀 Dashboard Initializing...');
+    console.log('📊 Server-side stats loaded:');
+    console.log('  - Total Organisasi: {{ stats.total }}');
+    console.log('  - Perangkat Desa: {{ stats.perangkat_desa }}');
+    console.log('  - PKK: {{ stats.pkk }}');
+    console.log('  - Karang Taruna: {{ stats.karang_taruna }}');
+    console.log('  - Lembaga Adat: {{ stats.lembaga_adat }}');
+    console.log('  - Kepemudaan: {{ stats.kepemudaan }}');
+    
+    // Update date and time
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    // Data sudah ada dari server-side, refresh API setiap 30 detik saja
+    setInterval(loadOrganizationStats, 30000);
+    
+    console.log('✅ Dashboard Initialized with server-side data!');
+    console.log('💡 Data will auto-refresh from API every 30 seconds');
+});
+</script>
+{% endblock %}

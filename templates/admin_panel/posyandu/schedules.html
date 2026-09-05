@@ -1,0 +1,559 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Jadwal Kegiatan{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% csrf_token %}
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-calendar-check text-primary mr-2"></i>
+                        Jadwal Kegiatan
+                    </h2>
+                    <p class="text-muted mb-0 d-none d-md-block">Kelola jadwal kegiatan posyandu</p>
+                </div>
+                <div>
+                    <a href="{% url 'admin_panel:posyandu:schedule_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus mr-1"></i>
+                        <span class="d-none d-sm-inline">Tambah</span>
+                    </a>
+                </div>
+            </div>
+            <a href="{% url 'admin_panel:posyandu:posyandu_admin' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-arrow-left mr-1"></i>
+                Kembali
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card">
+                <div class="stats-number" id="totalSchedules">0</div>
+                <div class="stats-label">Total</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="stats-number" id="upcomingSchedules">0</div>
+                <div class="stats-label">Mendatang</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="stats-number" id="ongoingSchedules">0</div>
+                <div class="stats-label">Berlangsung</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="stats-number" id="completedSchedules">0</div>
+                <div class="stats-label">Selesai</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-section">
+        <div class="row">
+            <div class="col-12 col-md-4 mb-2">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cari kegiatan...">
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+                <select class="form-control" id="statusFilter">
+                    <option value="">Semua Status</option>
+                    <option value="upcoming">Mendatang</option>
+                    <option value="ongoing">Berlangsung</option>
+                    <option value="completed">Selesai</option>
+                    <option value="cancelled">Dibatalkan</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3 mb-2">
+                <select class="form-control" id="locationFilter">
+                    <option value="">Semua Lokasi</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-2 mb-2">
+                <button class="btn btn-outline-secondary btn-block w-100" id="clearFilters">
+                    <i class="fas fa-times mr-1"></i>
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <div class="activity-type-filter">
+            <button class="btn btn-outline-primary active" data-type="all">Semua</button>
+            <button class="btn btn-outline-primary" data-type="posyandu">Posyandu</button>
+            <button class="btn btn-outline-primary" data-type="imunisasi">Imunisasi</button>
+            <button class="btn btn-outline-primary" data-type="pemeriksaan">Pemeriksaan</button>
+            <button class="btn btn-outline-primary" data-type="konseling">Konseling</button>
+            <button class="btn btn-outline-primary" data-type="pelatihan">Pelatihan</button>
+        </div>
+    </div>
+
+    <div class="calendar-view">
+        <div class="calendar-header">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar mr-2"></i>
+                Kalender Jadwal
+            </h5>
+            <div class="calendar-nav">
+                <button class="btn btn-outline-secondary btn-sm" id="prevMonth">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="mx-3" id="currentMonth">Januari 2024</span>
+                <button class="btn btn-outline-secondary btn-sm" id="nextMonth">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+
+        </div>
+    </div>
+
+    <div class="row" id="schedulesList">
+
+    </div>
+
+    <div class="pagination-wrapper">
+        <nav aria-label="Schedules pagination">
+            <ul class="pagination" id="pagination">
+
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Delete -->
+<div class="modal fade" id="deleteScheduleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Konfirmasi Hapus
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Apakah Anda yakin ingin menghapus jadwal ini?</p>
+                <p class="text-muted small mb-0">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash mr-1"></i> Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script></script>
+<script>$(document).ready(function() {
+    let currentPage = 1;
+    let currentFilters = {
+        search: '',
+        status: '',
+        location: '',
+        type: 'all'
+    };
+    let currentDate = new Date();
+    let allSchedules = [];
+
+    loadSchedules();
+    loadLocationOptions();
+    loadAllSchedulesForCalendar();
+    generateCalendar();
+
+    $('#searchInput').on('input', function() {
+        currentFilters.search = $(this).val();
+        currentPage = 1;
+        loadSchedules();
+    });
+
+    $('#statusFilter').on('change', function() {
+        currentFilters.status = $(this).val();
+        currentPage = 1;
+        loadSchedules();
+    });
+
+    $('#locationFilter').on('change', function() {
+        currentFilters.location = $(this).val();
+        currentPage = 1;
+        loadSchedules();
+    });
+
+    $('.activity-type-filter .btn').on('click', function() {
+        $('.activity-type-filter .btn').removeClass('active');
+        $(this).addClass('active');
+        currentFilters.type = $(this).data('type');
+        currentPage = 1;
+        loadSchedules();
+    });
+
+    $('#clearFilters').on('click', function() {
+        $('#searchInput').val('');
+        $('#statusFilter').val('');
+        $('#locationFilter').val('');
+        $('.activity-type-filter .btn').removeClass('active');
+        $('.activity-type-filter .btn[data-type="all"]').addClass('active');
+
+        currentFilters = {
+            search: '',
+            status: '',
+            location: '',
+            type: 'all'
+        };
+        currentPage = 1;
+        loadSchedules();
+    });
+
+    $('#prevMonth').on('click', function() {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        loadAllSchedulesForCalendar();
+    });
+
+    $('#nextMonth').on('click', function() {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        loadAllSchedulesForCalendar();
+    });
+
+    function loadSchedules() {
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_schedule_list" %}',
+            method: 'GET',
+            data: {
+                page: currentPage,
+                search: currentFilters.search,
+                status: currentFilters.status,
+                location: currentFilters.location,
+                type: currentFilters.type
+            },
+            success: function(response) {
+                // Check if response exists and has the expected structure (API uses 'results' not 'data')
+                if (response) {
+                    displaySchedules(response.results);
+                    updatePagination(response.pagination);
+                    updateStatistics(response.statistics);
+                } else {
+                    console.warn('Schedule API response is invalid:', response);
+                    displaySchedules([]);
+                    updateStatistics({});
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading schedules:', error);
+                showAlert('Error loading data', 'error');
+            }
+        });
+    }
+
+    function displaySchedules(schedules) {
+        const container = $('#schedulesList');
+
+        // Check if schedules is valid and is an array
+        if (!schedules || !Array.isArray(schedules) || schedules.length === 0) {
+            container.html(`
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-check"></i>
+                        <h4>Tidak ada jadwal</h4>
+                        <p>Belum ada jadwal kegiatan yang tersedia.</p>
+                    </div>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+        schedules.forEach(function(schedule) {
+            const statusLabels = {
+                'upcoming': 'Mendatang',
+                'ongoing': 'Sedang Berlangsung',
+                'completed': 'Selesai',
+                'cancelled': 'Dibatalkan'
+            };
+
+            const statusClasses = {
+                'upcoming': 'upcoming',
+                'ongoing': 'ongoing',
+                'completed': 'completed',
+                'cancelled': 'cancelled'
+            };
+
+            const typeLabels = {
+                'posyandu': 'Posyandu',
+                'imunisasi': 'Imunisasi',
+                'pemeriksaan': 'Pemeriksaan',
+                'konseling': 'Konseling',
+                'pelatihan': 'Pelatihan',
+                'lainnya': 'Lainnya'
+            };
+
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="schedule-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="mb-1">${schedule.title}</h6>
+                                <small class="text-muted">${schedule.schedule_date}</small>
+                            </div>
+                            <span class="schedule-status ${statusClasses[schedule.status]}">
+                                ${statusLabels[schedule.status]}
+                            </span>
+                        </div>
+
+                        <div class="mb-2">
+                            <i class="fas fa-tag text-muted mr-1"></i>
+                            <span class="badge badge-info">${typeLabels[schedule.activity_type] || schedule.activity_type || 'Tidak Diketahui'}</span>
+                            <i class="fas fa-clock text-muted ml-2 mr-1"></i>
+                            <small>${schedule.start_time}</small>
+                        </div>
+
+                        <div class="mb-2">
+                            <i class="fas fa-map-marker-alt text-muted mr-1"></i>
+                            <small>${schedule.location_name}</small>
+                        </div>
+
+                        <div class="mb-2">
+                            <i class="fas fa-users text-muted mr-1"></i>
+                            <small>${schedule.participants || 0}/${schedule.max_participants || '-'} peserta</small>
+                        </div>
+
+                        <div class="action-buttons mt-3">
+                            <a href="#" class="btn btn-sm btn-outline-primary view-schedule" data-id="${schedule.id || 0}">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-warning edit-schedule" data-id="${schedule.id || 0}">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-danger delete-schedule" data-id="${schedule.id || 0}">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.html(html);
+    }
+
+    function loadLocationOptions() {
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_locations" %}',
+            method: 'GET',
+            success: function(response) {
+                let options = '<option value="">Pilih Lokasi</option>';
+                
+                // Check if response and results exist (API uses 'results' not 'data')
+                if (response && response.results && Array.isArray(response.results)) {
+                    response.results.forEach(function(location) {
+                        options += `<option value="${location.id}">${location.name}</option>`;
+                    });
+                } else {
+                    console.warn('Location API response is invalid:', response);
+                }
+                
+                $('#locationSelect, #editLocationSelect, #locationFilter').html(options);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading location options:', error);
+                // Keep default options on error
+                $('#locationSelect, #editLocationSelect, #locationFilter').html('<option value="">Pilih Lokasi</option>');
+            }
+        });
+    }
+
+    function loadAllSchedulesForCalendar() {
+        $.ajax({
+            url: '{% url "admin_panel:posyandu:api_schedule_list" %}',
+            method: 'GET',
+            data: {
+                page: 1,
+                per_page: 1000
+            },
+            success: function(response) {
+                // Check if response and results exist (API uses 'results' not 'data')
+                if (response && response.results && Array.isArray(response.results)) {
+                    allSchedules = response.results;
+                } else {
+                    console.warn('Calendar API response is invalid:', response);
+                    allSchedules = [];
+                }
+                generateCalendar();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading calendar schedules:', error);
+                allSchedules = [];
+                generateCalendar();
+            }
+        });
+    }
+
+    function generateCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        $('#currentMonth').text(`${monthNames[month]} ${year}`);
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+        const scheduleDates = {};
+        allSchedules.forEach(schedule => {
+            if (schedule.schedule_date) {
+                const dateKey = new Date(schedule.schedule_date).toDateString();
+                if (!scheduleDates[dateKey]) {
+                    scheduleDates[dateKey] = [];
+                }
+                scheduleDates[dateKey].push(schedule);
+            }
+        });
+
+        let html = '';
+        const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+        dayNames.forEach(day => {
+            html += `<div class="calendar-day-header">${day}</div>`;
+        });
+
+        for (let i = 0; i < 42; i++) {
+            const currentDay = new Date(startDate);
+            currentDay.setDate(startDate.getDate() + i);
+
+            const isCurrentMonth = currentDay.getMonth() === month;
+            const isToday = currentDay.toDateString() === new Date().toDateString();
+            const dateKey = currentDay.toDateString();
+            const hasSchedule = scheduleDates[dateKey] && scheduleDates[dateKey].length > 0;
+            const scheduleCount = hasSchedule ? scheduleDates[dateKey].length : 0;
+
+            let dayClass = 'calendar-day';
+            if (!isCurrentMonth) dayClass += ' other-month';
+            if (isToday) dayClass += ' today';
+            if (hasSchedule) dayClass += ' has-schedule';
+
+            html += `
+                <div class="${dayClass}" data-date="${currentDay.toISOString().split('T')[0]}">
+                    <div class="day-number">${currentDay.getDate()}</div>
+                    ${hasSchedule ? `<div class="schedule-count">${scheduleCount} kegiatan</div>` : ''}
+                </div>
+            `;
+        }
+
+        $('#calendarGrid').html(html);
+    }
+
+    let currentScheduleId = null;
+
+    $(document).on('click', '.view-schedule', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        window.location.href = `{% url 'admin_panel:posyandu:schedule_detail' 0 %}`.replace('0', id);
+    });
+
+    $(document).on('click', '.edit-schedule', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        window.location.href = `{% url 'admin_panel:posyandu:schedule_update' 0 %}`.replace('0', id);
+    });
+
+    $(document).on('click', '.delete-schedule', function(e) {
+        e.preventDefault();
+        currentScheduleId = $(this).data('id');
+        $('#deleteScheduleModal').modal('show');
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentScheduleId) return;
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        $.ajax({
+            url: `{% url "admin_panel:posyandu:api_schedule_delete" 0 %}`.replace('0', currentScheduleId),
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function(response) {
+                $('#deleteScheduleModal').modal('hide');
+                showSuccess('Jadwal berhasil dihapus');
+                loadSchedules();
+                loadAllSchedulesForCalendar();
+                currentScheduleId = null;
+            },
+            error: function(xhr, status, error) {
+                showError('Gagal menghapus jadwal');
+            }
+        });
+    });
+
+    function updateStatistics(stats) {
+        if (!stats) {
+            console.warn('Statistics data is undefined');
+            return;
+        }
+        $('#totalSchedules').text(stats.total || 0);
+        $('#upcomingSchedules').text(stats.upcoming || 0);
+        $('#ongoingSchedules').text(stats.ongoing || 0);
+        $('#completedSchedules').text(stats.completed || 0);
+    }
+
+    function updatePagination(pagination) {
+        // TODO: Implement pagination if needed
+    }
+
+    // Alert functions
+    function showAlert(message, type = 'info') {
+        const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+        
+        // Insert at top of page
+        $('body').prepend(alertHtml);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+
+    function showSuccess(message) {
+        showAlert(message, 'success');
+    }
+
+    function showError(message) {
+        showAlert(message, 'error');
+    }
+
+});
+</script>
+{% endblock %}

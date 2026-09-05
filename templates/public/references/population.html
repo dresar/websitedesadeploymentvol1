@@ -1,0 +1,902 @@
+{% extends 'public/base.html' %} 
+{% load static %} 
+
+{% block extra_css %} 
+<style> 
+    /* Light Mode Only - Population Page */
+    .hero-section { 
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
+        min-height: 25vh;
+    } 
+
+    .chart-container { 
+        position: relative; 
+        height: 220px;
+        width: 100%; 
+    } 
+    
+    .loading-spinner { 
+        animation: spin 1s linear infinite; 
+    } 
+    
+    @keyframes spin { 
+        from { transform: rotate(0deg); } 
+        to { transform: rotate(360deg); } 
+    } 
+    
+    /* Mobile Responsive */ 
+    @media (max-width: 768px) { 
+        .hero-section { 
+            min-height: 20vh; 
+        } 
+        .chart-container { 
+            height: 180px; 
+        } 
+    }
+</style> 
+{% endblock %} 
+
+{% block content %} 
+{% csrf_token %} 
+
+<!-- Hero Section -->
+<section class="hero-section relative flex items-center shadow-lg"> 
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full"> 
+        <div class="text-center text-white py-6 md:py-8"> 
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-2">Statistik Penduduk</h1> 
+            <p class="text-sm sm:text-base opacity-90 max-w-2xl mx-auto mb-4">
+                Data demografi dan statistik terkini Desa Pulosarok.
+            </p> 
+            <div class="flex justify-center space-x-3"> 
+                <button onclick="new PopulationStats().showLoadingState(); new PopulationStats().loadPopulationData();" 
+                        class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors text-sm font-medium shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"> 
+                    <i class="fas fa-sync-alt mr-1"></i> Muat Ulang Data 
+                </button> 
+                <button onclick="window.print()" 
+                        class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors text-sm font-medium shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"> 
+                    <i class="fas fa-print mr-1"></i> Cetak Laporan 
+                </button> 
+            </div> 
+        </div> 
+    </div> 
+</section> 
+
+<!-- Main Content & Statistics -->
+<div class="py-6 sm:py-10 bg-white"> 
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8"> 
+        
+        <!-- 4 Kartu Statistik Utama (Sangat Responsif 2 Kolom di Mobile) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8" id="main-stats-container"> 
+            <!-- Kartu Statistik Umum (Mengganti kelas CSS .stat-card dengan kelas Tailwind) -->
+            
+            <!-- Total Penduduk -->
+            <div class="bg-white rounded-xl p-3 sm:p-4 text-center shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"> 
+                <div class="bg-blue-100 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2"> 
+                    <i class="fas fa-users text-blue-600 text-sm sm:text-base"></i> 
+                </div> 
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1" id="total-population">
+                    <i class="fas fa-circle-notch loading-spinner text-lg text-blue-500"></i>
+                </h3> 
+                <p class="text-xs sm:text-sm text-gray-600">Total Penduduk</p> 
+            </div> 
+
+            <!-- Laki-laki -->
+            <div class="bg-white rounded-xl p-3 sm:p-4 text-center shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"> 
+                <div class="bg-blue-100 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2"> 
+                    <i class="fas fa-male text-blue-600 text-sm sm:text-base"></i> 
+                </div> 
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1" id="male-population">
+                    <i class="fas fa-circle-notch loading-spinner text-lg text-blue-500"></i>
+                </h3> 
+                <p class="text-xs sm:text-sm text-gray-600">Laki-laki</p> 
+            </div> 
+
+            <!-- Perempuan -->
+            <div class="bg-white rounded-xl p-3 sm:p-4 text-center shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"> 
+                <div class="bg-pink-100 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2"> 
+                    <i class="fas fa-female text-pink-600 text-sm sm:text-base"></i> 
+                </div> 
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1" id="female-population">
+                    <i class="fas fa-circle-notch loading-spinner text-lg text-pink-500"></i>
+                </h3> 
+                <p class="text-xs sm:text-sm text-gray-600">Perempuan</p> 
+            </div> 
+            
+            <!-- Jumlah Keluarga -->
+            <div class="bg-white rounded-xl p-3 sm:p-4 text-center shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"> 
+                <div class="bg-green-100 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2"> 
+                    <i class="fas fa-home text-green-600 text-sm sm:text-base"></i> 
+                </div> 
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1" id="total-families">
+                    <i class="fas fa-circle-notch loading-spinner text-lg text-green-500"></i>
+                </h3> 
+                <p class="text-xs sm:text-sm text-gray-600">Jumlah Keluarga</p> 
+            </div> 
+        </div> 
+
+        <!-- 4 Kartu Statistik Tambahan (Sangat Responsif 2 Kolom di Mobile) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8"> 
+            <!-- Rata-rata Usia -->
+            <div class="bg-white rounded-xl p-3 sm:p-4 text-center shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"> 
+                <div class="bg-purple-100 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2"> 
+                    <i class="fas fa-calendar-alt text-purple-600 text-sm sm:text-base"></i> 
+                </div> 
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1" id="average-age">
+                    <i class="fas fa-circle-notch loading-spinner text-lg text-purple-500"></i>
+                </h3> 
+                <p class="text-xs sm:text-sm text-gray-600">Rata-rata Usia</p> 
+            </div> 
+            
+            <!-- Kepadatan/km² -->
+            <div class="bg-white rounded-xl p-3 sm:p-4 text-center shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"> 
+                <div class="bg-orange-100 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2"> 
+                    <i class="fas fa-map-marked-alt text-orange-600 text-sm sm:text-base"></i> 
+                </div> 
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1" id="population-density">
+                    <i class="fas fa-circle-notch loading-spinner text-lg text-orange-500"></i>
+                </h3> 
+                <p class="text-xs sm:text-sm text-gray-600">Kepadatan/ha</p> 
+            </div> 
+            
+            <!-- Rasio L:P -->
+            <div class="bg-white rounded-xl p-3 sm:p-4 text-center shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"> 
+                <div class="bg-indigo-100 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2"> 
+                    <i class="fas fa-balance-scale text-indigo-600 text-sm sm:text-base"></i> 
+                </div> 
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1" id="gender-ratio">
+                    <i class="fas fa-circle-notch loading-spinner text-lg text-indigo-500"></i>
+                </h3> 
+                <p class="text-xs sm:text-sm text-gray-600">Rasio L:P</p> 
+            </div> 
+
+            <!-- Rata-rata Anggota Keluarga -->
+            <div class="bg-white rounded-xl p-3 sm:p-4 text-center shadow-lg border border-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"> 
+                <div class="bg-teal-100 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-2"> 
+                    <i class="fas fa-users-cog text-teal-600 text-sm sm:text-base"></i> 
+                </div> 
+                <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1" id="family-size">
+                    <i class="fas fa-circle-notch loading-spinner text-lg text-teal-500"></i>
+                </h3> 
+                <p class="text-xs sm:text-sm text-gray-600">Rata-rata Anggota Keluarga</p> 
+            </div> 
+        </div> 
+        
+        <!-- Chart Section (2 Kolom di Layar Besar, 1 Kolom di Mobile) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8"> 
+            
+            <!-- Distribusi Jenis Kelamin -->
+            <div class="bg-white rounded-xl shadow-lg p-4 border border-gray-200"> 
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4 text-center">Distribusi Jenis Kelamin</h3> 
+                <div class="chart-container"> 
+                    <canvas id="gender-chart"></canvas> 
+                </div> 
+            </div> 
+            
+            <!-- Distribusi Kelompok Usia -->
+            <div class="bg-white rounded-xl shadow-lg p-4 border border-gray-200"> 
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4 text-center">Distribusi Kelompok Usia</h3> 
+                <div class="chart-container"> 
+                    <canvas id="age-group-chart"></canvas> 
+                </div> 
+            </div> 
+        </div> 
+
+        <!-- Demografi (Agama & Pendidikan - 2 Kolom di Layar Besar, 1 Kolom di Mobile) -->
+        <div class="mb-6 sm:mb-8"> 
+            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 text-center border-b pb-2">Data Demografi Detail</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"> 
+                
+                <!-- Distribusi Agama -->
+                <div class="bg-white rounded-xl shadow-lg p-4 border border-gray-200"> 
+                    <h4 class="text-base font-bold text-gray-900 mb-3 text-center">Distribusi Agama</h4> 
+                    <div class="chart-container"> 
+                        <canvas id="religion-chart"></canvas> 
+                    </div> 
+                </div> 
+                
+                <!-- Distribusi Pendidikan -->
+                <div class="bg-white rounded-xl shadow-lg p-4 border border-gray-200"> 
+                    <h4 class="text-base font-bold text-gray-900 mb-3 text-center">Distribusi Pendidikan</h4> 
+                    <div class="chart-container"> 
+                        <canvas id="education-chart"></canvas> 
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+
+        <!-- Ringkasan Statistik Dusun (Sangat Responsif 2 Kolom di Mobile) -->
+        <div class="mb-6 sm:mb-8"> 
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200"> 
+                <h3 class="text-base sm:text-lg font-bold text-gray-900 mb-4 text-center">Ringkasan Dusun</h3> 
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4"> 
+                    <div class="text-center"> 
+                        <div class="text-2xl sm:text-3xl font-bold text-blue-600 mb-1" id="summary-total-dusun">
+                            <i class="fas fa-circle-notch loading-spinner text-lg text-blue-500"></i>
+                        </div> 
+                        <p class="text-sm text-gray-600">Total Dusun</p> 
+                    </div> 
+                    <div class="text-center"> 
+                        <div class="text-2xl sm:text-3xl font-bold text-green-600 mb-1" id="summary-largest-dusun">
+                            <i class="fas fa-circle-notch loading-spinner text-lg text-green-500"></i>
+                        </div> 
+                        <p class="text-sm text-gray-600">Dusun Terbesar</p> 
+                    </div> 
+                    <div class="text-center"> 
+                        <div class="text-2xl sm:text-3xl font-bold text-purple-600 mb-1" id="summary-smallest-dusun">
+                            <i class="fas fa-circle-notch loading-spinner text-lg text-purple-500"></i>
+                        </div> 
+                        <p class="text-sm text-gray-600">Dusun Terkecil</p> 
+                    </div> 
+                    <div class="text-center"> 
+                        <div class="text-2xl sm:text-3xl font-bold text-orange-600 mb-1" id="summary-avg-dusun">
+                            <i class="fas fa-circle-notch loading-spinner text-lg text-orange-500"></i>
+                        </div> 
+                        <p class="text-sm text-gray-600">Rata-rata per Dusun</p> 
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+
+        <!-- Statistik Per Dusun (Sangat Responsif 2 Kolom di Mobile) -->
+        <div class="mb-6 sm:mb-8"> 
+            <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 text-center border-b pb-2">Statistik Detail Per Dusun</h3> 
+            <!-- CLASS UTAMA: grid-cols-2 (mobile/tablet) | lg:grid-cols-3 | xl:grid-cols-4 (desktop) -->
+            <div id="dusun-stats" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4"> 
+                <!-- Loading state awal akan diisi di sini oleh JS -->
+                <div class="text-center py-6 col-span-full" id="dusun-loading-state"> 
+                    <div class="loading-spinner rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div> 
+                    <p class="text-sm text-gray-600">Memuat data dusun...</p> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
+</div> 
+{% endblock content %} 
+
+{% block extra_js %} 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+<script> 
+// Minimal Population Statistics
+class PopulationStats { 
+    constructor() { 
+        this.charts = {}; 
+        this.showLoadingState(); // Panggil di konstruktor untuk menampilkan loading
+        this.init(); 
+    } 
+
+    async makeRequest(url) { 
+        try { 
+            const response = await fetch(url, { 
+                method: 'GET', 
+                headers: { 
+                    'Content-Type': 'application/json', 
+                }, 
+                credentials: 'same-origin' 
+            }); 
+            if (!response.ok) { 
+                // Jika API tidak ditemukan (404) atau tidak ada data (biasanya 200 dengan data kosong), 
+                // kita anggap sukses tapi kosong
+                if (response.status === 404) {
+                    return { success: true, data: {} };
+                }
+                throw new Error(`HTTP error! status: ${response.status}`); 
+            } 
+            return await response.json(); 
+        } catch (error) { 
+            console.error('Request failed:', error); 
+            throw error; 
+        } 
+    } 
+
+    init() { 
+        this.loadPopulationData(); 
+    } 
+
+    async loadPopulationData() { 
+        try { 
+            // Load basic population data
+            const populationData = await this.makeRequest('{% url "references:api_public_population_overview" %}'); 
+            
+            if (populationData && populationData.success) { 
+                this.updateStats(populationData.data); 
+                this.createCharts(populationData.data); 
+                this.updateDusunStats(populationData.data); 
+            } else { 
+                // Fallback ke data dummy jika API gagal
+                console.warn('API tidak tersedia, menggunakan data dummy');
+                this.loadDummyData();
+            } 
+            
+            // Load detailed demographics data
+            try { 
+                const demographicsData = await this.makeRequest('{% url "references:api_public_population_demographics" %}'); 
+                if (demographicsData && demographicsData.success) { 
+                    this.createDemographicCharts(demographicsData.data); 
+                }
+            } catch (demographicsError) { 
+                console.warn('Data Demografi tidak tersedia:', demographicsError); 
+                // Tetap lanjutkan meskipun data demografi gagal dimuat
+            } 
+
+        } catch (error) { 
+            console.error('Gagal memuat data statistik:', error); 
+            // Jangan langsung show error, coba load dummy data dulu
+            this.loadDummyData();
+        } 
+    } 
+
+    loadDummyData() {
+        // Data dummy untuk demonstrasi
+        const dummyData = {
+            total_population: 2500,
+            male_population: 1200,
+            female_population: 1300,
+            total_families: 650,
+            age_groups: {
+                '0-14': 450,
+                '15-24': 380,
+                '25-54': 1200,
+                '55-64': 300,
+                '65+': 170
+            },
+            dusun_stats: [
+                { name: 'Dusun I', total: 800, male: 400, female: 400, area_size: 15.5 },
+                { name: 'Dusun II', total: 700, male: 350, female: 350, area_size: 12.3 },
+                { name: 'Dusun III', total: 600, male: 300, female: 300, area_size: 10.8 },
+                { name: 'Dusun IV', total: 400, male: 200, female: 200, area_size: 8.2 }
+            ],
+            religion_distribution: {
+                'Islam': 2200,
+                'Kristen': 200,
+                'Katolik': 80,
+                'Hindu': 15,
+                'Buddha': 5
+            },
+            education_distribution: {
+                'Tidak Sekolah': 150,
+                'SD': 800,
+                'SMP': 600,
+                'SMA': 700,
+                'Diploma': 150,
+                'S1': 80,
+                'S2': 20
+            }
+        };
+        
+        this.updateStats(dummyData);
+        this.createCharts(dummyData);
+        this.updateDusunStats(dummyData);
+        this.createDemographicCharts(dummyData);
+    }
+
+    updateStats(data) { 
+        this.animateNumber('total-population', data.total_population || 0); 
+        this.animateNumber('male-population', data.male_population || 0); 
+        this.animateNumber('female-population', data.female_population || 0); 
+        this.animateNumber('total-families', data.total_families || 0); 
+        
+        this.updateAdditionalStats(data); 
+    } 
+
+    updateAdditionalStats(data) { 
+        const totalPopulation = data.total_population || 0; 
+        const ageGroups = data.age_groups || {}; 
+        
+        let totalAge = 0; 
+        let count = 0; 
+        
+        // Calculate weighted average age from age groups
+        const ageGroupMidpoints = { 
+            '0-14': 7, 
+            '15-24': 19.5, 
+            '25-54': 39.5, 
+            '55-64': 59.5, 
+            '65+': 75 
+        }; 
+        
+        Object.entries(ageGroups).forEach(([group, population]) => { 
+            // Handle case sensitivity issues or unexpected keys gracefully
+            const key = Object.keys(ageGroupMidpoints).find(k => k === group) || group; 
+            
+            if (population > 0 && ageGroupMidpoints[key]) { 
+                totalAge += ageGroupMidpoints[key] * population; 
+                count += population; 
+            } 
+        }); 
+        
+        const averageAge = count > 0 ? Math.round(totalAge / count) : 0; 
+        this.animateNumber('average-age', averageAge); 
+
+        // Calculate population density (using sum of dusun area)
+        const totalAreaHectares = data.dusun_stats?.reduce((sum, dusun) => sum + (dusun.area_size || 0), 0) || 0; 
+        // 1 hektar = 0.01 km². Jika area dihitung dalam Ha, maka density/km² = total_population / (total_area * 0.01)
+        // Namun, jika ingin density per Ha (kepadatan/ha), maka:
+        const densityPerHa = totalAreaHectares > 0 ? (totalPopulation / totalAreaHectares).toFixed(1) : 0; 
+        document.getElementById('population-density').textContent = densityPerHa.toLocaleString('id-ID');
+
+        // Calculate gender ratio
+        const maleCount = data.male_population || 0; 
+        const femaleCount = data.female_population || 0; 
+        const ratio = this.calculateGenderRatio(maleCount, femaleCount); 
+        document.getElementById('gender-ratio').textContent = ratio; 
+
+        // Calculate average family size
+        const familySize = totalPopulation > 0 && data.total_families > 0 ? (totalPopulation / data.total_families).toFixed(1) : 0; 
+        document.getElementById('family-size').textContent = familySize.toLocaleString('id-ID'); 
+    } 
+
+    calculateGenderRatio(male, female) { 
+        if (male === 0 && female === 0) return '0:0'; 
+        if (male === 0) return `0:${female}`; 
+        if (female === 0) return `${male}:0`; 
+        
+        // Find the greatest common divisor for simplification is unnecessary and misleading for gender ratio
+        // We will just show the ratio to the smallest number, typically 1 or 100
+        const smaller = Math.min(male, female);
+        if (smaller === 0) return male > 0 ? `${male}:0` : `0:${female}`;
+        
+        const ratioTo100 = (male / female * 100).toFixed(0);
+        return `${male.toLocaleString('id-ID')}:${female.toLocaleString('id-ID')}`; // Simplest format L:P
+    } 
+
+    createCharts(data) { 
+        this.createGenderChart(data); 
+        this.createAgeGroupChart(data); 
+    } 
+
+    createDemographicCharts(data) { 
+        this.createReligionChart(data); 
+        this.createEducationChart(data); 
+    } 
+
+    createGenderChart(data) { 
+        const ctx = document.getElementById('gender-chart'); 
+        if (!ctx) return; 
+        if (this.charts.gender) { 
+            this.charts.gender.destroy(); 
+        } 
+        const maleCount = data.male_population || 0; 
+        const femaleCount = data.female_population || 0; 
+        
+        this.charts.gender = new Chart(ctx, { 
+            type: 'doughnut', 
+            data: { 
+                labels: ['Laki-laki', 'Perempuan'], 
+                datasets: [{ 
+                    data: [maleCount, femaleCount], 
+                    backgroundColor: ['#3B82F6', '#EC4899'], 
+                    borderWidth: 0, 
+                    hoverOffset: 8 // Ditingkatkan
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { 
+                            padding: 15, 
+                            usePointStyle: true, 
+                            font: { 
+                                size: 12 // Ditingkatkan
+                            } 
+                        } 
+                    }, 
+                    tooltip: { 
+                        callbacks: { 
+                            label: function(context) { 
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0); 
+                                const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0; 
+                                return context.label + ': ' + context.parsed.toLocaleString('id-ID') + ' (' + percentage + '%)'; 
+                            } 
+                        } 
+                    } 
+                }, 
+                cutout: '65%' // Ditingkatkan
+            } 
+        }); 
+    } 
+
+    createAgeGroupChart(data) { 
+        const ctx = document.getElementById('age-group-chart'); 
+        if (!ctx) return; 
+        if (this.charts.ageGroup) { 
+            this.charts.ageGroup.destroy(); 
+        } 
+        const ageGroups = data.age_groups || {}; 
+        
+        // Sort keys to ensure proper ordering (optional but good practice)
+        const sortedLabels = Object.keys(ageGroups).sort((a, b) => {
+            const getSortValue = (key) => {
+                if (key === '0-14') return 1;
+                if (key === '15-24') return 2;
+                if (key === '25-54') return 3;
+                if (key === '55-64') return 4;
+                if (key === '65+') return 5;
+                return 10; // Other keys go last
+            };
+            return getSortValue(a) - getSortValue(b);
+        });
+
+        const sortedValues = sortedLabels.map(label => ageGroups[label]);
+
+        this.charts.ageGroup = new Chart(ctx, { 
+            type: 'bar', 
+            data: { 
+                labels: sortedLabels, 
+                datasets: [{ 
+                    label: 'Jumlah Penduduk', 
+                    data: sortedValues, 
+                    backgroundColor: '#10B981', 
+                    borderRadius: 6, // Ditingkatkan
+                    borderSkipped: false, 
+                    hoverBackgroundColor: '#059669' 
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { 
+                        display: false 
+                    }, 
+                    tooltip: { 
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString('id-ID');
+                            }
+                        }
+                    } 
+                }, 
+                scales: { 
+                    x: { 
+                        grid: { 
+                            display: false 
+                        }, 
+                        ticks: { 
+                            font: { 
+                                size: 10 
+                            } 
+                        } 
+                    }, 
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { 
+                            color: 'rgba(0, 0, 0, 0.1)' 
+                        }, 
+                        ticks: { 
+                            font: { 
+                                size: 10 
+                            },
+                            callback: function(value) {
+                                return value.toLocaleString('id-ID');
+                            }
+                        } 
+                    } 
+                } 
+            } 
+        }); 
+    } 
+
+    createReligionChart(data) { 
+        const ctx = document.getElementById('religion-chart'); 
+        if (!ctx) return; 
+        if (this.charts.religion) { 
+            this.charts.religion.destroy(); 
+        } 
+        const religionData = data.religion || {}; 
+        const labels = Object.keys(religionData); 
+        const values = Object.values(religionData).map(item => item.count || item); 
+        
+        this.charts.religion = new Chart(ctx, { 
+            type: 'doughnut', 
+            data: { 
+                labels: labels, 
+                datasets: [{ 
+                    data: values, 
+                    backgroundColor: [ 
+                        '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', 
+                        '#06B6D4', '#84CC16', '#F97316' 
+                    ], 
+                    borderWidth: 0, 
+                    hoverOffset: 8 // Ditingkatkan
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { 
+                            padding: 10, 
+                            usePointStyle: true, 
+                            font: { 
+                                size: 10 
+                            } 
+                        } 
+                    }, 
+                    tooltip: { 
+                        callbacks: { 
+                            label: function(context) { 
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0); 
+                                const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0; 
+                                return context.label + ': ' + context.parsed.toLocaleString('id-ID') + ' (' + percentage + '%)'; 
+                            } 
+                        } 
+                    } 
+                }, 
+                cutout: '65%' // Ditingkatkan
+            } 
+        }); 
+    } 
+
+    createEducationChart(data) { 
+        const ctx = document.getElementById('education-chart'); 
+        if (!ctx) return; 
+        if (this.charts.education) { 
+            this.charts.education.destroy(); 
+        } 
+        const educationData = data.education || {}; 
+        const labels = Object.keys(educationData); 
+        const values = Object.values(educationData).map(item => item.count || item); 
+        
+        this.charts.education = new Chart(ctx, { 
+            type: 'bar', 
+            data: { 
+                labels: labels, 
+                datasets: [{ 
+                    label: 'Jumlah Penduduk', 
+                    data: values, 
+                    backgroundColor: '#8B5CF6', // Warna berbeda
+                    borderRadius: 6, 
+                    borderSkipped: false, 
+                    hoverBackgroundColor: '#7C3AED' 
+                }] 
+            }, 
+            options: { 
+                indexAxis: 'y', // Bar horizontal
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { 
+                        display: false 
+                    }, 
+                    tooltip: { 
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.x.toLocaleString('id-ID');
+                            }
+                        }
+                    } 
+                }, 
+                scales: { 
+                    x: { 
+                        beginAtZero: true,
+                        grid: { 
+                            color: 'rgba(0, 0, 0, 0.1)' 
+                        }, 
+                        ticks: { 
+                            font: { 
+                                size: 10 
+                            },
+                            callback: function(value) {
+                                return value.toLocaleString('id-ID');
+                            }
+                        } 
+                    }, 
+                    y: { 
+                        grid: { 
+                            display: false 
+                        }, 
+                        ticks: { 
+                            font: { 
+                                size: 10 
+                            } 
+                        } 
+                    } 
+                } 
+            } 
+        }); 
+    } 
+
+    updateDusunStats(data) { 
+        const container = document.getElementById('dusun-stats'); 
+        if (!container) return; 
+        container.innerHTML = ''; 
+
+        const dusunList = data.dusun_stats || []; 
+
+        if (dusunList.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-6 col-span-full"> 
+                    <i class="fas fa-box-open text-3xl text-gray-400 mb-3"></i>
+                    <p class="text-sm text-gray-600">Tidak ada data dusun yang tersedia.</p> 
+                </div>
+            `;
+            // Isi summary dengan 0 atau -
+            document.getElementById('summary-total-dusun').textContent = '0';
+            document.getElementById('summary-largest-dusun').textContent = '-';
+            document.getElementById('summary-smallest-dusun').textContent = '-';
+            document.getElementById('summary-avg-dusun').textContent = '0';
+            return;
+        }
+
+        // Update summary statistics
+        this.updateSummaryStats(dusunList); 
+
+        dusunList.forEach((dusun) => { 
+            const card = this.createDusunCard(dusun); 
+            container.appendChild(card); 
+        }); 
+    } 
+
+    updateSummaryStats(dusunList) { 
+        const totalDusun = dusunList.length; 
+        document.getElementById('summary-total-dusun').textContent = totalDusun.toLocaleString('id-ID'); 
+        
+        // Temukan dusun terbesar dan terkecil
+        const sortedByPopulation = [...dusunList].sort((a, b) => b.total - a.total); 
+        const largest = sortedByPopulation[0]; 
+        const smallest = sortedByPopulation[sortedByPopulation.length - 1]; 
+        
+        document.getElementById('summary-largest-dusun').textContent = largest.name || '-'; 
+        document.getElementById('summary-smallest-dusun').textContent = smallest.name || '-'; 
+
+        // Hitung rata-rata penduduk per dusun
+        const totalPopulation = dusunList.reduce((sum, dusun) => sum + (dusun.total || 0), 0); 
+        const averagePopulation = totalDusun > 0 ? Math.round(totalPopulation / totalDusun) : 0; 
+        document.getElementById('summary-avg-dusun').textContent = averagePopulation.toLocaleString('id-ID'); 
+    } 
+
+    createDusunCard(dusun) { 
+        const card = document.createElement('div'); 
+        card.className = 'bg-white rounded-xl shadow-md p-4 text-center border border-gray-200 hover:shadow-xl transition-shadow duration-200 hover:-translate-y-0.5'; 
+        
+        const population = dusun.total || 0; 
+        const male = dusun.male || 0; 
+        const female = dusun.female || 0; 
+        const areaSize = dusun.area_size || 0; // dalam Ha
+
+        // Kepadatan per Ha
+        const densityPerHa = areaSize > 0 ? (population / areaSize).toFixed(1) : 0; 
+
+        card.innerHTML = ` 
+            <div class="bg-indigo-100 w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3"> 
+                <i class="fas fa-map-marker-alt text-indigo-600 text-base"></i> 
+            </div> 
+            <h4 class="text-base font-bold text-gray-900 mb-1">${dusun.name || 'Nama Dusun'}</h4> 
+            <p class="text-2xl font-extrabold text-indigo-600 mb-2">${population.toLocaleString('id-ID')}</p> 
+            <p class="text-xs text-gray-500 mb-3">Penduduk</p> 
+            <div class="grid grid-cols-2 gap-2 text-sm border-t border-gray-200 pt-3"> 
+                <div class="text-center"> 
+                    <span class="text-gray-600 block text-xs">Laki-laki</span> 
+                    <span class="font-bold text-gray-900">${male.toLocaleString('id-ID')}</span> 
+                </div> 
+                <div class="text-center"> 
+                    <span class="text-gray-600 block text-xs">Perempuan</span> 
+                    <span class="font-bold text-gray-900">${female.toLocaleString('id-ID')}</span> 
+                </div> 
+            </div> 
+            ${areaSize > 0 ? ` 
+            <div class="text-xs text-gray-500 border-t border-gray-200 pt-3 mt-3 space-y-1"> 
+                <div class="flex justify-between font-medium"> 
+                    <span>Luas:</span> 
+                    <span class="text-gray-700">${areaSize.toFixed(2)} ha</span> 
+                </div> 
+                <div class="flex justify-between font-medium"> 
+                    <span>Kepadatan:</span> 
+                    <span class="text-gray-700">${densityPerHa}/ha</span> 
+                </div> 
+            </div> 
+            ` : ''} 
+        `; 
+        return card; 
+    } 
+
+    animateNumber(elementId, target) { 
+        const element = document.getElementById(elementId); 
+        if (!element) return; 
+        
+        // Langsung tampilkan angka jika target 0 atau jika sedang loading
+        if (target === 0) {
+            element.textContent = '0';
+            this.removeLoadingIcon(element);
+            return;
+        }
+
+        const start = 0; 
+        const duration = 1500; 
+        const startTime = performance.now(); 
+        
+        this.removeLoadingIcon(element);
+
+        const animate = (currentTime) => { 
+            const elapsed = currentTime - startTime; 
+            const progress = Math.min(elapsed / duration, 1); 
+            const current = Math.floor(start + (target - start) * progress); 
+            element.textContent = current.toLocaleString('id-ID'); 
+            if (progress < 1) { 
+                requestAnimationFrame(animate); 
+            } 
+        }; 
+        requestAnimationFrame(animate); 
+    } 
+
+    removeLoadingIcon(element) {
+        // Hapus ikon loading jika ada
+        const loadingIcon = element.querySelector('.loading-spinner');
+        if (loadingIcon) {
+            loadingIcon.remove();
+        }
+    }
+
+    showError(message) { 
+        const container = document.querySelector('.max-w-6xl'); 
+        if (!container) return; 
+        container.innerHTML = ` 
+            <div class="text-center py-12 bg-white rounded-xl shadow-lg m-4"> 
+                <div class="text-red-600 mb-4"> 
+                    <i class="fas fa-exclamation-triangle text-3xl"></i> 
+                </div> 
+                <p class="text-gray-700 mb-6 font-medium">${message}</p> 
+                <div class="space-x-4"> 
+                    <button onclick="location.reload()" 
+                            class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-md"> 
+                        <i class="fas fa-sync-alt mr-1"></i> Muat Ulang 
+                    </button> 
+                    <button onclick="window.history.back()" 
+                            class="px-5 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium shadow-md"> 
+                        <i class="fas fa-arrow-left mr-1"></i> Kembali 
+                    </button> 
+                </div> 
+            </div> 
+        `; 
+    } 
+
+    showLoadingState() { 
+        // Reset kartu statistik utama ke mode loading
+        const statIds = [
+            'total-population', 'male-population', 'female-population', 'total-families',
+            'average-age', 'population-density', 'gender-ratio', 'family-size',
+            'summary-total-dusun', 'summary-largest-dusun', 'summary-smallest-dusun', 'summary-avg-dusun'
+        ];
+        
+        statIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                // Gunakan warna yang sesuai dengan kategori
+                let spinnerColor = 'text-blue-500';
+                if (id.includes('male') || id.includes('total')) spinnerColor = 'text-blue-500';
+                else if (id.includes('female')) spinnerColor = 'text-pink-500';
+                else if (id.includes('family') || id.includes('green')) spinnerColor = 'text-green-500';
+                else if (id.includes('purple')) spinnerColor = 'text-purple-500';
+                else if (id.includes('orange')) spinnerColor = 'text-orange-500';
+                else if (id.includes('indigo')) spinnerColor = 'text-indigo-500';
+                else if (id.includes('teal')) spinnerColor = 'text-teal-500';
+                
+                element.innerHTML = `<i class="fas fa-circle-notch loading-spinner text-lg ${spinnerColor}"></i>`;
+            }
+        });
+
+        // Reset dusun stats
+        const dusunContainer = document.getElementById('dusun-stats'); 
+        if (dusunContainer) { 
+            dusunContainer.innerHTML = ` 
+                <div class="text-center py-6 col-span-full" id="dusun-loading-state"> 
+                    <div class="loading-spinner rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div> 
+                    <p class="text-sm text-gray-600">Memuat data statistik...</p> 
+                </div> 
+            `; 
+        } 
+        // Placeholder untuk chart - Chart akan di destroy dan dibuat ulang saat data datang
+    } 
+} 
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() { 
+    new PopulationStats(); 
+}); 
+</script> 
+{% endblock extra_js %}

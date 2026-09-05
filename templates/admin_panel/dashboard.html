@@ -1,0 +1,493 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+<style>
+
+    .info-cart.h-100 {
+        min-height: 90px;
+    }
+    .info-icon.small {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    .info-label.small {
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .info-cart.h-100 {
+            min-height: 80px;
+        }
+        .info-icon.small {
+            width: 35px;
+            height: 35px;
+            font-size: 1rem;
+            margin-bottom: 0.375rem;
+        }
+        .info-label.small {
+            font-size: 0.75rem;
+        }
+        .chart-no-data {
+            padding: 1.5rem;
+            min-height: 180px;
+        }
+        .chart-no-data i {
+            font-size: 2rem !important;
+        }
+        .chart-no-data p {
+            font-size: 0.9rem;
+        }
+        .chart-no-data small {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% csrf_token %}
+
+<div class="dashboard-header shadow-sm mb-4">
+    <div class="header-content">
+        <div class="header-info">
+            <h1 class="dashboard-title">
+                <i class="fas fa-home"></i>
+                Selamat Datang, {{ user.get_full_name|default:user.username }}!
+            </h1>
+            <p class="dashboard-subtitle">Admin Panel Desa Pulosarok</p>
+        </div>
+        <div class="header-meta">
+            <div class="badge bg-success px-3 py-2">
+                <i class="fas fa-user-tag me-2"></i>{{ role_name }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-cart-container shadow-sm mb-4">
+    <div class="cart-header mb-4">
+        <h2 class="cart-title">
+            <i class="fas fa-chart-line"></i>
+            Statistik Utama
+        </h2>
+        <p class="cart-subtitle">Data terkini sistem informasi desa</p>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="stat-cart stat-cart-primary shadow-sm h-100">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-penduduk">{{ total_penduduk|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">Total Penduduk</div>
+                    <p class="stat-description mb-0">Jumlah penduduk terdaftar</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="stat-cart stat-cart-success shadow-sm h-100">
+                <div class="stat-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-keluarga">{{ total_keluarga|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">Total Keluarga</div>
+                    <p class="stat-description mb-0">Jumlah keluarga terdaftar</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="stat-cart stat-cart-warning shadow-sm h-100">
+                <div class="stat-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-businesses">{{ total_businesses|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">Usaha Terdaftar</div>
+                    <p class="stat-description mb-0">UMKM & Koperasi</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="stat-cart stat-cart-info shadow-sm h-100">
+                <div class="stat-icon">
+                    <i class="fas fa-hand-holding-heart"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-beneficiaries">{{ total_beneficiaries|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">Penerima Bantuan</div>
+                    <p class="stat-description mb-0">Program bantuan aktif</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="stat-cart stat-cart-primary shadow-sm h-100">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-complaints">{{ total_complaints|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">Total Keluhan</div>
+                    <p class="stat-description mb-0">Keluhan masyarakat</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="stat-cart stat-cart-success shadow-sm h-100">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-documents">{{ total_documents|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">Dokumen</div>
+                    <p class="stat-description mb-0">Dokumen tersimpan</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="stat-cart stat-cart-warning shadow-sm h-100">
+                <div class="stat-icon">
+                    <i class="fas fa-mountain"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-tourism">{{ total_tourism_locations|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">Wisata</div>
+                    <p class="stat-description mb-0">Destinasi wisata</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="stat-cart stat-cart-info shadow-sm h-100">
+                <div class="stat-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number" id="total-posyandu">{{ total_posyandu_locations|default:0|floatformat:0 }}</div>
+                    <div class="stat-label">Posyandu</div>
+                    <p class="stat-description mb-0">Lokasi posyandu</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="info-cart-container shadow-sm mb-4">
+    <div class="cart-header mb-3">
+        <h2 class="cart-title">
+            <i class="fas fa-bolt"></i>
+            Aksi Cepat
+        </h2>
+        <p class="cart-subtitle">Akses fitur utama</p>
+    </div>
+
+    <div class="row g-2">
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:references_dashboard' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-primary shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Data Referensi</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:beneficiaries_dashboard' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-success shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Penerima Bantuan</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:business_dashboard' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-warning shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Usaha</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:complaints_dashboard' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-danger shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Keluhan</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:documents_dashboard' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-primary shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Dokumen</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:tourism_dashboard' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-success shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-mountain"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Wisata</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'posyandu:posyandu_admin' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-warning shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Posyandu</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:news_dashboard' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-primary shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Berita</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="/admin-panel/village-profile/admin/dashboard/" class="text-decoration-none">
+                <div class="info-cart info-cart-success shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Profil Desa</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:organization:organization_list' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-warning shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Organisasi</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'admin_panel:reports_dashboard' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-danger shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Laporan</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a href="{% url 'core:settings' %}" class="text-decoration-none">
+                <div class="info-cart info-cart-primary shadow-sm h-100">
+                    <div class="info-icon small">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label small">Pengaturan</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
+
+    loadDashboardStats();
+});
+
+function loadDashboardStats() {
+    console.log('Loading dashboard stats...');
+    fetch('/admin-panel/api/dashboard-stats/', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('API Response:', data);
+        if (data.success && data.data) {
+            console.log('Updating dashboard with data:', data.data);
+            updateDashboardStats(data.data);
+        } else {
+            console.error('Error loading dashboard stats:', data.error || 'No data received');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading dashboard stats:', error);
+
+        console.log('Using fallback static data');
+    });
+}
+
+function updateDashboardStats(stats) {
+
+    updateStatCard('#total-penduduk', stats.total_penduduk);
+    updateStatCard('#total-keluarga', stats.total_keluarga);
+    updateStatCard('#total-businesses', stats.total_businesses);
+    updateStatCard('#total-beneficiaries', stats.total_beneficiaries);
+
+    updateStatCard('#total-complaints', stats.total_complaints);
+    updateStatCard('#total-documents', stats.total_documents);
+    updateStatCard('#total-tourism', stats.total_tourism_locations);
+    updateStatCard('#total-posyandu', stats.total_posyandu_locations);
+
+    updateUserInfoStats(stats);
+}
+
+function updateStatCard(selector, value) {
+    const element = document.querySelector(selector);
+    console.log(`Selector: ${selector}, Element found:`, element, 'Value:', value);
+    if (element) {
+        console.log(`Successfully updating element with value: ${value}`);
+
+        element.textContent = value.toLocaleString('id-ID');
+
+        animateValue(element, 0, value, 1000);
+    } else {
+        console.warn(`Element not found for selector: ${selector}`);
+    }
+}
+
+function updateUserInfoStats(stats) {
+
+    const pelajarElement = document.querySelector('.user-info .row:nth-child(2) .col-6:nth-child(1) strong');
+    if (pelajarElement) {
+        animateValue(pelajarElement, 0, stats.total_pelajar, 1000);
+    }
+
+    const disabilitasElement = document.querySelector('.user-info .row:nth-child(2) .col-6:nth-child(2) strong');
+    if (disabilitasElement) {
+        animateValue(disabilitasElement, 0, stats.total_disabilitas, 1000);
+    }
+
+    const newsElement = document.querySelector('.user-info .row:nth-child(3) .col-6:nth-child(1) strong');
+    if (newsElement) {
+        animateValue(newsElement, 0, stats.total_news, 1000);
+    }
+
+    const dusunElement = document.querySelector('.user-info .row:nth-child(4) .col-6:nth-child(1) strong');
+    if (dusunElement) {
+        animateValue(dusunElement, 0, stats.total_dusun, 1000);
+    }
+
+    const lorongElement = document.querySelector('.user-info .row:nth-child(4) .col-6:nth-child(2) strong');
+    if (lorongElement) {
+        animateValue(lorongElement, 0, stats.total_lorong, 1000);
+    }
+
+    const rtElement = document.querySelector('.user-info .row:nth-child(5) .col-6:nth-child(1) strong');
+    if (rtElement) {
+        animateValue(rtElement, 0, stats.total_rt, 1000);
+    }
+
+    const rwElement = document.querySelector('.user-info .row:nth-child(5) .col-6:nth-child(2) strong');
+    if (rwElement) {
+        animateValue(rwElement, 0, stats.total_rw, 1000);
+    }
+}
+
+function animateValue(element, start, end, duration) {
+    const startTime = performance.now();
+    const startValue = start;
+    const endValue = end;
+
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentValue = Math.floor(startValue + (endValue - startValue) * easeOut);
+
+        element.textContent = currentValue.toLocaleString('id-ID');
+
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            element.textContent = endValue.toLocaleString('id-ID');
+        }
+    }
+
+    requestAnimationFrame(update);
+}
+
+setInterval(loadDashboardStats, 5 * 60 * 1000);
+</script>
+{% endblock %}

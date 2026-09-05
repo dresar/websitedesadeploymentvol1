@@ -1,0 +1,437 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Dashboard Berita{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    /* Additional News Dashboard Specific Styles */
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        transition: background-color 0.2s ease;
+    }
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    .recent-news-item:hover,
+    .popular-news-item:hover {
+        background-color: #e3f2fd;
+    }
+    .badge-sm {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+    }
+    .dropdown-menu {
+        border: 1px solid #dee2e6;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="container-fluid px-3 px-md-4">
+
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div class="header-content">
+                <div class="header-info">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-newspaper"></i>
+                        Dashboard Berita
+                    </h1>
+                    <p class="dashboard-subtitle">Kelola dan pantau semua berita website</p>
+                </div>
+                <div class="header-meta">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'admin_panel:news_create' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-plus"></i> Tambah Berita
+                        </a>
+                        <a href="{% url 'admin_panel:news_list' %}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-list"></i> Lihat Semua
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards Container -->
+        <div class="stats-cart-container">
+            <div class="cart-header">
+                <h2 class="cart-title">
+                    <i class="fas fa-chart-line"></i>
+                    Statistik Utama
+                </h2>
+                <p class="cart-subtitle">Ringkasan data berita dan aktivitas</p>
+            </div>
+            
+            <div class="stats-grid">
+                <!-- Total Berita -->
+                <div class="stat-cart stat-cart-primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ total_news }}</div>
+                        <div class="stat-label">Total Berita</div>
+                        <p class="stat-description">Semua berita yang telah dibuat</p>
+                    </div>
+                </div>
+
+                <!-- Dipublikasi -->
+                <div class="stat-cart stat-cart-success">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ published_news }}</div>
+                        <div class="stat-label">Dipublikasi</div>
+                        <p class="stat-description">Berita yang sudah dipublikasikan</p>
+                    </div>
+                </div>
+
+                <!-- Total Views -->
+                <div class="stat-cart stat-cart-info">
+                    <div class="stat-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ total_views }}</div>
+                        <div class="stat-label">Total Views</div>
+                        <p class="stat-description">Jumlah pembaca berita</p>
+                    </div>
+                </div>
+
+                <!-- Total Komentar -->
+                <div class="stat-cart stat-cart-success">
+                    <div class="stat-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ total_comments }}</div>
+                        <div class="stat-label">Total Komentar</div>
+                        <p class="stat-description">Komentar dari pembaca</p>
+                    </div>
+                </div>
+
+                <!-- Draft -->
+                <div class="stat-cart stat-cart-warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ draft_news }}</div>
+                        <div class="stat-label">Draft</div>
+                        <p class="stat-description">Berita yang belum dipublikasi</p>
+                    </div>
+                </div>
+
+                <!-- Kategori -->
+                <div class="stat-cart stat-cart-info">
+                    <div class="stat-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ total_categories }}</div>
+                        <div class="stat-label">Kategori</div>
+                        <p class="stat-description">Total kategori berita</p>
+                    </div>
+                </div>
+
+                <!-- Total Likes -->
+                <div class="stat-cart stat-cart-primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ total_likes }}</div>
+                        <div class="stat-label">Total Likes</div>
+                        <p class="stat-description">Jumlah likes dari pembaca</p>
+                    </div>
+                </div>
+
+                <!-- Komentar Pending -->
+                <div class="stat-cart stat-cart-warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">{{ pending_comments }}</div>
+                        <div class="stat-label">Komentar Pending</div>
+                        <p class="stat-description">Menunggu persetujuan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Cards Container -->
+        <div class="info-cart-container">
+            <div class="cart-header">
+                <h2 class="cart-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Statistik Views & Aktivitas
+                </h2>
+                <p class="cart-subtitle">Data pembaca dan penulis aktif</p>
+            </div>
+            
+            <div class="info-grid">
+                <!-- Views Hari Ini -->
+                <a href="#" class="info-cart info-cart-primary">
+                    <div class="info-icon">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-number">{{ today_views|default:0 }}</div>
+                        <div class="info-label">Views Hari Ini</div>
+                        <p class="info-description">Total pembaca hari ini</p>
+                    </div>
+                    <div class="info-status">
+                        <span class="status-indicator active"></span>
+                        <span>Update Realtime</span>
+                    </div>
+                </a>
+
+                <!-- Views Minggu Ini -->
+                <a href="#" class="info-cart info-cart-success">
+                    <div class="info-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-number">{{ week_views|default:0 }}</div>
+                        <div class="info-label">Views Minggu Ini</div>
+                        <p class="info-description">Total pembaca minggu ini</p>
+                    </div>
+                    <div class="info-status">
+                        <span class="status-indicator active"></span>
+                        <span>Aktif</span>
+                    </div>
+                </a>
+
+                <!-- Views Bulan Ini -->
+                <a href="#" class="info-cart info-cart-warning">
+                    <div class="info-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-number">{{ month_views|default:0 }}</div>
+                        <div class="info-label">Views Bulan Ini</div>
+                        <p class="info-description">Total pembaca bulan ini</p>
+                    </div>
+                    <div class="info-status">
+                        <span class="status-indicator updated"></span>
+                        <span>Terbaru</span>
+                    </div>
+                </a>
+
+                <!-- Penulis Aktif -->
+                <a href="#" class="info-cart info-cart-primary">
+                    <div class="info-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-number">{{ active_authors|default:0 }}</div>
+                        <div class="info-label">Penulis Aktif</div>
+                        <p class="info-description">Kontributor berita</p>
+                    </div>
+                    <div class="info-status">
+                        <span class="status-indicator online"></span>
+                        <span>Online</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Activities Container -->
+        <div class="activities-cart-container">
+            <div class="cart-header">
+                <h2 class="cart-title">
+                    <i class="fas fa-history"></i>
+                    Aktivitas Berita
+                </h2>
+                <p class="cart-subtitle">Berita terbaru dan populer</p>
+            </div>
+            
+            <div class="activities-grid">
+                <!-- Berita Terbaru -->
+                <div class="activity-cart">
+                    <div class="activity-header">
+                        <h3 class="activity-title">
+                            <i class="fas fa-clock"></i>
+                            Berita Terbaru
+                        </h3>
+                        <p class="activity-subtitle">{{ recent_news|length }} berita terbaru</p>
+                    </div>
+                    <div class="activity-body">
+                        {% if recent_news %}
+                            {% for news in recent_news|slice:":5" %}
+                            <a href="{% url 'admin_panel:news_detail' news.pk %}" class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-newspaper"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title-text">{{ news.title|truncatechars:35 }}</div>
+                                    <div class="activity-time">{{ news.created_at|timesince }} yang lalu</div>
+                                </div>
+                                <div class="activity-status">
+                                    <span class="status-badge status-{% if news.status == 'published' %}success{% elif news.status == 'draft' %}warning{% else %}secondary{% endif %}">
+                                        {{ news.get_status_display }}
+                                    </span>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-newspaper"></i>
+                                <p>Belum ada berita terbaru</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Berita Populer -->
+                <div class="activity-cart">
+                    <div class="activity-header">
+                        <h3 class="activity-title">
+                            <i class="fas fa-fire"></i>
+                            Berita Populer
+                        </h3>
+                        <p class="activity-subtitle">{{ popular_news|length }} berita populer</p>
+                    </div>
+                    <div class="activity-body">
+                        {% if popular_news %}
+                            {% for news in popular_news|slice:":5" %}
+                            <a href="{% url 'admin_panel:news_detail' news.pk %}" class="activity-item">
+                                <div class="activity-icon" style="background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title-text">{{ news.title|truncatechars:35 }}</div>
+                                    <div class="activity-time">
+                                        <i class="fas fa-eye"></i> {{ news.view_count }} views
+                                    </div>
+                                </div>
+                                <div class="activity-status">
+                                    <span class="status-badge status-danger">
+                                        <i class="fas fa-fire"></i>
+                                    </span>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-fire"></i>
+                                <p>Belum ada data views</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Statistik Kategori -->
+                <div class="activity-cart">
+                    <div class="activity-header">
+                        <h3 class="activity-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Statistik Kategori
+                        </h3>
+                        <p class="activity-subtitle">{{ category_stats|length }} kategori berita</p>
+                    </div>
+                    <div class="activity-body">
+                        {% if category_stats %}
+                            {% for category in category_stats %}
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ffd43b 100%);">
+                                    <i class="fas fa-tag"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title-text">{{ category.name }}</div>
+                                    <div class="activity-time">{{ category.news_count }} berita</div>
+                                </div>
+                                <div class="activity-status">
+                                    <span class="status-badge status-info">
+                                        {{ category.news_count }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-tags"></i>
+                                <p>Belum ada kategori</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments Table -->
+        <div class="activities-cart-container">
+            <div class="cart-header">
+                <h2 class="cart-title">
+                    <i class="fas fa-comments"></i>
+                    Komentar Terbaru
+                </h2>
+                <p class="cart-subtitle">Daftar komentar yang masuk</p>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                        <tr>
+                            <th style="padding: 1rem; font-weight: 600; color: #495057;">Komentar</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #495057;">Berita</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #495057;">Penulis</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #495057;">Status</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #495057;">Tanggal</th>
+                            <th style="padding: 1rem; font-weight: 600; color: #495057;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comment in recent_comments %}
+                        <tr style="transition: all 0.3s ease; border-bottom: 1px solid #f0f0f0;">
+                            <td style="padding: 1rem;">{{ comment.content|truncatechars:50 }}</td>
+                            <td style="padding: 1rem;">
+                                <a href="{% url 'admin_panel:news_detail' comment.news.pk %}" 
+                                   style="color: #4A90E2; text-decoration: none; font-weight: 500;">
+                                    {{ comment.news.title|truncatechars:30 }}
+                                </a>
+                            </td>
+                            <td style="padding: 1rem;">{{ comment.author_name }}</td>
+                            <td style="padding: 1rem;">
+                                <span class="status-badge status-{% if comment.status == 'approved' %}success{% elif comment.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                    {{ comment.get_status_display }}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; color: #6c757d; font-size: 0.875rem;">
+                                {{ comment.created_at|timesince }} yang lalu
+                            </td>
+                            <td style="padding: 1rem;">
+                                <a href="{% url 'admin_panel:news_comments' %}" 
+                                   class="btn btn-sm btn-primary" 
+                                   style="padding: 0.375rem 0.75rem;">
+                                    <i class="fas fa-eye"></i> Lihat
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted" style="padding: 3rem;">
+                                <div class="empty-state">
+                                    <i class="fas fa-comments" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+                                    <p style="font-size: 1.1rem;">Belum ada komentar</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+

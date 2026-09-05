@@ -1,0 +1,651 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load humanize %}
+
+{% block page_title %}Pengaturan Surat{% endblock %}
+{% block page_description %}Konfigurasi sistem surat dan dokumen desa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Settings Page Styles */
+.settings-page {
+    padding: 2rem 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+.settings-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.settings-header h1 {
+    color: #495057;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.settings-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.settings-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Main Settings */
+.settings-main {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+.settings-main-header {
+    background: #f8f9fa;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.settings-main-header h5 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+.settings-main-body {
+    padding: 2rem;
+}
+
+/* Settings Sections */
+.settings-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.settings-section-header {
+    margin-bottom: 1.5rem;
+}
+
+.settings-section-header h6 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+.settings-section-body {
+    padding-left: 1rem;
+}
+
+/* Form Groups */
+.settings-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.settings-form-label {
+    color: #495057;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.settings-form-help {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.settings-form-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Form Actions */
+.settings-form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 2rem;
+    border-top: 1px solid #e9ecef;
+    margin-top: 2rem;
+}
+
+.settings-form-actions-left,
+.settings-form-actions-right {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Sidebar */
+.settings-sidebar {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.settings-sidebar-header {
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.settings-sidebar-header h6 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+.settings-sidebar-body {
+    padding: 1.5rem;
+}
+
+/* Info Grid */
+.settings-info-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.settings-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.settings-info-item:last-child {
+    border-bottom: none;
+}
+
+.settings-info-label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.settings-info-value {
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Tips */
+.settings-tips {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.settings-tips-header {
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.settings-tips-header h6 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+.settings-tips-body {
+    padding: 1.5rem;
+}
+
+.settings-tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.settings-tip {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    border-left: 4px solid #28a745;
+}
+
+.settings-tip:last-child {
+    margin-bottom: 0;
+}
+
+.settings-tip i {
+    margin-top: 0.125rem;
+}
+
+/* Quick Actions */
+.settings-quick-actions {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+.settings-quick-actions-header {
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.settings-quick-actions-header h6 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+.settings-quick-actions-body {
+    padding: 1.5rem;
+}
+
+.settings-quick-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .settings-page {
+        padding: 1rem 0;
+    }
+    
+    .settings-header {
+        margin-bottom: 2rem;
+        padding: 1.5rem 1rem;
+    }
+    
+    .settings-content {
+        padding: 0 0.5rem;
+    }
+    
+    .settings-main-body {
+        padding: 1.5rem;
+    }
+    
+    .settings-section-body {
+        padding-left: 0;
+    }
+    
+    .settings-form-actions {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .settings-form-actions-left,
+    .settings-form-actions-right {
+        justify-content: center;
+    }
+    
+    .settings-info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .settings-quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .settings-main-header,
+    .settings-sidebar-header,
+    .settings-tips-header,
+    .settings-quick-actions-header {
+        padding: 1rem;
+    }
+    
+    .settings-main-body,
+    .settings-sidebar-body,
+    .settings-tips-body,
+    .settings-quick-actions-body {
+        padding: 1rem;
+    }
+    
+    .settings-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Settings Page Container -->
+<div class="settings-page">
+    <!-- Settings Header -->
+    <div class="settings-header">
+        <h1>Pengaturan Surat</h1>
+        <p>Konfigurasi sistem surat dan dokumen desa</p>
+    </div>
+    
+    <!-- Settings Content -->
+    <div class="settings-content">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="settings-main">
+                    <div class="settings-main-header">
+                        <h5>
+                            <i class="fas fa-cog me-2"></i>
+                            Pengaturan Sistem Surat
+                        </h5>
+                    </div>
+                    <div class="settings-main-body">
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+
+                            <!-- Village Information -->
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <h6>
+                                        <i class="fas fa-building me-2"></i>
+                                        Informasi Desa
+                                    </h6>
+                                </div>
+                                <div class="settings-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="settings-form-group">
+                                                <label for="village_name" class="settings-form-label">
+                                                    Nama Desa <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" id="village_name" name="village_name"
+                                                       value="{{ settings.village_name }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="settings-form-group">
+                                                <label for="village_phone" class="settings-form-label">Telepon Desa</label>
+                                                <input type="text" class="form-control" id="village_phone" name="village_phone"
+                                                       value="{{ settings.village_phone }}">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="settings-form-group">
+                                        <label for="village_address" class="settings-form-label">
+                                            Alamat Desa <span class="text-danger">*</span>
+                                        </label>
+                                        <textarea class="form-control" id="village_address" name="village_address" rows="2" required>{{ settings.village_address }}</textarea>
+                                    </div>
+
+                                    <div class="settings-form-group">
+                                        <label for="village_email" class="settings-form-label">Email Desa</label>
+                                        <input type="email" class="form-control" id="village_email" name="village_email"
+                                               value="{{ settings.village_email }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Head of Village Information -->
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <h6>
+                                        <i class="fas fa-user-tie me-2"></i>
+                                        Informasi Kepala Desa
+                                    </h6>
+                                </div>
+                                <div class="settings-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="settings-form-group">
+                                                <label for="head_of_village_name" class="settings-form-label">
+                                                    Nama Kepala Desa <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" id="head_of_village_name" name="head_of_village_name"
+                                                       value="{{ settings.head_of_village_name }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="settings-form-group">
+                                                <label for="head_of_village_nip" class="settings-form-label">NIP Kepala Desa</label>
+                                                <input type="text" class="form-control" id="head_of_village_nip" name="head_of_village_nip"
+                                                       value="{{ settings.head_of_village_nip }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Letter Number Format -->
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <h6>
+                                        <i class="fas fa-hashtag me-2"></i>
+                                        Format Nomor Surat
+                                    </h6>
+                                </div>
+                                <div class="settings-section-body">
+                                    <div class="settings-form-group">
+                                        <label for="letter_number_format" class="settings-form-label">
+                                            Format Nomor Surat <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="letter_number_format" name="letter_number_format"
+                                               value="{{ settings.letter_number_format }}" required>
+                                        <div class="settings-form-help">
+                                            Gunakan placeholder: {code}, {number}, {month}, {year}<br>
+                                            Contoh: {code}/{number:03d}/{month:02d}/{year}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Digital Signature -->
+                            <div class="settings-section">
+                                <div class="settings-section-header">
+                                    <h6>
+                                        <i class="fas fa-signature me-2"></i>
+                                        Tanda Tangan Digital
+                                    </h6>
+                                </div>
+                                <div class="settings-section-body">
+                                    <div class="settings-form-group">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="enable_digital_signature" 
+                                                   name="enable_digital_signature" {% if settings.enable_digital_signature %}checked{% endif %}>
+                                            <label class="form-check-label" for="enable_digital_signature">
+                                                Aktifkan Tanda Tangan Digital
+                                            </label>
+                                        </div>
+                                        <div class="settings-form-help">
+                                            Tanda tangan digital akan ditambahkan secara otomatis pada surat yang disetujui
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="settings-form-actions">
+                                <div class="settings-form-actions-left">
+                                    <a href="{% url 'admin_panel:letters:admin_dashboard' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>Kembali
+                                    </a>
+                                </div>
+                                <div class="settings-form-actions-right">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>Simpan Pengaturan
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Settings Info -->
+                <div class="settings-sidebar">
+                    <div class="settings-sidebar-header">
+                        <h6>
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informasi Pengaturan
+                        </h6>
+                    </div>
+                    <div class="settings-sidebar-body">
+                        <div class="settings-info-grid">
+                            <div class="settings-info-item">
+                                <div class="settings-info-label">Status</div>
+                                <div class="settings-info-value">
+                                    <span class="badge bg-success">Aktif</span>
+                                </div>
+                            </div>
+                            <div class="settings-info-item">
+                                <div class="settings-info-label">Terakhir Update</div>
+                                <div class="settings-info-value">{{ settings.updated_at|date:"d M Y H:i" }}</div>
+                            </div>
+                            <div class="settings-info-item">
+                                <div class="settings-info-label">Diubah Oleh</div>
+                                <div class="settings-info-value">
+                                    {% if settings.created_by %}
+                                    {{ settings.created_by.get_full_name|default:settings.created_by.username }}
+                                    {% else %}
+                                    System
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="settings-tips">
+                    <div class="settings-tips-header">
+                        <h6>
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Tips Pengaturan
+                        </h6>
+                    </div>
+                    <div class="settings-tips-body">
+                        <ul class="settings-tips-list">
+                            <li class="settings-tip">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Pastikan nama desa dan alamat sudah benar
+                            </li>
+                            <li class="settings-tip">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Format nomor surat akan digunakan untuk semua surat baru
+                            </li>
+                            <li class="settings-tip">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Tanda tangan digital opsional
+                            </li>
+                            <li class="settings-tip">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Pengaturan berlaku untuk semua jenis surat
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="settings-quick-actions">
+                    <div class="settings-quick-actions-header">
+                        <h6>
+                            <i class="fas fa-bolt me-2"></i>
+                            Aksi Cepat
+                        </h6>
+                    </div>
+                    <div class="settings-quick-actions-body">
+                        <div class="settings-quick-actions-grid">
+                            <button class="btn btn-info btn-sm" onclick="resetToDefault()">
+                                <i class="fas fa-undo me-1"></i>Reset ke Default
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="exportSettings()">
+                                <i class="fas fa-download me-1"></i>Export Pengaturan
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="importSettings()">
+                                <i class="fas fa-upload me-1"></i>Import Pengaturan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin/letters-admin.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Form validation
+    $('form').on('submit', function(e) {
+        const requiredFields = $(this).find('[required]');
+        let isValid = true;
+        
+        requiredFields.each(function() {
+            if (!$(this).val().trim()) {
+                $(this).addClass('is-invalid');
+                isValid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Mohon lengkapi semua field yang wajib diisi.');
+        }
+    });
+
+    // Quick actions
+    window.resetToDefault = function() {
+        if (confirm('Apakah Anda yakin ingin mengembalikan pengaturan ke default?')) {
+            // Implementation for reset to default
+            console.log('Reset to default');
+        }
+    };
+
+    window.exportSettings = function() {
+        // Implementation for exporting settings
+        console.log('Export settings');
+    };
+
+    window.importSettings = function() {
+        // Implementation for importing settings
+        console.log('Import settings');
+    };
+
+    // Auto-save draft (optional)
+    let autoSaveTimeout;
+    $('input, textarea').on('input', function() {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(function() {
+            // Auto-save implementation
+            console.log('Auto-saving...');
+        }, 2000);
+    });
+});
+</script>
+{% endblock %}

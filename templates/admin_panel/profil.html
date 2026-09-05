@@ -1,0 +1,536 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load role_permissions %}
+
+{% block page_title %}Profil Pengguna{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="container">
+
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="header-photo-container">
+                    {% if profile.photo %}
+                        <img src="{{ profile.photo.url }}" alt="Profile Photo" class="profile-avatar" id="header-photo">
+                    {% else %}
+                        <div class="profile-avatar-placeholder" id="header-photo-placeholder">
+                            <i class="fas fa-user fa-3x"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
+                <p class="profile-email">{{ user.email }}</p>
+                {% if profile_id %}
+                <div class="profile-id-info">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        ID Profil: <code>{{ profile_id }}</code>
+                    </small>
+                </div>
+                {% endif %}
+
+                <div class="role-badges">
+                    {% for role in user.roles.all %}
+                        <span class="role-badge">{{ role.name }}</span>
+                    {% empty %}
+                        <span class="role-badge">Pengguna</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="profile-content">
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user.date_joined|timesince }}</div>
+                        <div class="stat-label">Bergabung</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ user.last_login|date:"d/m/Y"|default:"-" }}</div>
+                        <div class="stat-label">Login Terakhir</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">
+                            {% if user.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                        </div>
+                        <div class="stat-label">Status Akun</div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-user"></i>Informasi Pribadi
+                    </h3>
+
+                    <div id="profile-view-mode">
+
+                        <div class="current-photo-section text-center mb-4">
+                            {% if profile.photo %}
+                                <img src="{{ profile.photo.url }}" alt="Current Photo" class="photo-preview" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #667eea;">
+                                <p class="text-muted mt-2">Foto Profil Saat Ini</p>
+                            {% else %}
+                                <div class="photo-placeholder" style="width: 150px; height: 150px; border-radius: 50%; border: 3px dashed #e9ecef; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #f8f9fa;">
+                                    <i class="fas fa-user fa-3x text-muted mb-2"></i>
+                                    <p class="text-muted">Belum ada foto profil</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <div class="info-item">
+                                    <span class="info-label">Nama Lengkap</span>
+                                    <span class="info-value">{{ user.get_full_name|default:"-" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Username</span>
+                                    <span class="info-value">{{ user.username }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Email</span>
+                                    <span class="info-value">{{ user.email }}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-card">
+                                <div class="info-item">
+                                    <span class="info-label">No. Telepon</span>
+                                    <span class="info-value">{{ profile.phone|default:"-" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Tanggal Lahir</span>
+                                    <span class="info-value">{{ profile.birth_date|date:"d F Y"|default:"-" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Jenis Kelamin</span>
+                                    <span class="info-value">
+                                        {% if profile.gender == 'M' %}Laki-laki
+                                        {% elif profile.gender == 'F' %}Perempuan
+                                        {% else %}-{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="info-item">
+                                <span class="info-label">Alamat</span>
+                                <span class="info-value">{{ profile.address|default:"-" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button class="btn-custom" onclick="toggleEditMode('profile')">
+                                <i class="fas fa-edit mr-2"></i>Edit Profil
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="profile-edit-mode" class="edit-mode" style="display: none;">
+                        <form method="post" action="{% url 'admin_panel:profile_update' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="id_first_name">Nama Depan</label>
+                                        <input type="text" class="form-control" id="id_first_name" name="first_name" value="{{ user.first_name }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="id_last_name">Nama Belakang</label>
+                                        <input type="text" class="form-control" id="id_last_name" name="last_name" value="{{ user.last_name }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_email">Email</label>
+                                <input type="email" class="form-control" id="id_email" name="email" value="{{ user.email }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_phone">No. Telepon</label>
+                                <input type="tel" class="form-control" id="id_phone" name="phone" value="{{ profile.phone|default:'' }}" placeholder="Contoh: 081234567890">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_address">Alamat</label>
+                                <textarea class="form-control" id="id_address" name="address" rows="3" placeholder="Masukkan alamat lengkap">{{ profile.address|default:'' }}</textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="id_birth_date">Tanggal Lahir</label>
+                                        <input type="date" class="form-control" id="id_birth_date" name="birth_date" value="{{ profile.birth_date|date:'Y-m-d'|default:'' }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="id_gender">Jenis Kelamin</label>
+                                        <select class="form-control" id="id_gender" name="gender">
+                                            <option value="">Pilih Jenis Kelamin</option>
+                                            <option value="M" {% if profile.gender == 'M' %}selected{% endif %}>Laki-laki</option>
+                                            <option value="F" {% if profile.gender == 'F' %}selected{% endif %}>Perempuan</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="id_photo">Foto Profil</label>
+                                <div class="photo-upload-section">
+
+                                    <div class="current-photo-display text-center mb-3">
+                                        {% if profile.photo %}
+                                            <img src="{{ profile.photo.url }}" alt="Current Photo" class="photo-preview" id="current-photo">
+                                        {% else %}
+                                            <div class="photo-placeholder">
+                                                <i class="fas fa-user fa-3x text-muted mb-2"></i>
+                                                <p class="text-muted">Belum ada foto profil</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <input type="file" class="form-control" id="id_photo" name="photo" accept="image/*" onchange="previewPhoto(this)">
+                                    <small class="form-text text-muted">Format yang didukung: JPG, PNG, GIF, WebP. Maksimal 2MB.</small>
+
+                                    <div id="photo-preview-container" class="text-center mb-3" style="display: none;">
+                                        <img id="photo-preview" class="photo-preview" alt="Preview">
+                                        <p class="text-muted mt-2">Preview foto yang akan diupload</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn-secondary-custom" onclick="toggleEditMode('profile')">
+                                    <i class="fas fa-times mr-2"></i>Batal
+                                </button>
+                                <button type="submit" class="btn-custom">
+                                    <i class="fas fa-save mr-2"></i>Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-key"></i>Ubah Password
+                    </h3>
+
+                    <div id="password-view-mode">
+                        <div class="info-card">
+                            <div class="info-item">
+                                <span class="info-label">Password</span>
+                                <span class="info-value">••••••••</span>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button class="btn-custom" onclick="toggleEditMode('password')">
+                                <i class="fas fa-key mr-2"></i>Ubah Password
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="password-edit-mode" class="edit-mode" style="display: none;">
+                        <form method="post" action="{% url 'admin_panel:change_password' %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="id_old_password">Password Lama</label>
+                                <input type="password" class="form-control" id="id_old_password" name="old_password" required placeholder="Masukkan password lama">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_new_password1">Password Baru</label>
+                                <input type="password" class="form-control" id="id_new_password1" name="new_password1" required placeholder="Minimal 8 karakter">
+                                <small class="form-text text-muted">Password minimal 8 karakter</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_new_password2">Konfirmasi Password Baru</label>
+                                <input type="password" class="form-control" id="id_new_password2" name="new_password2" required placeholder="Ulangi password baru">
+                            </div>
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn-secondary-custom" onclick="toggleEditMode('password')">
+                                    <i class="fas fa-times mr-2"></i>Batal
+                                </button>
+                                <button type="submit" class="btn-custom">
+                                    <i class="fas fa-key mr-2"></i>Ubah Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-history"></i>Riwayat Login
+                    </h3>
+
+                    <div class="login-history-item">
+                        <div class="login-icon bg-success">
+                            <i class="fas fa-sign-in-alt"></i>
+                        </div>
+                        <div class="login-content">
+                            <div class="login-title">Sesi Saat Ini</div>
+                            <div class="login-details">
+                                {{ user.last_login|date:"d F Y H:i"|default:"Belum pernah login" }}
+                            </div>
+                            <div class="login-details">
+                                <span class="browser-badge browser-chrome" id="current-browser">Deteksi Browser...</span>
+                                <span class="text-muted ml-2" id="current-ip">IP: Deteksi...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% for login in recent_logins %}
+                    <div class="login-history-item">
+                        <div class="login-icon bg-info">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="login-content">
+                            <div class="login-title">{{ login.login_time|date:"d F Y H:i" }}</div>
+                            <div class="login-details">
+                                {% if login.browser %}
+                                    <span class="browser-badge browser-{{ login.browser|lower }}">{{ login.browser }}</span>
+                                {% else %}
+                                    <span class="browser-badge browser-other">Unknown</span>
+                                {% endif %}
+                                <span class="text-muted ml-2">IP: {{ login.ip_address }}</span>
+                            </div>
+                            {% if login.location %}
+                            <div class="login-details">
+                                <small class="text-muted"><i class="fas fa-map-marker-alt mr-1"></i>{{ login.location }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="login-history-item">
+                        <div class="login-icon bg-secondary">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="login-content">
+                            <div class="login-title">Belum ada riwayat login</div>
+                            <div class="login-details text-muted">
+                                Riwayat login akan tersimpan setelah login berikutnya
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="login-history-item">
+                        <div class="login-icon bg-primary">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="login-content">
+                            <div class="login-title">Akun Dibuat</div>
+                            <div class="login-details">
+                                {{ user.date_joined|date:"d F Y H:i" }}
+                            </div>
+                            <div class="login-details">
+                                <span class="browser-badge browser-other">Sistem</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-bolt"></i>Aksi Cepat
+                    </h3>
+                    <div class="text-center">
+                        <a href="{% url 'admin_panel:dashboard' %}" class="btn-custom">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Kembali ke Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>function toggleEditMode(mode) {
+    if (mode === 'profile') {
+        const viewMode = document.getElementById('profile-view-mode');
+        const editMode = document.getElementById('profile-edit-mode');
+
+        if (viewMode.style.display === 'none') {
+            viewMode.style.display = 'block';
+            editMode.style.display = 'none';
+        } else {
+            viewMode.style.display = 'none';
+            editMode.style.display = 'block';
+        }
+    } else if (mode === 'password') {
+        const viewMode = document.getElementById('password-view-mode');
+        const editMode = document.getElementById('password-edit-mode');
+
+        if (viewMode.style.display === 'none') {
+            viewMode.style.display = 'block';
+            editMode.style.display = 'none';
+        } else {
+            viewMode.style.display = 'none';
+            editMode.style.display = 'block';
+        }
+    }
+}
+
+function previewPhoto(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+
+        if (file.size > 2 * 1024 * 1024) {
+            showWarning('Ukuran file terlalu besar! Maksimal 2MB.');
+            input.value = '';
+            return;
+        }
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            showWarning('Format file tidak didukung! Gunakan JPG, PNG, GIF, atau WebP.');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('photo-preview');
+            const container = document.getElementById('photo-preview-container');
+
+            if (preview && container) {
+                preview.src = e.target.result;
+                container.style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function showNotification(message, type = 'info') {
+
+    const existingNotifications = document.querySelectorAll('.custom-notification');
+    existingNotifications.forEach(notification => notification.remove());
+
+    const notification = document.createElement('div');
+    notification.className = `custom-notification custom-notification-${type}`;
+
+    let icon = 'fas fa-info-circle';
+    if (type === 'success') icon = 'fas fa-check-circle';
+    if (type === 'error') icon = 'fas fa-exclamation-circle';
+    if (type === 'warning') icon = 'fas fa-exclamation-triangle';
+
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="${icon}"></i>
+            <span>${message}</span>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function detectBrowser() {
+    const userAgent = navigator.userAgent;
+    let browserName = 'Unknown';
+    let browserClass = 'browser-other';
+
+    if (userAgent.indexOf('Chrome') > -1 && userAgent.indexOf('Edg') === -1) {
+        browserName = 'Chrome';
+        browserClass = 'browser-chrome';
+    } else if (userAgent.indexOf('Firefox') > -1) {
+        browserName = 'Firefox';
+        browserClass = 'browser-firefox';
+    } else if (userAgent.indexOf('Safari') > -1 && userAgent.indexOf('Chrome') === -1) {
+        browserName = 'Safari';
+        browserClass = 'browser-safari';
+    } else if (userAgent.indexOf('Edg') > -1) {
+        browserName = 'Edge';
+        browserClass = 'browser-edge';
+    }
+
+    return { name: browserName, class: browserClass };
+}
+
+function getClientIP() {
+    return new Promise((resolve) => {
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => resolve(data.ip))
+            .catch(() => {
+                fetch('https://ipapi.co/json/')
+                    .then(response => response.json())
+                    .then(data => resolve(data.ip))
+                    .catch(() => resolve('Tidak dapat dideteksi'));
+            });
+    });
+}
+
+function updateLoginInfo() {
+    const browser = detectBrowser();
+    const browserElement = document.getElementById('current-browser');
+
+    if (browserElement) {
+        browserElement.textContent = browser.name;
+        browserElement.className = 'browser-badge ' + browser.class;
+    }
+
+    getClientIP().then(ip => {
+        const ipElement = document.getElementById('current-ip');
+        if (ipElement) {
+            ipElement.textContent = 'IP: ' + ip;
+        }
+    });
+}
+
+$(document).ready(function() {
+
+    updateLoginInfo();
+
+    $('#profile-edit-mode form').on('submit', function(e) {
+        var email = $('#id_email').val();
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email)) {
+            e.preventDefault();
+            showWarning('Format email tidak valid!');
+            return false;
+        }
+    });
+
+    $('#password-edit-mode form').on('submit', function(e) {
+        var newPassword1 = $('#id_new_password1').val();
+        var newPassword2 = $('#id_new_password2').val();
+
+        if (newPassword1 !== newPassword2) {
+            e.preventDefault();
+            showWarning('Konfirmasi password tidak cocok!');
+            return false;
+        }
+
+        if (newPassword1.length < 8) {
+            e.preventDefault();
+            showWarning('Password minimal 8 karakter!');
+            return false;
+        }
+    });
+
+    setTimeout(function() {
+        $('.alert-success').fadeOut();
+    }, 5000);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Dashboard Dokumen{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-mobile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-info">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-file-alt"></i>
+                    Dashboard Dokumen Transparansi
+                </h1>
+                <p class="dashboard-subtitle">Kelola dan pantau semua dokumen transparansi desa</p>
+            </div>
+            <div class="header-meta">
+                <div class="time-info">
+                    <i class="fas fa-clock"></i>
+                    <span id="currentTime"></span>
+                </div>
+                <div class="date-info">
+                    <i class="fas fa-calendar"></i>
+                    <span id="currentDate"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-cart-container">
+        <div class="cart-header">
+            <h2 class="cart-title">
+                <i class="fas fa-chart-bar"></i>
+                Statistik Dokumen
+            </h2>
+            <p class="cart-subtitle">Ringkasan data dokumen terkini</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-cart stat-cart-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ total_documents|default:0 }}</div>
+                    <div class="stat-label">Total Dokumen</div>
+                    <p class="stat-description">Semua dokumen yang terdaftar</p>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-success">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ approved_documents|default:0 }}</div>
+                    <div class="stat-label">Dipublikasikan</div>
+                    <p class="stat-description">Dokumen yang telah dipublikasikan</p>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ submitted_documents|default:0 }}</div>
+                    <div class="stat-label">Dalam Review</div>
+                    <p class="stat-description">Menunggu peninjauan</p>
+                </div>
+            </div>
+
+            <div class="stat-cart stat-cart-info">
+                <div class="stat-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ completed_documents|default:0 }}</div>
+                    <div class="stat-label">Public</div>
+                    <p class="stat-description">Tampil di halaman publik</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col-lg-8 mb-3">
+            <div class="stats-cart-container">
+                <div class="cart-header">
+                    <h2 class="cart-title">
+                        <i class="fas fa-list"></i>
+                        Dokumen Terbaru
+                    </h2>
+                    <p class="cart-subtitle">10 dokumen terbaru yang ditambahkan</p>
+                </div>
+
+                {% if recent_documents %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%">Judul</th>
+                                    <th style="width: 15%">Nomor</th>
+                                    <th style="width: 20%">Kategori</th>
+                                    <th style="width: 10%">Tahun</th>
+                                    <th style="width: 10%">Status</th>
+                                    <th style="width: 15%">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in recent_documents %}
+                                <tr>
+                                    <td>
+                                        <strong class="d-block">{{ document.title|truncatechars:40 }}</strong>
+                                        <small class="text-muted">
+                                            <i class="fas fa-user"></i> {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}
+                                        </small>
+                                    </td>
+                                    <td><small>{{ document.document_number|default:"-" }}</small></td>
+                                    <td><small>{{ document.category.name }}</small></td>
+                                    <td><small>{{ document.document_year }}</small></td>
+                                    <td>
+                                        <small>
+                                            {% if document.status == 'published' %}
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            {% elif document.status == 'review' %}
+                                                <i class="fas fa-clock text-warning"></i>
+                                            {% else %}
+                                                <i class="fas fa-file text-secondary"></i>
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'admin_panel:document_detail' document.pk %}"
+                                               class="btn btn-outline-primary btn-sm" title="Lihat Detail">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'admin_panel:document_edit' document.pk %}"
+                                               class="btn btn-outline-warning btn-sm" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'admin_panel:documents_list' %}"
+                           class="btn btn-primary btn-sm">
+                            <i class="fas fa-list"></i> Lihat Semua Dokumen
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <p>Belum ada dokumen</p>
+                        <a href="{% url 'admin_panel:document_create' %}"
+                           class="btn btn-primary btn-sm mt-2">
+                            <i class="fas fa-plus"></i> Tambah Dokumen Pertama
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-3">
+
+            <div class="stats-cart-container mb-3">
+                <div class="cart-header">
+                    <h2 class="cart-title">
+                        <i class="fas fa-bolt"></i>
+                        Aksi Cepat
+                    </h2>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{% url 'admin_panel:document_create' %}"
+                       class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Tambah Dokumen Baru
+                    </a>
+                    <a href="{% url 'admin_panel:documents_list' %}"
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-list"></i> Lihat Semua Dokumen
+                    </a>
+                    <a href="{% url 'admin_panel:document_categories_list' %}"
+                       class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-tags"></i> Kelola Kategori
+                    </a>
+                </div>
+            </div>
+
+            <div class="stats-cart-container">
+                <div class="cart-header">
+                    <h2 class="cart-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Statistik Kategori
+                    </h2>
+                    <p class="cart-subtitle">Jumlah dokumen per kategori</p>
+                </div>
+
+                {% if category_stats %}
+                    <div class="system-info-grid">
+                        {% for category, count in category_stats.items %}
+                        <div class="system-info-cart">
+                            <div class="info-icon">
+                                <i class="fas fa-folder"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">{{ category|truncatechars:15 }}</div>
+                                <div class="info-value">{{ count }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-chart-pie"></i>
+                        <p>Belum ada data</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>function updateDateTime() {
+    const now = new Date();
+
+    const timeString = now.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    document.getElementById('currentTime').textContent = timeString;
+
+    const dateString = now.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    document.getElementById('currentDate').textContent = dateString;
+}
+
+updateDateTime();
+setInterval(updateDateTime, 1000);
+
+setInterval(function() {
+    fetch('{% url "admin_panel:api_documents_stats" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Statistics updated:', data.stats);
+            }
+        })
+        .catch(error => console.log('Error updating statistics:', error));
+}, 30000);
+</script>
+{% endblock %}
+

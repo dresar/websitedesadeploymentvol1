@@ -1,0 +1,756 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load humanize %}
+
+{% block page_title %}
+{% if form.instance.pk %}Edit{% else %}Tambah{% endif %} Jenis Surat
+{% endblock %}
+
+{% block page_description %}
+{% if form.instance.pk %}Ubah informasi jenis surat yang sudah ada{% else %}Buat jenis surat baru dengan informasi lengkap{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Letter Type Form Specific Styles */
+.letter-type-form-page {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+.letter-type-form-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.letter-type-form-header h1 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.letter-type-form-header p {
+    opacity: 0.9;
+    margin: 0;
+}
+
+.letter-type-form-content {
+    padding: 0 1rem;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Form Card */
+.letter-type-form-main {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.letter-type-form-main .card-header {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: white;
+    padding: 1.5rem 2rem;
+    border: none;
+}
+
+.letter-type-form-main .card-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.letter-type-form-main .card-body {
+    padding: 2rem;
+}
+
+/* Form Sections */
+.letter-type-form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.letter-type-form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.letter-type-form-section-header h6 {
+    color: #ffc107;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #ffc107;
+    display: inline-block;
+}
+
+/* Form Groups */
+.letter-type-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.letter-type-form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.letter-type-form-label .required {
+    color: #dc3545;
+}
+
+.letter-type-form-help {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.letter-type-form-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Form Actions */
+.letter-type-form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #f1f3f4;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.letter-type-form-actions-left {
+    display: flex;
+    gap: 1rem;
+}
+
+.letter-type-form-actions-right {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Sidebar Cards */
+.letter-type-form-sidebar,
+.letter-type-form-tips,
+.letter-type-form-stats {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.letter-type-form-sidebar .card-header,
+.letter-type-form-tips .card-header,
+.letter-type-form-stats .card-header {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+    padding: 1.5rem 2rem;
+    border: none;
+}
+
+.letter-type-form-sidebar .card-header h6,
+.letter-type-form-tips .card-header h6,
+.letter-type-form-stats .card-header h6 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.letter-type-form-sidebar .card-body,
+.letter-type-form-tips .card-body,
+.letter-type-form-stats .card-body {
+    padding: 2rem;
+}
+
+/* Info Grid */
+.letter-type-form-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.letter-type-form-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.letter-type-form-info-item:last-child {
+    border-bottom: none;
+}
+
+.letter-type-form-info-label {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.letter-type-form-info-value {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Tips List */
+.letter-type-form-tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.letter-type-form-tip {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #28a745;
+    transition: all 0.3s ease;
+}
+
+.letter-type-form-tip:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.letter-type-form-tip:last-child {
+    margin-bottom: 0;
+}
+
+.letter-type-form-tip i {
+    margin-right: 0.75rem;
+    margin-top: 0.125rem;
+    font-size: 1rem;
+}
+
+/* Stats Grid */
+.letter-type-form-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.letter-type-form-stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.letter-type-form-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.letter-type-form-stat-label {
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+}
+
+.letter-type-form-stat-value {
+    font-weight: 500;
+    color: #495057;
+    margin-top: 0.5rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 767.98px) {
+    .letter-type-form-header {
+        padding: 1rem 0;
+        margin-bottom: 1rem;
+    }
+    
+    .letter-type-form-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .letter-type-form-content {
+        padding: 0 0.5rem;
+    }
+    
+    .letter-type-form-main .card-body {
+        padding: 1rem;
+    }
+    
+    .letter-type-form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .letter-type-form-actions-left,
+    .letter-type-form-actions-right {
+        justify-content: stretch;
+    }
+    
+    .letter-type-form-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .letter-type-form-actions .btn:last-child {
+        margin-bottom: 0;
+    }
+    
+    .letter-type-form-sidebar .card-body,
+    .letter-type-form-tips .card-body,
+    .letter-type-form-stats .card-body {
+        padding: 1rem;
+    }
+    
+    .letter-type-form-info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .letter-type-form-stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .letter-type-form-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .letter-type-form-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .letter-type-form-content {
+        padding: 0 0.25rem;
+    }
+    
+    .letter-type-form-main .card-body {
+        padding: 0.75rem;
+    }
+    
+    .letter-type-form-sidebar .card-body,
+    .letter-type-form-tips .card-body,
+    .letter-type-form-stats .card-body {
+        padding: 0.75rem;
+    }
+    
+    .letter-type-form-stat-item {
+        padding: 1rem;
+    }
+    
+    .letter-type-form-stat-number {
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Letter Type Form Page Container -->
+<div class="letter-type-form-page">
+    <!-- Letter Type Form Header -->
+    <div class="letter-type-form-header">
+        <h1>{% if form.instance.pk %}Edit{% else %}Tambah{% endif %} Jenis Surat</h1>
+        <p>{% if form.instance.pk %}Ubah informasi jenis surat yang sudah ada{% else %}Buat jenis surat baru dengan informasi lengkap{% endif %}</p>
+    </div>
+    
+    <!-- Letter Type Form Content -->
+    <div class="letter-type-form-content">
+        <div class="row">
+            <div class="col-12">
+                <div class="letter-type-form-main">
+                    <div class="card-header">
+                        <h5>
+                            <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} me-2"></i>
+                            {% if form.instance.pk %}Edit{% else %}Tambah{% endif %} Jenis Surat
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" novalidate>
+                            {% csrf_token %}
+
+                            <!-- Basic Information -->
+                            <div class="letter-type-form-section">
+                                <div class="letter-type-form-section-header">
+                                    <h6>
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Informasi Dasar
+                                    </h6>
+                                </div>
+                                <div class="letter-type-form-section-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="letter-type-form-group">
+                                                <label for="{{ form.name.id_for_label }}" class="letter-type-form-label">
+                                                    Nama Jenis Surat <span class="text-danger">*</span>
+                                                </label>
+                                                {% render_field form.name class="form-control" placeholder="Masukkan nama jenis surat" %}
+                                                {% if form.name.errors %}
+                                                <div class="letter-type-form-error">
+                                                    {% for error in form.name.errors %}
+                                                    {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="letter-type-form-group">
+                                                <label for="{{ form.code.id_for_label }}" class="letter-type-form-label">
+                                                    Kode Surat <span class="text-danger">*</span>
+                                                </label>
+                                                {% render_field form.code class="form-control" placeholder="Contoh: SKU, SKD, dll" style="text-transform: uppercase;" %}
+                                                {% if form.code.errors %}
+                                                <div class="letter-type-form-error">
+                                                    {% for error in form.code.errors %}
+                                                    {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                                {% endif %}
+                                                <div class="letter-type-form-help">
+                                                    Kode unik untuk jenis surat (huruf kapital)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div class="letter-type-form-group">
+                                        <label for="{{ form.description.id_for_label }}" class="letter-type-form-label">
+                                            Deskripsi
+                                        </label>
+                                        {% render_field form.description class="form-control" rows="3" placeholder="Jelaskan jenis surat ini secara singkat" %}
+                                        {% if form.description.errors %}
+                                        <div class="letter-type-form-error">
+                                            {% for error in form.description.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        <div class="letter-type-form-help">
+                                            Berikan penjelasan singkat mengenai jenis surat ini
+                                        </div>
+                                    </div>
+
+                                    <!-- Template File -->
+                                    <div class="letter-type-form-group">
+                                        <label for="{{ form.template_file.id_for_label }}" class="letter-type-form-label">
+                                            File Template
+                                        </label>
+                                        {% render_field form.template_file class="form-control" %}
+                                        {% if form.template_file.errors %}
+                                        <div class="letter-type-form-error">
+                                            {% for error in form.template_file.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        <div class="letter-type-form-help">
+                                            Upload template dokumen (format: DOCX, PDF). Opsional.
+                                        </div>
+                                    </div>
+
+                                    <!-- Required Documents -->
+                                    <div class="letter-type-form-group">
+                                        <label for="{{ form.required_documents.id_for_label }}" class="letter-type-form-label">
+                                            Dokumen yang Diperlukan
+                                        </label>
+                                        {% render_field form.required_documents class="form-control" rows="3" placeholder="KTP, KK, Surat Pengantar, dll (pisahkan dengan koma)" %}
+                                        {% if form.required_documents.errors %}
+                                        <div class="letter-type-form-error">
+                                            {% for error in form.required_documents.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        <div class="letter-type-form-help">
+                                            Daftar dokumen yang harus disiapkan pemohon (pisahkan dengan koma)
+                                        </div>
+                                    </div>
+
+                                    <!-- Processing Settings -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="letter-type-form-group">
+                                                <label for="{{ form.processing_time_days.id_for_label }}" class="letter-type-form-label">
+                                                    Waktu Proses (Hari) <span class="text-danger">*</span>
+                                                </label>
+                                {% render_field form.processing_time_days class="form-control" min="1" %}
+                                {% if form.processing_time_days.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.processing_time_days.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.fee_amount.id_for_label }}" class="form-label">
+                                    Biaya Administrasi
+                                </label>
+                                {% render_field form.fee_amount class="form-control" step="0.01" min="0" placeholder="0 untuk gratis" %}
+                                {% if form.fee_amount.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.fee_amount.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Biaya administrasi dalam Rupiah (0 untuk gratis)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Status -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {% render_field form.is_active class="form-check-input" %}
+                            <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                Aktif
+                            </label>
+                        </div>
+                        {% if form.is_active.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.is_active.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Jenis surat aktif akan muncul di halaman layanan publik
+                        </div>
+                    </div>
+
+                            <!-- Action Buttons -->
+                            <div class="letter-type-form-actions">
+                                <div class="letter-type-form-actions-left">
+                                    <a href="{% url 'admin_panel:letters:admin_letter_type_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>Kembali
+                                    </a>
+                                </div>
+                                <div class="letter-type-form-actions-right">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>
+                                        {% if form.instance.pk %}Simpan Perubahan{% else %}Buat Jenis Surat{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Sections - Moved to Bottom -->
+        <div class="row mt-4">
+            <div class="col-12">
+                {% if form.instance.pk %}
+                <!-- Current Letter Type Info -->
+                <div class="letter-type-form-sidebar">
+                    <div class="card-header">
+                        <h6>
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informasi Saat Ini
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="letter-type-form-info-grid">
+                            <div class="letter-type-form-info-item">
+                                <div class="letter-type-form-info-label">Kode</div>
+                                <div class="letter-type-form-info-value">
+                                    <span class="badge bg-primary">{{ form.instance.code }}</span>
+                                </div>
+                            </div>
+                            <div class="letter-type-form-info-item">
+                                <div class="letter-type-form-info-label">Status</div>
+                                <div class="letter-type-form-info-value">
+                                    {% if form.instance.is_active %}
+                                    <span class="badge bg-success">Aktif</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Tidak Aktif</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="letter-type-form-info-item">
+                                <div class="letter-type-form-info-label">Dibuat</div>
+                                <div class="letter-type-form-info-value">{{ form.instance.created_at|date:"d M Y H:i" }}</div>
+                            </div>
+                            <div class="letter-type-form-info-item">
+                                <div class="letter-type-form-info-label">Terakhir Update</div>
+                                <div class="letter-type-form-info-value">{{ form.instance.updated_at|date:"d M Y H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Usage Statistics - Full Width -->
+        {% if form.instance.pk %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="letter-type-form-stats">
+                    <div class="card-header">
+                        <h6>
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Statistik Penggunaan
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="letter-type-form-stats-grid">
+                            <div class="letter-type-form-stat-item">
+                                <div class="letter-type-form-stat-number">{{ usage_count|intcomma }}</div>
+                                <div class="letter-type-form-stat-label">Total Penggunaan</div>
+                            </div>
+                            {% if last_used %}
+                            <div class="letter-type-form-stat-item">
+                                <div class="letter-type-form-stat-label">Terakhir Digunakan</div>
+                                <div class="letter-type-form-stat-value">{{ last_used|date:"d M Y" }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/admin/letters-admin.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Auto-uppercase for code field
+    $('#{{ form.code.id_for_label }}').on('input', function() {
+        $(this).val($(this).val().toUpperCase());
+    });
+
+    // Form validation
+    $('form').submit(function(e) {
+        // Basic validation
+        const requiredFields = ['name', 'code', 'processing_time_days'];
+        let isValid = true;
+
+        requiredFields.forEach(function(fieldName) {
+            const field = $('#id_' + fieldName);
+            const value = field.val().trim();
+
+            if (!value) {
+                field.addClass('is-invalid');
+                isValid = false;
+            } else {
+                field.removeClass('is-invalid');
+            }
+        });
+
+        // Code validation (alphanumeric only, uppercase)
+        const codeField = $('#{{ form.code.id_for_label }}');
+        const codeValue = codeField.val().trim();
+        if (codeValue && !/^[A-Z0-9]+$/.test(codeValue)) {
+            codeField.addClass('is-invalid');
+            isValid = false;
+            if (!codeField.next('.invalid-feedback').length) {
+                codeField.after('<div class="invalid-feedback d-block">Kode hanya boleh berisi huruf kapital dan angka</div>');
+            }
+        }
+
+        // Processing time validation (positive number)
+        const processingTimeField = $('#{{ form.processing_time_days.id_for_label }}');
+        const processingTimeValue = parseInt(processingTimeField.val());
+        if (processingTimeValue < 1) {
+            processingTimeField.addClass('is-invalid');
+            isValid = false;
+            if (!processingTimeField.next('.invalid-feedback').length) {
+                processingTimeField.after('<div class="invalid-feedback d-block">Waktu proses minimal 1 hari</div>');
+            }
+        }
+
+        // Fee validation (non-negative)
+        const feeField = $('#{{ form.fee_amount.id_for_label }}');
+        const feeValue = parseFloat(feeField.val());
+        if (feeValue < 0) {
+            feeField.addClass('is-invalid');
+            isValid = false;
+            if (!feeField.next('.invalid-feedback').length) {
+                feeField.after('<div class="invalid-feedback d-block">Biaya tidak boleh negatif</div>');
+            }
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            showAlert('Mohon lengkapi semua field yang wajib diisi dengan benar', 'error');
+            return false;
+        }
+
+        // Show loading state
+        const submitBtn = $('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...').prop('disabled', true);
+
+        // Re-enable after 10 seconds as fallback
+        setTimeout(function() {
+            submitBtn.html(originalText).prop('disabled', false);
+        }, 10000);
+
+        return true;
+    });
+
+    // Real-time validation feedback
+    $('#{{ form.code.id_for_label }}').on('input', function() {
+        const value = $(this).val();
+        if (value && !/^[A-Z0-9]+$/.test(value)) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+
+    $('#{{ form.processing_time_days.id_for_label }}').on('input', function() {
+        const value = parseInt($(this).val());
+        if (value < 1) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+
+    $('#{{ form.fee_amount.id_for_label }}').on('input', function() {
+        const value = parseFloat($(this).val());
+        if (value < 0) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}
+

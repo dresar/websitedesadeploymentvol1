@@ -1,0 +1,1642 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id" class="h-full scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}{{ site_description|default:'Website resmi Desa Pulosarok - Informasi desa, layanan administrasi, dan berita terkini' }}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}desa, pulosarok, administrasi, layanan, berita{% endblock %}">
+    <meta name="author" content="{% block meta_author %}Tim Website Pulosarok{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{{ site_name|default:'Desa Pulosarok' }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_description|default:'Website resmi Desa Pulosarok' }}{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:image" content="{% block og_image %}{% if website_settings.logo %}{{ website_settings.logo.url }}{% else %}/static/images/logo.svg{% endif %}{% endblock %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ site_name|default:'Desa Pulosarok' }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ site_description|default:'Website resmi Desa Pulosarok' }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% if website_settings.logo %}{{ website_settings.logo.url }}{% else %}/static/images/logo.svg{% endif %}{% endblock %}">
+    <title>{% block title %}{{ site_name|default:'Desa Pulosarok' }}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% if website_settings.favicon %}{{ website_settings.favicon.url }}{% else %}/static/images/favicon.svg{% endif %}">
+    {% if website_settings.google_tag_manager_id %}
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ website_settings.google_tag_manager_id }}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    {% endif %}
+    <link rel="stylesheet" href="{% static 'css/tailwind-production.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <style>
+        #mobileSidebar {
+            transform: translateX(100%) !important;
+            right: 0 !important;
+        }
+
+        #mobileSidebar.translate-x-0 {
+            transform: translateX(0) !important;
+        }
+
+        #mobileSidebar.translate-x-full {
+            transform: translateX(100%) !important;
+        }
+
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .submenu.active {
+            max-height: 300px;
+        }
+
+        .has-submenu button:hover .fas.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .submenu.active+button .fas.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .has-submenu.open .submenu {
+            max-height: 300px;
+        }
+
+        .has-submenu.open button .fas.fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .has-submenu.open button {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .has-submenu.open button i:not(.fa-chevron-down) {
+            color: #3b82f6;
+        }
+
+        .hamburger-icon-medium {
+            width: 20px;
+            height: 16px;
+            position: relative;
+            transform: rotate(0deg);
+            transition: 0.3s ease-in-out;
+            cursor: pointer;
+        }
+
+        .mobile-menu-button {
+            height: 40px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hamburger-icon-medium span {
+            display: block;
+            position: absolute;
+            height: 2.5px;
+            width: 100%;
+            background: currentColor;
+            border-radius: 1px;
+            opacity: 1;
+            left: 0;
+            transform: rotate(0deg);
+            transition: 0.25s ease-in-out;
+        }
+
+        .hamburger-icon-medium span:nth-child(1) {
+            top: 0px;
+        }
+
+        .hamburger-icon-medium span:nth-child(2) {
+            top: 6px;
+        }
+
+        .hamburger-icon-medium span:nth-child(3) {
+            top: 12px;
+        }
+
+        .hamburger-icon-medium.open span:nth-child(1) {
+            top: 6px;
+            transform: rotate(135deg);
+        }
+
+        .hamburger-icon-medium.open span:nth-child(2) {
+            opacity: 0;
+            left: -60px;
+        }
+
+        .hamburger-icon-medium.open span:nth-child(3) {
+            top: 6px;
+            transform: rotate(-135deg);
+        }
+
+        #mobileSidebar button[onclick="closeMobileSidebar()"] {
+            background: none;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 320px) {
+            #mobileSidebar {
+                width: 100vw;
+                max-width: 280px;
+            }
+
+            .submenu {
+                max-height: 200px;
+            }
+
+            #mobileSidebar .text-sm {
+                font-size: 0.75rem;
+            }
+
+            #mobileSidebar .text-xs {
+                font-size: 0.625rem;
+            }
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="h-full bg-white text-gray-900 transition-colors duration-300">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'core:home' %}" class="flex items-center space-x-3 group">
+                        {% if village_profile.logo %}
+                        <img src="{{ village_profile.logo.url }}" alt="{{ village_profile.name|default:'Desa Pulosarok' }}" class="h-10 w-auto transition-transform duration-300 group-hover:scale-105">
+                        {% elif website_settings.logo %}
+                        <img src="{{ website_settings.logo.url }}" alt="{{ website_settings.site_name|default:'Desa Pulosarok' }}" class="h-10 w-auto transition-transform duration-300 group-hover:scale-105">
+                        {% else %}
+                        <img src="/static/images/logo-desa.svg" alt="{{ website_settings.site_name|default:'Desa Pulosarok' }}" class="h-10 w-auto transition-transform duration-300 group-hover:scale-105">
+                        {% endif %}
+                        <div class="hidden sm:block">
+                            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors duration-300">
+                                {{ village_profile.name|default:website_settings.site_name|default:'Desa Pulosarok' }}
+                            </h1>
+                        </div>
+                    </a>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'core:home' %}" class="text-gray-700 hover:text-primary-600 transition-colors duration-200 font-medium relative group">
+                        Beranda
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <div class="relative group">
+                        <a href="javascript:void(0)" class="text-gray-700 hover:text-primary-600 transition-colors duration-200 font-medium relative flex items-center">
+                            Profil Desa <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                        </a>
+                        <div class="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                            <div class="py-2">
+                                <a href="{% url 'village_profile:dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-home mr-3"></i>Dashboard Profil
+                                </a>
+                                <a href="{% url 'village_profile:vision_mission' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-bullseye mr-3"></i>Visi & Misi
+                                </a>
+                                <a href="{% url 'village_profile:officials' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-users mr-3"></i>Perangkat Desa
+                                </a>
+                                <a href="{% url 'village_profile:facilities' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-building mr-3"></i>Fasilitas Desa
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <a href="{% url 'village_profile:geography' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-map-marker-alt mr-3"></i>Geografi
+                                </a>
+                                <a href="{% url 'village_profile:demography' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-chart-bar mr-3"></i>Demografi
+                                </a>
+                                <a href="{% url 'references:population' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-users mr-3"></i>Statistik Penduduk
+                                </a>
+                                <a href="{% url 'village_profile:history' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-scroll mr-3"></i>Sejarah Desa
+                                </a>
+                                <a href="{% url 'village_profile:gallery' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-images mr-3"></i>Galeri Foto
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <a href="javascript:void(0)" class="text-gray-700 hover:text-primary-600 transition-colors duration-200 font-medium relative flex items-center">
+                            Organisasi <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                        </a>
+                        <div class="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                            <div class="py-2">
+                                <a href="{% url 'organization:organization_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-users mr-3"></i>Semua Organisasi
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <a href="{% url 'organization:perangkat_desa_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-user-tie mr-3"></i>Perangkat Desa
+                                </a>
+                                <a href="{% url 'organization:lembaga_adat_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-landmark mr-3"></i>Lembaga Adat
+                                </a>
+                                <a href="{% url 'organization:pkk_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-female mr-3"></i>PKK
+                                </a>
+                                <a href="{% url 'organization:kepemudaan_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-user-friends mr-3"></i>Kepemudaan
+                                </a>
+                                <a href="{% url 'organization:karang_taruna_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-users mr-3"></i>Karang Taruna
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <a href="javascript:void(0)" class="text-gray-700 hover:text-primary-600 transition-colors duration-200 font-medium relative flex items-center">
+                            Layanan <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                        </a>
+                        <div class="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                            <div class="py-2">
+                                <a href="{% url 'layanan:index' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-home mr-3"></i>Dashboard Layanan
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <div class="relative group">
+                                    <a href="{% url 'layanan:letter_services' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                        <i class="fas fa-envelope mr-3"></i>Layanan Surat <i class="fas fa-chevron-right ml-auto text-xs"></i>
+                                    </a>
+                                    <div class="absolute left-full top-0 mt-0 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                                        <div class="py-2">
+                                            <a href="{% url 'layanan:letter_request' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-file-plus mr-3"></i>Ajukan Surat
+                                            </a>
+                                            <a href="{% url 'layanan:letter_status' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-search mr-3"></i>Cek Status Surat
+                                            </a>
+                                            <a href="{% url 'layanan:letter_history' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-history mr-3"></i>Riwayat Surat
+                                            </a>
+                                            <a href="{% url 'layanan:letter_guidelines' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-book mr-3"></i>Panduan Surat
+                                            </a>
+                                            <a href="{% url 'layanan:letter_faq' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-question-circle mr-3"></i>FAQ Surat
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="{% url 'layanan:document_services' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-file-alt mr-3"></i>Layanan Dokumen
+                                </a>
+                                <a href="{% url 'layanan:posyandu_services' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-heartbeat mr-3"></i>Layanan Posyandu
+                                </a>
+                                <a href="{% url 'business:business_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-briefcase mr-3"></i>Daftar Bisnis
+                                </a>
+                                <a href="{% url 'layanan:tourism_services' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-mountain mr-3"></i>Layanan Wisata
+                                </a>
+                                <a href="{% url 'beneficiaries:index' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-hand-holding-heart mr-3"></i>Data Penerima Bantuan
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <div class="relative group">
+                                    <a href="{% url 'documents:public_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                        <i class="fas fa-file-alt mr-3"></i>Dokumen Transparansi <i class="fas fa-chevron-right ml-auto text-xs"></i>
+                                    </a>
+                                    <div class="absolute left-full top-0 mt-0 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                                        <div class="py-2">
+                                            <a href="{% url 'documents:public_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-list mr-3"></i>Semua Dokumen
+                                            </a>
+                                            <div class="border-t border-gray-200 my-1"></div>
+                                            <a href="{% url 'documents:transparansi_anggaran' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-chart-pie mr-3"></i>Transparansi Anggaran
+                                            </a>
+                                            <a href="{% url 'documents:produk_hukum' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-gavel mr-3"></i>Produk Hukum
+                                            </a>
+                                            <a href="{% url 'documents:profil_desa' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-info-circle mr-3"></i>Profil Desa
+                                            </a>
+                                            <a href="{% url 'documents:laporan' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-file-alt mr-3"></i>Laporan Desa
+                                            </a>
+                                            <div class="border-t border-gray-200 my-1"></div>
+                                            <a href="{% url 'documents:public_list' %}?category=apbdes" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-calculator mr-3"></i>APBDES
+                                            </a>
+                                            <a href="{% url 'documents:public_list' %}?category=realisasi_anggaran" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-chart-line mr-3"></i>Realisasi Anggaran
+                                            </a>
+                                            <a href="{% url 'documents:public_list' %}?category=dana_desa" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-money-bill-wave mr-3"></i>Dana Desa
+                                            </a>
+                                            <a href="{% url 'documents:public_list' %}?category=perdes" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-file-signature mr-3"></i>Peraturan Desa
+                                            </a>
+                                            <a href="{% url 'documents:public_list' %}?category=sk_kades" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-file-alt mr-3"></i>SK Kepala Desa
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="relative group">
+                                    <a href="{% url 'complaints:complaint_form' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                        <i class="fas fa-exclamation-triangle mr-3"></i>Keluhan & Pengaduan <i class="fas fa-chevron-right ml-auto text-xs"></i>
+                                    </a>
+                                    <div class="absolute left-full top-0 mt-0 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                                        <div class="py-2">
+                                            <a href="{% url 'complaints:complaint_form' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-plus mr-3"></i>Buat Keluhan
+                                            </a>
+                                            <a href="{% url 'complaints:complaint_tracking' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-search mr-3"></i>Lacak Status
+                                            </a>
+                                            <a href="{% url 'complaints:complaint_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-list mr-3"></i>Daftar Keluhan
+                                            </a>
+                                            <a href="{% url 'complaints:contact' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                                <i class="fas fa-phone mr-3"></i>Kontak Kami
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="{% url 'layanan:document_request' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-file-upload mr-3"></i>Ajukan Dokumen
+                                </a>
+                                <a href="{% url 'layanan:request_status' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-search mr-3"></i>Cek Status Dokumen
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <a href="javascript:void(0)" class="text-gray-700 hover:text-primary-600 transition-colors duration-200 font-medium relative flex items-center">
+                            Berita <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                        </a>
+                        <div class="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <div class="py-2">
+                                <a href="{% url 'news:list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-newspaper mr-3"></i>Semua Berita
+                                </a>
+                                <a href="{% url 'news:announcements' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-bullhorn mr-3"></i>Pengumuman
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <a href="{% url 'news:list' %}?featured=1" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-star mr-3"></i>Berita Utama
+                                </a>
+                                <a href="{% url 'news:list' %}?breaking=1" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-bolt mr-3"></i>Breaking News
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <a href="javascript:void(0)" class="text-gray-700 hover:text-primary-600 transition-colors duration-200 font-medium relative flex items-center">
+                            Ekonomi <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                        </a>
+                        <div class="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <div class="py-2">
+                                <a href="{% url 'business:business_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-store mr-3"></i>Semua Bisnis
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <a href="{% url 'business:umkm_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-building mr-3"></i>UMKM
+                                </a>
+                                <a href="{% url 'business:koperasi_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-handshake mr-3"></i>Koperasi
+                                </a>
+                                <a href="{% url 'business:bumg_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-landmark mr-3"></i>BUMG
+                                </a>
+                                <a href="{% url 'business:toko_warung_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-shopping-cart mr-3"></i>Toko & Warung
+                                </a>
+                                <a href="{% url 'business:layanan_jasa_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-tools mr-3"></i>Layanan Jasa
+                                </a>
+                                <div class="border-t border-gray-200 my-1"></div>
+                                <a href="{% url 'business:business_register' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-plus mr-3"></i>Daftarkan Bisnis
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative group">
+                        <a href="javascript:void(0)" class="text-gray-700 hover:text-primary-600 transition-colors duration-200 font-medium relative flex items-center">
+                            Wisata <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                            <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-600 transition-all duration-300 group-hover:w-full"></span>
+                        </a>
+                        <div class="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <div class="py-2">
+                                <a href="{% url 'tourism:dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-mountain mr-3"></i>Dashboard Wisata
+                                </a>
+                                <a href="{% url 'tourism:location_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-map-marker-alt mr-3"></i>Destinasi Wisata
+                                </a>
+                                <a href="{% url 'tourism:category_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-tags mr-3"></i>Kategori Wisata
+                                </a>
+                                <a href="{% url 'tourism:event_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-calendar-alt mr-3"></i>Event Wisata
+                                </a>
+                                <a href="{% url 'tourism:package_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-suitcase mr-3"></i>Paket Wisata
+                                </a>
+                                <a href="{% url 'tourism:search' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200">
+                                    <i class="fas fa-search mr-3"></i>Cari Wisata
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 touch-target" aria-label="Notifications">
+                            <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center relative">
+                                <i class="fas fa-bell text-white text-xs"></i>
+                                <span id="notificationBadge" class="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-[8px] font-bold">0</span>
+                                </span>
+                            </div>
+                        </button>
+                        <div id="notificationsModal" class="absolute top-full right-0 mt-2 w-64 sm:w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 hidden">
+                            <div class="p-2 sm:p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-base sm:text-lg font-bold text-gray-900">Notifikasi</h3>
+                                    <button onclick="toggleNotifications()" class="text-gray-400 hover:text-gray-600 p-1 touch-target">
+                                        <i class="fas fa-times text-sm"></i>
+                                    </button>
+                                </div>
+                                <div id="notificationsList" class="space-y-2 max-h-48 sm:max-h-64 overflow-y-auto">
+                                    <div id="notificationsLoading" class="text-center py-3 sm:py-4">
+                                        <i class="fas fa-spinner fa-spin text-gray-400 text-sm"></i>
+                                        <p class="text-xs sm:text-sm text-gray-500 mt-2">Memuat notifikasi...</p>
+                                    </div>
+                                    <div id="notificationsEmpty" class="text-center py-6 sm:py-8 hidden">
+                                        <i class="fas fa-bell-slash text-gray-400 text-xl sm:text-2xl mb-2"></i>
+                                        <p class="text-xs sm:text-sm text-gray-500">Tidak ada notifikasi</p>
+                                    </div>
+                                </div>
+                                <div class="mt-3 pt-3 border-t border-gray-200">
+                                    <a href="{% url 'news:announcements' %}" class="block w-full text-center bg-primary-600 hover:bg-primary-700 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-300 touch-target">
+                                        Lihat Semua Notifikasi
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="md:hidden p-2 rounded-lg text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition-colors duration-200 touch-target mobile-menu-button flex items-center justify-center" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                        <div class="hamburger-icon-medium">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            <div class="mobile-menu hidden md:block lg:hidden border-t border-gray-200 bg-white transition-all duration-300">
+                <div class="px-2 pt-2 pb-3 space-y-1">
+                    <a href="{% url 'core:home' %}" class="block px-3 py-3 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg font-medium transition-colors duration-200 touch-target">
+                        <i class="fas fa-home mr-3"></i>Beranda
+                    </a>
+                    <div class="has-submenu">
+                        <a href="javascript:void(0)" class="block px-3 py-3 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg font-medium transition-colors duration-200 touch-target" onclick="toggleSubmenu(this)">
+                            <i class="fas fa-info-circle mr-3"></i>Profil Desa <i class="fas fa-chevron-down float-right mt-1 text-xs"></i>
+                        </a>
+                        <div class="submenu">
+                            <a href="{% url 'village_profile:dashboard' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-home mr-3"></i>Dashboard Profil
+                            </a>
+                            <a href="{% url 'village_profile:vision_mission' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-bullseye mr-3"></i>Visi & Misi
+                            </a>
+                            <a href="{% url 'village_profile:officials' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-users mr-3"></i>Perangkat Desa
+                            </a>
+                            <a href="{% url 'village_profile:facilities' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-building mr-3"></i>Fasilitas Desa
+                            </a>
+                            <a href="{% url 'village_profile:geography' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-map-marker-alt mr-3"></i>Geografi
+                            </a>
+                            <a href="{% url 'village_profile:demography' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-chart-bar mr-3"></i>Demografi
+                            </a>
+                            <a href="{% url 'references:population' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-users mr-3"></i>Statistik Penduduk
+                            </a>
+                            <a href="{% url 'village_profile:history' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-scroll mr-3"></i>Sejarah Desa
+                            </a>
+                            <a href="{% url 'village_profile:gallery' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-images mr-3"></i>Galeri Foto
+                            </a>
+                        </div>
+                    </div>
+                    <div class="has-submenu">
+                        <a href="javascript:void(0)" class="block px-3 py-3 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg font-medium transition-colors duration-200 touch-target" onclick="toggleSubmenu(this)">
+                            <i class="fas fa-users mr-3"></i>Organisasi <i class="fas fa-chevron-down float-right mt-1 text-xs"></i>
+                        </a>
+                        <div class="submenu">
+                            <a href="{% url 'organization:organization_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-users mr-3"></i>Semua Organisasi
+                            </a>
+                            <a href="{% url 'organization:perangkat_desa_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-user-tie mr-3"></i>Perangkat Desa
+                            </a>
+                            <a href="{% url 'organization:lembaga_adat_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-landmark mr-3"></i>Lembaga Adat
+                            </a>
+                            <a href="{% url 'organization:pkk_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-female mr-3"></i>PKK
+                            </a>
+                            <a href="{% url 'organization:kepemudaan_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-user-friends mr-3"></i>Kepemudaan
+                            </a>
+                            <a href="{% url 'organization:karang_taruna_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-users mr-3"></i>Karang Taruna
+                            </a>
+                        </div>
+                    </div>
+                    <div class="has-submenu">
+                        <a href="javascript:void(0)" class="block px-3 py-3 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg font-medium transition-colors duration-200 touch-target" onclick="toggleSubmenu(this)">
+                            <i class="fas fa-cogs mr-3"></i>Layanan <i class="fas fa-chevron-down float-right mt-1 text-xs"></i>
+                        </a>
+                        <div class="submenu">
+                            <a href="{% url 'layanan:index' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-home mr-3"></i>Dashboard Layanan
+                            </a>
+                            <a href="{% url 'layanan:letter_services' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-envelope mr-3"></i>Layanan Surat
+                            </a>
+                            <a href="{% url 'layanan:document_services' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-file-alt mr-3"></i>Layanan Dokumen
+                            </a>
+                            <a href="{% url 'layanan:posyandu_services' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-heartbeat mr-3"></i>Layanan Posyandu
+                            </a>
+                            <a href="{% url 'business:business_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-briefcase mr-3"></i>Daftar Bisnis
+                            </a>
+                            <a href="{% url 'layanan:tourism_services' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-mountain mr-3"></i>Layanan Wisata
+                            </a>
+                            <a href="{% url 'beneficiaries:index' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-hand-holding-heart mr-3"></i>Data Penerima Bantuan
+                            </a>
+                            <div class="has-submenu">
+                                <a href="javascript:void(0)" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200" onclick="toggleSubmenu(this)">
+                                    <i class="fas fa-file-alt mr-3"></i>Dokumen
+                                    Transparansi <i class="fas fa-chevron-down float-right mt-1 text-xs"></i>
+                                </a>
+                                <div class="submenu">
+                                    <a href="{% url 'documents:public_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-list mr-3"></i>Semua Dokumen
+                                    </a>
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                    <a href="{% url 'documents:transparansi_anggaran' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-chart-pie mr-3"></i>Transparansi Anggaran
+                                    </a>
+                                    <a href="{% url 'documents:produk_hukum' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-gavel mr-3"></i>Produk Hukum
+                                    </a>
+                                    <a href="{% url 'documents:profil_desa' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-info-circle mr-3"></i>Profil Desa
+                                    </a>
+                                    <a href="{% url 'documents:laporan' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-file-alt mr-3"></i>Laporan Desa
+                                    </a>
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                    <a href="{% url 'documents:public_list' %}?category=apbdes" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-calculator mr-3"></i>APBDES
+                                    </a>
+                                    <a href="{% url 'documents:public_list' %}?category=realisasi_anggaran" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-chart-line mr-3"></i>Realisasi Anggaran
+                                    </a>
+                                    <a href="{% url 'documents:public_list' %}?category=dana_desa" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-money-bill-wave mr-3"></i>Dana Desa
+                                    </a>
+                                    <a href="{% url 'documents:public_list' %}?category=perdes" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-file-signature mr-3"></i>Peraturan Desa
+                                    </a>
+                                    <a href="{% url 'documents:public_list' %}?category=sk_kades" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-file-alt mr-3"></i>SK Kepala Desa
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="has-submenu">
+                                <a href="javascript:void(0)" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200" onclick="toggleSubmenu(this)">
+                                    <i class="fas fa-exclamation-triangle mr-3"></i>Keluhan & Pengaduan <i class="fas fa-chevron-down float-right mt-1 text-xs"></i>
+                                </a>
+                                <div class="submenu">
+                                    <a href="{% url 'complaints:complaint_form' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-plus mr-3"></i>Buat Keluhan
+                                    </a>
+                                    <a href="{% url 'complaints:complaint_tracking' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-search mr-3"></i>Lacak Status
+                                    </a>
+                                    <a href="{% url 'complaints:complaint_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-list mr-3"></i>Daftar Keluhan
+                                    </a>
+                                    <a href="{% url 'complaints:contact' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                        <i class="fas fa-phone mr-3"></i>Kontak Kami
+                                    </a>
+                                </div>
+                            </div>
+                            <a href="{% url 'layanan:document_request' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-file-upload mr-3"></i>Ajukan Dokumen
+                            </a>
+                            <a href="{% url 'layanan:request_status' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-search mr-3"></i>Cek Status Dokumen
+                            </a>
+                        </div>
+                    </div>
+                    <div class="has-submenu">
+                        <a href="javascript:void(0)" class="block px-3 py-3 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg font-medium transition-colors duration-200 touch-target" onclick="toggleSubmenu(this)">
+                            <i class="fas fa-newspaper mr-3"></i>Berita <i class="fas fa-chevron-down float-right mt-1 text-xs"></i>
+                        </a>
+                        <div class="submenu">
+                            <a href="{% url 'news:list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-newspaper mr-3"></i>Semua Berita
+                            </a>
+                            <a href="{% url 'news:announcements' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-bullhorn mr-3"></i>Pengumuman
+                            </a>
+                            <a href="{% url 'news:list' %}?featured=1" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-star mr-3"></i>Berita Utama
+                            </a>
+                            <a href="{% url 'news:list' %}?breaking=1" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-bolt mr-3"></i>Breaking News
+                            </a>
+                        </div>
+                    </div>
+                    <div class="has-submenu">
+                        <a href="javascript:void(0)" class="block px-3 py-3 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg font-medium transition-colors duration-200 touch-target" onclick="toggleSubmenu(this)">
+                            <i class="fas fa-briefcase mr-3"></i>Ekonomi <i class="fas fa-chevron-down float-right mt-1 text-xs"></i>
+                        </a>
+                        <div class="submenu">
+                            <a href="{% url 'business:business_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-store mr-3"></i>Semua Bisnis
+                            </a>
+                            <a href="{% url 'business:umkm_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-building mr-3"></i>UMKM
+                            </a>
+                            <a href="{% url 'business:koperasi_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-handshake mr-3"></i>Koperasi
+                            </a>
+                            <a href="{% url 'business:bumg_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-landmark mr-3"></i>BUMG
+                            </a>
+                            <a href="{% url 'business:toko_warung_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-shopping-cart mr-3"></i>Toko & Warung
+                            </a>
+                            <a href="{% url 'business:layanan_jasa_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-tools mr-3"></i>Layanan Jasa
+                            </a>
+                            <div class="border-t border-gray-200 my-1"></div>
+                            <a href="{% url 'business:business_register' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-plus mr-3"></i>Daftarkan Bisnis
+                            </a>
+                        </div>
+                    </div>
+                    <div class="has-submenu">
+                        <a href="javascript:void(0)" class="block px-3 py-3 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-lg font-medium transition-colors duration-200 touch-target" onclick="toggleSubmenu(this)">
+                            <i class="fas fa-mountain mr-3"></i>Wisata <i class="fas fa-chevron-down float-right mt-1 text-xs"></i>
+                        </a>
+                        <div class="submenu">
+                            <a href="{% url 'tourism:dashboard' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-mountain mr-3"></i>Dashboard Wisata
+                            </a>
+                            <a href="{% url 'tourism:location_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-map-marker-alt mr-3"></i>Destinasi Wisata
+                            </a>
+                            <a href="{% url 'tourism:category_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-tags mr-3"></i>Kategori Wisata
+                            </a>
+                            <a href="{% url 'tourism:event_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-calendar-alt mr-3"></i>Event Wisata
+                            </a>
+                            <a href="{% url 'tourism:package_list' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-suitcase mr-3"></i>Paket Wisata
+                            </a>
+                            <a href="{% url 'tourism:search' %}" class="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-search mr-3"></i>Cari Wisata
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-40 opacity-0 invisible transition-all duration-300 md:hidden" id="mobileSidebarOverlay" onclick="closeMobileSidebar()"></div>
+    <div class="fixed top-0 right-0 h-full w-64 bg-white z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto md:hidden shadow-xl" id="mobileSidebar">
+        <div class="p-3 bg-blue-600 border-b border-gray-200 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                {% if village_profile.logo %}
+                <img src="{{ village_profile.logo.url }}" alt="{{ village_profile.name|default:'Desa Pulosarok' }}" class="h-10 w-auto rounded">
+                {% elif website_settings.logo %}
+                <img src="{{ website_settings.logo.url }}" alt="{{ website_settings.site_name|default:'Desa Pulosarok' }}" class="h-10 w-auto rounded">
+                {% else %}
+                <div class="h-10 w-10 bg-white rounded-full flex items-center justify-center">
+                    <i class="fas fa-home text-blue-600 text-lg"></i>
+                </div>
+                {% endif %}
+                <span class="text-base font-bold text-white">{{ village_profile.name|default:'Pulosarok' }}</span>
+            </div>
+            <button onclick="closeMobileSidebar()" class="text-white hover:text-gray-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <div class="p-3">
+            <div class="space-y-1">
+                <a href="{% url 'core:home' %}" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                    <i class="fas fa-home w-4 mr-2 text-blue-600"></i> Beranda
+                </a>
+                <div class="has-submenu" id="profil-desa-submenu">
+                    <button onclick="toggleSubmenu(this)" class="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                        <div class="flex items-center">
+                            <i class="fas fa-info-circle w-4 mr-2 text-blue-600"></i> Profil Desa
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div class="submenu ml-3 mt-1 space-y-0.5">
+                        <a href="{% url 'village_profile:dashboard' %}" class="block px-3 py-1.5 text-xs text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors duration-200">
+                            <i class="fas fa-home w-4 mr-2"></i>Dashboard
+                        </a>
+                        <a href="{% url 'village_profile:vision_mission' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-bullseye w-4 mr-2"></i>Visi & Misi
+                        </a>
+                        <a href="{% url 'village_profile:officials' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-users w-4 mr-2"></i>Perangkat Desa
+                        </a>
+                        <a href="{% url 'village_profile:facilities' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-building w-4 mr-2"></i>Fasilitas
+                        </a>
+                        <a href="{% url 'village_profile:gallery' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-images w-4 mr-2"></i>Galeri
+                        </a>
+                    </div>
+                </div>
+                <div class="has-submenu" id="organisasi-submenu">
+                    <button onclick="toggleSubmenu(this)" class="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                        <div class="flex items-center">
+                            <i class="fas fa-users w-5 mr-3 text-green-600"></i> Organisasi
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div class="submenu ml-3 mt-1 space-y-0.5">
+                        <a href="{% url 'organization:organization_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-users w-4 mr-2"></i>Semua Organisasi
+                        </a>
+                        <a href="{% url 'organization:perangkat_desa_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-user-tie w-4 mr-2"></i>Perangkat Desa
+                        </a>
+                        <a href="{% url 'organization:lembaga_adat_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-landmark w-4 mr-2"></i>Lembaga Adat
+                        </a>
+                        <a href="{% url 'organization:pkk_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-female w-4 mr-2"></i>PKK
+                        </a>
+                        <a href="{% url 'organization:kepemudaan_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-user-friends w-4 mr-2"></i>Kepemudaan
+                        </a>
+                        <a href="{% url 'organization:karang_taruna_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-green-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-users w-4 mr-2"></i>Karang Taruna
+                        </a>
+                    </div>
+                </div>
+                <div class="has-submenu" id="layanan-submenu">
+                    <button onclick="toggleSubmenu(this)" class="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                        <div class="flex items-center">
+                            <i class="fas fa-cogs w-5 mr-3 text-purple-600"></i> Layanan
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div class="submenu ml-3 mt-1 space-y-0.5">
+                        <a href="{% url 'layanan:index' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-home w-4 mr-2"></i>Dashboard
+                        </a>
+                        <a href="{% url 'layanan:letter_services' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-envelope w-4 mr-2"></i>Surat
+                        </a>
+                        <a href="{% url 'layanan:document_services' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-file-alt w-4 mr-2"></i>Dokumen
+                        </a>
+                        <a href="{% url 'layanan:posyandu_services' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-heartbeat w-4 mr-2"></i>Posyandu
+                        </a>
+                        <a href="{% url 'business:business_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-briefcase w-4 mr-2"></i>Daftar Bisnis
+                        </a>
+                        <a href="{% url 'layanan:tourism_services' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-mountain w-4 mr-2"></i>Wisata
+                        </a>
+                        <a href="{% url 'beneficiaries:index' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-purple-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-hand-holding-heart w-4 mr-2"></i>Penerima Bantuan
+                        </a>
+                    </div>
+                </div>
+                <div class="has-submenu" id="dokumen-transparansi-submenu">
+                    <button onclick="toggleSubmenu(this)" class="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                        <div class="flex items-center">
+                            <i class="fas fa-file-alt w-5 mr-3 text-orange-600"></i> Dokumen Transparansi
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div class="submenu ml-3 mt-1 space-y-0.5">
+                        <a href="{% url 'documents:public_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-list w-4 mr-2"></i>Semua Dokumen
+                        </a>
+                        <a href="{% url 'documents:transparansi_anggaran' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-chart-pie w-4 mr-2"></i>Anggaran
+                        </a>
+                        <a href="{% url 'documents:produk_hukum' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-gavel w-4 mr-2"></i>Produk Hukum
+                        </a>
+                        <a href="{% url 'documents:laporan' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-file-alt w-4 mr-2"></i>Laporan
+                        </a>
+                        <a href="{% url 'documents:public_list' %}?category=apbdes" class="block px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-calculator w-4 mr-2"></i>APBDES
+                        </a>
+                        <a href="{% url 'documents:public_list' %}?category=perdes" class="block px-4 py-2 text-sm text-gray-600 hover:text-orange-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-file-signature w-4 mr-2"></i>Perdes
+                        </a>
+                    </div>
+                </div>
+                <div class="has-submenu" id="keluhan-pengaduan-submenu">
+                    <button onclick="toggleSubmenu(this)" class="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle w-5 mr-3 text-red-600"></i> Keluhan & Pengaduan
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div class="submenu ml-3 mt-1 space-y-0.5">
+                        <a href="{% url 'complaints:complaint_form' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-plus w-4 mr-2"></i>Buat Keluhan
+                        </a>
+                        <a href="{% url 'complaints:complaint_tracking' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-search w-4 mr-2"></i>Lacak Status
+                        </a>
+                        <a href="{% url 'complaints:contact' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-phone w-4 mr-2"></i>Kontak
+                        </a>
+                    </div>
+                </div>
+                <div class="has-submenu" id="berita-submenu">
+                    <button onclick="toggleSubmenu(this)" class="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                        <div class="flex items-center">
+                            <i class="fas fa-newspaper w-5 mr-3 text-indigo-600"></i> Berita
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div class="submenu ml-3 mt-1 space-y-0.5">
+                        <a href="{% url 'news:list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-newspaper w-4 mr-2"></i>Semua Berita
+                        </a>
+                        <a href="{% url 'news:announcements' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-bullhorn w-4 mr-2"></i>Pengumuman
+                        </a>
+                        <a href="{% url 'news:list' %}?featured=1" class="block px-4 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-star w-4 mr-2"></i>Berita Utama
+                        </a>
+                    </div>
+                </div>
+                <div class="has-submenu" id="ekonomi-submenu">
+                    <button onclick="toggleSubmenu(this)" class="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                        <div class="flex items-center">
+                            <i class="fas fa-briefcase w-5 mr-3 text-yellow-600"></i> Ekonomi
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div class="submenu ml-3 mt-1 space-y-0.5">
+                        <a href="{% url 'business:business_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-store w-4 mr-2"></i>Semua Bisnis
+                        </a>
+                        <a href="{% url 'business:umkm_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-building w-4 mr-2"></i>UMKM
+                        </a>
+                        <a href="{% url 'business:koperasi_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-handshake w-4 mr-2"></i>Koperasi
+                        </a>
+                        <a href="{% url 'business:bumg_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-landmark w-4 mr-2"></i>BUMG
+                        </a>
+                        <div class="border-t border-gray-200 my-1"></div>
+                        <a href="{% url 'business:business_register' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-plus w-4 mr-2"></i>Daftarkan Bisnis
+                        </a>
+                    </div>
+                </div>
+                <div class="has-submenu" id="wisata-submenu">
+                    <button onclick="toggleSubmenu(this)" class="w-full flex items-center justify-between px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-all duration-200 text-sm font-medium">
+                        <div class="flex items-center">
+                            <i class="fas fa-mountain w-5 mr-3 text-teal-600"></i> Wisata
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div class="submenu ml-3 mt-1 space-y-0.5">
+                        <a href="{% url 'tourism:dashboard' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-teal-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-mountain w-4 mr-2"></i>Dashboard
+                        </a>
+                        <a href="{% url 'tourism:location_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-teal-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-map-marker-alt w-4 mr-2"></i>Destinasi
+                        </a>
+                        <a href="{% url 'tourism:event_list' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-teal-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-calendar-alt w-4 mr-2"></i>Event
+                        </a>
+                        <a href="{% url 'tourism:search' %}" class="block px-4 py-2 text-sm text-gray-600 hover:text-teal-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                            <i class="fas fa-search w-4 mr-2"></i>Cari Wisata
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-gray-200">
+                <div class="px-4 mb-3">
+                    <button onclick="clearSubmenuStates()" class="w-full text-xs text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                        <i class="fas fa-refresh mr-1"></i>Reset Menu
+                    </button>
+                </div>
+            </div>
+            <div class="mt-6 pt-4 border-t border-gray-200">
+                <h4 class="text-sm font-semibold text-gray-700 mb-3 px-4">Media Sosial</h4>
+                <div class="flex space-x-2 px-4">
+                    {% if website_settings.facebook_url %}
+                    <a href="{{ website_settings.facebook_url }}" class="w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center justify-center transition-colors duration-200" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-facebook-f text-white text-sm"></i>
+                    </a>
+                    {% endif %}
+                    {% if website_settings.instagram_url %}
+                    <a href="{{ website_settings.instagram_url }}" class="w-8 h-8 bg-pink-600 hover:bg-pink-700 rounded-lg flex items-center justify-center transition-colors duration-200" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-instagram text-white text-sm"></i>
+                    </a>
+                    {% endif %}
+                    {% if website_settings.twitter_url %}
+                    <a href="{{ website_settings.twitter_url }}" class="w-8 h-8 bg-blue-400 hover:bg-blue-500 rounded-lg flex items-center justify-center transition-colors duration-200" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-twitter text-white text-sm"></i>
+                    </a>
+                    {% endif %}
+                    {% if website_settings.youtube_url %}
+                    <a href="{{ website_settings.youtube_url }}" class="w-8 h-8 bg-red-600 hover:bg-red-700 rounded-lg flex items-center justify-center transition-colors duration-200" target="_blank" rel="noopener noreferrer">
+                        <i class="fab fa-youtube text-white text-sm"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <main class="pt-16 min-h-screen">
+        {% if request.resolver_match.url_name != 'home' %}
+        <div class="fixed top-20 left-4 z-40">
+            <button onclick="goBack()" class="bg-white/90 backdrop-blur-md hover:bg-white text-gray-700 hover:text-primary-600 px-3 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 touch-target" aria-label="Kembali">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span class="hidden sm:inline">Kembali</span>
+            </button>
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="custom-footer-dark">
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-16 relative">
+            <div class="block md:hidden mobile-footer">
+                <div class="text-center mb-6">
+                    <div class="flex items-center justify-center space-x-3 mb-3">
+                        {% if village_profile.logo %}
+                        <img src="{{ village_profile.logo.url }}" alt="{{ village_profile.name|default:'Desa Pulosarok' }}" class="h-8 w-auto">
+                        {% elif website_settings.logo %}
+                        <img src="{{ website_settings.logo.url }}" alt="{{ website_settings.site_name|default:'Desa Pulosarok' }}" class="h-8 w-auto">
+                        {% else %}
+                        <img src="/static/images/logo-desa.svg" alt="{{ website_settings.site_name|default:'Desa Pulosarok' }}" class="h-8 w-auto">
+                        {% endif %}
+                        <h3 class="footer-title bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent text-lg font-bold">{{ village_profile.name|default:website_settings.site_name|default:'Desa Pulosarok' }}</h3>
+                    </div>
+                    <p class="custom-footer-text"> Website resmi {{ village_profile.name|default:'Desa Pulosarok' }} </p>
+                    <div class="flex justify-center social-icons space-x-3 mt-4">
+                        {% if website_settings.facebook_url %}
+                        <a href="{{ website_settings.facebook_url }}" class="w-10 h-10 bg-gray-800 hover:bg-blue-600 rounded-xl flex items-center justify-center transition-all duration-300 group hover:scale-110 shadow-lg" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-facebook-f custom-footer-icon"></i>
+                        </a>
+                        {% endif %}
+                        {% if website_settings.instagram_url %}
+                        <a href="{{ website_settings.instagram_url }}" class="w-10 h-10 bg-gray-800 hover:bg-pink-600 rounded-xl flex items-center justify-center transition-all duration-300 group hover:scale-110 shadow-lg" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-instagram custom-footer-icon"></i>
+                        </a>
+                        {% endif %}
+                        {% if website_settings.twitter_url %}
+                        <a href="{{ website_settings.twitter_url }}" class="w-10 h-10 bg-gray-800 hover:bg-blue-400 rounded-xl flex items-center justify-center transition-all duration-300 group hover:scale-110 shadow-lg" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-twitter custom-footer-icon"></i>
+                        </a>
+                        {% endif %}
+                        {% if website_settings.youtube_url %}
+                        <a href="{{ website_settings.youtube_url }}" class="w-10 h-10 bg-gray-800 hover:bg-red-600 rounded-xl flex items-center justify-center transition-all duration-300 group hover:scale-110 shadow-lg" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-youtube custom-footer-icon"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="space-y-3 mb-6">
+                    {% if website_settings.contact_phone %}
+                    <div class="flex items-center justify-center space-x-3 contact-item hover:text-white transition-all duration-300 hover:translate-x-1">
+                        <div class="contact-icon bg-blue-600 rounded-lg flex items-center justify-center w-8 h-8">
+                            <i class="fas fa-phone text-white text-sm"></i>
+                        </div>
+                        <span class="custom-footer-text">{{ website_settings.contact_phone }}</span>
+                    </div>
+                    {% endif %}
+                    {% if website_settings.contact_email %}
+                    <div class="flex items-center justify-center space-x-3 contact-item hover:text-white transition-all duration-300 hover:translate-x-1">
+                        <div class="contact-icon bg-green-600 rounded-lg flex items-center justify-center w-8 h-8">
+                            <i class="fas fa-envelope text-white text-sm"></i>
+                        </div>
+                        <span class="custom-footer-text">{{ website_settings.contact_email }}</span>
+                    </div>
+                    {% endif %}
+                    {% if website_settings.contact_address %}
+                    <div class="flex items-start justify-center space-x-3 contact-item hover:text-white transition-all duration-300 hover:translate-x-1">
+                        <div class="contact-icon bg-purple-600 rounded-lg flex items-center justify-center w-8 h-8 mt-0.5">
+                            <i class="fas fa-map-marker-alt text-white text-sm"></i>
+                        </div>
+                        <span class="custom-footer-text">{{ website_settings.contact_address }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+                <div class="lg:col-span-2">
+                    <div class="flex items-center space-x-4 mb-6">
+                        {% if village_profile.logo %}
+                        <img src="{{ village_profile.logo.url }}" alt="{{ village_profile.name|default:'Desa Pulosarok' }}" class="h-12 w-auto">
+                        {% elif website_settings.logo %}
+                        <img src="{{ website_settings.logo.url }}" alt="{{ website_settings.site_name|default:'Desa Pulosarok' }}" class="h-12 w-auto">
+                        {% else %}
+                        <img src="/static/images/logo-desa.svg" alt="{{ website_settings.site_name|default:'Desa Pulosarok' }}" class="h-12 w-auto">
+                        {% endif %}
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">{{ village_profile.name|default:website_settings.site_name|default:'Desa Pulosarok' }}</h3>
+                    </div>
+                    <p class="custom-footer-text"> Website resmi {{ village_profile.name|default:'Desa Pulosarok' }}. Menyediakan informasi desa, layanan administrasi, dan berita terkini untuk masyarakat. </p>
+                    <div class="flex space-x-4">
+                        {% if website_settings.facebook_url %}
+                        <a href="{{ website_settings.facebook_url }}" class="w-12 h-12 bg-gray-800 hover:bg-blue-600 rounded-xl flex items-center justify-center transition-all duration-300 group hover:scale-110 shadow-lg" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-facebook-f custom-footer-icon"></i>
+                        </a>
+                        {% endif %}
+                        {% if website_settings.instagram_url %}
+                        <a href="{{ website_settings.instagram_url }}" class="w-12 h-12 bg-gray-800 hover:bg-pink-600 rounded-xl flex items-center justify-center transition-all duration-300 group hover:scale-110 shadow-lg" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-instagram custom-footer-icon"></i>
+                        </a>
+                        {% endif %}
+                        {% if website_settings.twitter_url %}
+                        <a href="{{ website_settings.twitter_url }}" class="w-12 h-12 bg-gray-800 hover:bg-blue-400 rounded-xl flex items-center justify-center transition-all duration-300 group hover:scale-110 shadow-lg" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-twitter custom-footer-icon"></i>
+                        </a>
+                        {% endif %}
+                        {% if website_settings.youtube_url %}
+                        <a href="{{ website_settings.youtube_url }}" class="w-12 h-12 bg-gray-800 hover:bg-red-600 rounded-xl flex items-center justify-center transition-all duration-300 group hover:scale-110 shadow-lg" target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-youtube custom-footer-icon"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <h4 class="custom-footer-title">Menu Cepat</h4>
+                    <ul class="space-y-3">
+                        <li>
+                            <a href="{% url 'core:home' %}" class="custom-footer-link">
+                                <i class="fas fa-home mr-3 group-hover:text-blue-400 text-sm"></i>Beranda
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'core:profile' %}" class="custom-footer-link">
+                                <i class="fas fa-info-circle mr-3 group-hover:text-blue-400 text-sm"></i>Profil Desa
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'news:list' %}" class="text-cyan-300 hover:text-blue-400 transition-all duration-300 flex items-center group text-base hover:translate-x-2 animate-pulse">
+                                <i class="fas fa-newspaper mr-3 group-hover:text-blue-400 text-sm"></i>Berita
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'business:business_list' %}" class="text-cyan-300 hover:text-blue-400 transition-all duration-300 flex items-center group text-base hover:translate-x-2 animate-pulse">
+                                <i class="fas fa-store mr-3 group-hover:text-blue-400 text-sm"></i>UMKM
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'tourism:dashboard' %}" class="text-cyan-300 hover:text-blue-400 transition-all duration-300 flex items-center group text-base hover:translate-x-2 animate-pulse">
+                                <i class="fas fa-mountain mr-3 group-hover:text-blue-400 text-sm"></i>Wisata
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold mb-6 text-green-400">Kontak</h4>
+                    <div class="space-y-4">
+                        {% if website_settings.contact_phone %}
+                        <div class="flex items-center space-x-4 hover:text-white transition-all duration-300 hover:translate-x-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <i class="fas fa-phone text-white text-sm"></i>
+                            </div>
+                            <span class="text-cyan-300 text-base animate-pulse">{{ website_settings.contact_phone }}</span>
+                        </div>
+                        {% endif %}
+                        {% if website_settings.contact_email %}
+                        <div class="flex items-center space-x-4 hover:text-white transition-all duration-300 hover:translate-x-2">
+                            <div class="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <i class="fas fa-envelope text-white text-sm"></i>
+                            </div>
+                            <span class="text-cyan-300 text-base animate-pulse">{{ website_settings.contact_email }}</span>
+                        </div>
+                        {% endif %}
+                        {% if website_settings.contact_address %}
+                        <div class="flex items-start space-x-4 hover:text-white transition-all duration-300 hover:translate-x-2">
+                            <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center mt-1 shadow-lg">
+                                <i class="fas fa-map-marker-alt text-white text-sm"></i>
+                            </div>
+                            <span class="text-cyan-300 text-sm leading-relaxed animate-pulse">{{ website_settings.contact_address }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 md:mt-12 lg:mt-16 pt-6 md:pt-8 lg:pt-10 footer-bottom">
+                <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                    <div class="text-center md:text-left">
+                        <p class="text-cyan-300 text-base animate-pulse"> &copy; {% now "Y" %} {{ village_profile.name|default:website_settings.site_name|default:'Desa Pulosarok' }}. Semua hak dilindungi undang-undang. </p>
+                        <p class="text-cyan-300 text-base mt-3 font-medium animate-pulse"> Dibuat Oleh <i class="fas fa-heart text-red-500 animate-pulse"></i> oleh Mahasiswa KKN TI Universitas Muhammadiyah Sumatera Utara 2025</p>
+                    </div>
+                    <div class="flex footer-links space-x-6">
+                        <a href="javascript:void(0)" class="text-cyan-300 hover:text-blue-400 transition-all duration-300 text-base hover:translate-x-1 inline-block animate-pulse">Kebijakan Privasi</a>
+                        <a href="javascript:void(0)" class="text-cyan-300 hover:text-blue-400 transition-all duration-300 text-base hover:translate-x-1 inline-block animate-pulse">Syarat & Ketentuan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script>
+        function toggleMobileMenu() {
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('mobileSidebarOverlay');
+            const hamburgerIcon = document.querySelector('.hamburger-icon-medium');
+            console.log('toggleMobileMenu called');
+            console.log('sidebar:', sidebar);
+            console.log('overlay:', overlay);
+            console.log('hamburgerIcon:', hamburgerIcon);
+            const screenWidth = window.innerWidth;
+            console.log('screenWidth:', screenWidth);
+            if (screenWidth < 768) {
+                if (sidebar && overlay) {
+                    console.log('sidebar classes before:', sidebar.className);
+                    if (sidebar.classList.contains('translate-x-full')) {
+                        console.log('Opening sidebar');
+                        sidebar.classList.remove('translate-x-full');
+                        sidebar.classList.add('translate-x-0');
+                        overlay.classList.remove('opacity-0', 'invisible');
+                        overlay.classList.add('opacity-100', 'visible');
+                    } else {
+                        console.log('Closing sidebar');
+                        sidebar.classList.add('translate-x-full');
+                        sidebar.classList.remove('translate-x-0');
+                        overlay.classList.add('opacity-0', 'invisible');
+                        overlay.classList.remove('opacity-100', 'visible');
+                    }
+                    console.log('sidebar classes after:', sidebar.className);
+                }
+            } else if (screenWidth >= 768 && screenWidth < 1024) {
+                if (mobileMenu) {
+                    mobileMenu.classList.toggle('hidden');
+                }
+            }
+            if (hamburgerIcon) {
+                hamburgerIcon.classList.toggle('open');
+            }
+            if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                document.body.style.overflow = 'hidden';
+            } else if (sidebar && !sidebar.classList.contains('translate-x-full')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+        function closeMobileSidebar() {
+            console.log('closeMobileSidebar called');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('mobileSidebarOverlay');
+            const hamburgerIcon = document.querySelector('.hamburger-icon-medium');
+            console.log('sidebar:', sidebar);
+            console.log('overlay:', overlay);
+            console.log('hamburgerIcon:', hamburgerIcon);
+            if (mobileMenu) {
+                mobileMenu.classList.add('hidden');
+            }
+            if (sidebar && overlay) {
+                console.log('Closing sidebar');
+                sidebar.classList.add('translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+                overlay.classList.add('opacity-0', 'invisible');
+                overlay.classList.remove('opacity-100', 'visible');
+                console.log('sidebar classes after close:', sidebar.className);
+            }
+            if (hamburgerIcon) {
+                hamburgerIcon.classList.remove('open');
+            }
+            document.body.style.overflow = '';
+            if (sidebar) {
+                sidebar.style.transform = 'translateX(100%)';
+            }
+            if (overlay) {
+                overlay.style.opacity = '0';
+                overlay.style.visibility = 'hidden';
+            }
+        }
+        function toggleSidebarSubmenu(element) {
+            const submenu = element.nextElementSibling;
+            const chevron = element.querySelector('i.fa-chevron-down');
+            document.querySelectorAll('.sidebar-submenu').forEach(item => {
+                if (item !== submenu) {
+                    item.classList.add('max-h-0', 'overflow-hidden');
+                    item.classList.remove('max-h-96');
+                }
+            });
+            document.querySelectorAll('.sidebar-menu-link').forEach(item => {
+                if (item !== element) {
+                    item.classList.remove('active');
+                }
+            });
+            if (submenu.classList.contains('max-h-0')) {
+                submenu.classList.remove('max-h-0', 'overflow-hidden');
+                submenu.classList.add('max-h-96');
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('max-h-0', 'overflow-hidden');
+                submenu.classList.remove('max-h-96');
+                chevron.style.transform = 'rotate(0deg)';
+            }
+            element.classList.toggle('active');
+        }
+        function toggleSubmenu(element) {
+            const submenu = element.nextElementSibling;
+            const chevron = element.querySelector('.fa-chevron-down');
+            const parent = element.parentElement;
+            if (!submenu || !chevron || !parent) {
+                console.warn('Missing elements for toggleSubmenu');
+                return;
+            }
+            if (parent.classList.contains('open')) {
+                submenu.style.maxHeight = '0';
+                chevron.style.transform = 'rotate(0deg)';
+                parent.classList.remove('open');
+                saveSubmenuState(parent.id, false);
+            } else {
+                submenu.style.maxHeight = submenu.scrollHeight + 'px';
+                chevron.style.transform = 'rotate(180deg)';
+                parent.classList.add('open');
+                saveSubmenuState(parent.id, true);
+            }
+        }
+        function saveSubmenuState(submenuId, isOpen) {
+            const submenuStates = JSON.parse(localStorage.getItem('submenuStates') || '{}');
+            submenuStates[submenuId] = isOpen;
+            localStorage.setItem('submenuStates', JSON.stringify(submenuStates));
+        }
+        function loadSubmenuStates() {
+            const submenuStates = JSON.parse(localStorage.getItem('submenuStates') || '{}');
+            Object.keys(submenuStates).forEach(submenuId => {
+                const parent = document.getElementById(submenuId);
+                if (parent && submenuStates[submenuId]) {
+                    const submenu = parent.querySelector('.submenu');
+                    const chevron = parent.querySelector('.fa-chevron-down');
+                    if (submenu && chevron) {
+                        submenu.style.maxHeight = submenu.scrollHeight + 'px';
+                        chevron.style.transform = 'rotate(180deg)';
+                        parent.classList.add('open');
+                    }
+                }
+            });
+        }
+        function clearSubmenuStates() {
+            localStorage.removeItem('submenuStates');
+            document.querySelectorAll('.has-submenu').forEach(item => {
+                const submenu = item.querySelector('.submenu');
+                const chevron = item.querySelector('.fa-chevron-down');
+                if (submenu && chevron) {
+                    submenu.style.maxHeight = '0';
+                    chevron.style.transform = 'rotate(0deg)';
+                    item.classList.remove('open');
+                }
+            });
+        }
+        function handleNavbarScroll() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 100) {
+                navbar.classList.add('shadow-lg');
+            } else {
+                navbar.classList.remove('shadow-lg');
+            }
+        }
+        function toggleNotifications() {
+            const modal = document.getElementById('notificationsModal');
+            if (modal) {
+                const isHidden = modal.classList.contains('hidden');
+                modal.classList.toggle('hidden');
+                if (isHidden) {
+                    loadNotifications();
+                }
+            }
+        }
+        async function loadNotifications() {
+            const loading = document.getElementById('notificationsLoading');
+            const empty = document.getElementById('notificationsEmpty');
+            const list = document.getElementById('notificationsList');
+            try {
+                loading.classList.remove('hidden');
+                empty.classList.add('hidden');
+                const response = await fetch('/news/api/announcements/');
+                const data = await response.json();
+                loading.classList.add('hidden');
+                if (data.success && data.data && data.data.length > 0) {
+                    renderNotifications(data.data);
+                    updateNotificationBadge(data.data.length);
+                } else {
+                    empty.classList.remove('hidden');
+                    updateNotificationBadge(0);
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+                updateNotificationBadge(0);
+            }
+        }
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                const badgeText = badge.querySelector('span');
+                if (badgeText) {
+                    badgeText.textContent = count;
+                    if (count > 0) {
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            }
+        }
+        function renderNotifications(notifications) {
+            const list = document.getElementById('notificationsList');
+            const empty = document.getElementById('notificationsEmpty');
+            if (notifications.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            const notificationsHTML = notifications.map(notification => {
+                const typeColors = {
+                    'info': 'blue',
+                    'warning': 'orange',
+                    'urgent': 'red',
+                    'schedule': 'purple',
+                    'event': 'green',
+                    'service': 'teal'
+                };
+                const color = typeColors[notification.type] || 'blue';
+                const icons = {
+                    'info': 'fas fa-info',
+                    'warning': 'fas fa-exclamation-triangle',
+                    'urgent': 'fas fa-bolt',
+                    'schedule': 'fas fa-calendar',
+                    'event': 'fas fa-users',
+                    'service': 'fas fa-tools'
+                };
+                const icon = icons[notification.type] || 'fas fa-info';
+                return ` <div class="bg-${color}-50 rounded-lg p-2 sm:p-3 border-l-4 border-${color}-500 cursor-pointer hover:bg-${color}-100 transition-colors duration-200"> <div class="flex items-center gap-2 sm:gap-3"> <div class="w-5 h-5 sm:w-6 sm:h-6 bg-${color}-500 rounded-full flex items-center justify-center flex-shrink-0"> <i class="${icon} text-white text-[10px] sm:text-xs"></i> </div> <div class="flex-1 min-w-0"> <h4 class="text-xs sm:text-sm font-bold text-gray-900 line-clamp-1 truncate">${notification.title}</h4> <span class="text-[10px] sm:text-xs text-gray-500">${formatDate(notification.startDate)}</span> </div> </div> </div> `;
+            }).join('');
+            list.innerHTML = notificationsHTML;
+        }
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays === 1) {
+                return 'Kemarin';
+            } else if (diffDays < 7) {
+                return `${diffDays} hari yang lalu`;
+            } else {
+                return date.toLocaleDateString('id-ID');
+            }
+        }
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('notificationsModal');
+            const button = event.target.closest('[onclick="toggleNotifications()"]');
+            if (modal && !modal.contains(event.target) && !button) {
+                modal.classList.add('hidden');
+            }
+        });
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '{% url "core:home" %}';
+            }
+        }
+        function initSmoothScrolling() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (!href || href === '#' || href.length <= 1) {
+                        return;
+                    }
+                    const target = document.querySelector(href);
+                    if (!target) {
+                        return;
+                    }
+                    e.preventDefault();
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                });
+            });
+        }
+        function showLoading(element) {
+            if (element) {
+                element.innerHTML = '<div class="loading-spinner"></div>';
+            }
+        }
+        function hideLoading(element, content) {
+            if (element) {
+                element.innerHTML = content;
+            }
+        }
+        function initDropdownBehavior() {
+            const dropdownGroups = document.querySelectorAll('.relative.group');
+            dropdownGroups.forEach((group) => {
+                const dropdown = group.querySelector('.absolute.top-full');
+                if (dropdown) {
+                    group.addEventListener('mouseenter', function() {
+                        dropdownGroups.forEach(otherGroup => {
+                            if (otherGroup !== group) {
+                                const otherDropdown = otherGroup.querySelector('.absolute.top-full');
+                                if (otherDropdown) {
+                                    otherDropdown.classList.remove('opacity-100', 'visible');
+                                    otherDropdown.classList.add('opacity-0', 'invisible');
+                                }
+                            }
+                        });
+                        dropdown.classList.remove('opacity-0', 'invisible');
+                        dropdown.classList.add('opacity-100', 'visible');
+                    });
+                    group.addEventListener('mouseleave', function() {
+                        dropdown.classList.remove('opacity-100', 'visible');
+                        dropdown.classList.add('opacity-0', 'invisible');
+                    });
+                }
+            });
+        }
+        async function loadNotificationCount() {
+            try {
+                const response = await fetch('/news/api/announcements/');
+                const data = await response.json();
+                if (data.success && data.data) {
+                    updateNotificationBadge(data.data.length);
+                } else {
+                    updateNotificationBadge(0);
+                }
+            } catch (error) {
+                console.error('Error loading notification count:', error);
+                updateNotificationBadge(0);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Initializing...');
+            const sidebar = document.getElementById('mobileSidebar');
+            const overlay = document.getElementById('mobileSidebarOverlay');
+            if (sidebar) {
+                sidebar.classList.add('translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+            }
+            if (overlay) {
+                overlay.classList.add('opacity-0', 'invisible');
+                overlay.classList.remove('opacity-100', 'visible');
+            }
+            initDropdownBehavior();
+            initSmoothScrolling();
+            loadSubmenuStates();
+            loadNotificationCount();
+            document.addEventListener('click', function(e) {
+                const sidebar = document.getElementById('mobileSidebar');
+                const overlay = document.getElementById('mobileSidebarOverlay');
+                const menuButton = document.querySelector('[onclick="toggleMobileMenu()"]');
+                if (sidebar && overlay && menuButton) {
+                    if (!sidebar.classList.contains('translate-x-full')) {
+                        if (!sidebar.contains(e.target) && !menuButton.contains(e.target)) {
+                            closeMobileSidebar();
+                        }
+                    }
+                }
+            });
+        });
+        window.addEventListener('scroll', handleNavbarScroll);
+        window.addEventListener('resize', function() {
+            const screenWidth = window.innerWidth;
+            if (screenWidth >= 1024) {
+                closeMobileSidebar();
+            } else if (screenWidth >= 768) {
+                const sidebar = document.getElementById('mobileSidebar');
+                const overlay = document.getElementById('mobileSidebarOverlay');
+                if (sidebar && overlay) {
+                    sidebar.classList.add('translate-x-full');
+                    sidebar.classList.remove('translate-x-0');
+                    overlay.classList.add('opacity-0', 'invisible');
+                    overlay.classList.remove('opacity-100', 'visible');
+                }
+            } else {
+                const mobileMenu = document.querySelector('.mobile-menu');
+                if (mobileMenu) {
+                    mobileMenu.classList.add('hidden');
+                }
+            }
+        });
+    </script>
+    {% if website_settings.google_analytics_id %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ website_settings.google_analytics_id }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', '{{ website_settings.google_analytics_id }}');
+    </script>
+    {% endif %}
+    {% if website_settings.google_tag_manager_id %}
+    <script>
+        (function(w, d, s, l, i) {
+            w[l] = w[l] || [];
+            w[l].push({
+                'gtm.start': new Date().getTime(),
+                event: 'gtm.js'
+            });
+            var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s),
+                dl = l != 'dataLayer' ? '&l=' + l : '';
+            j.async = true;
+            j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+            f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', '{{ website_settings.google_tag_manager_id }}');
+    </script>
+    {% endif %}
+    {% if facebook_pixel_id and enable_facebook_tracking %}
+    <script>
+        // Facebook Pixel dengan error handling
+        try {
+            ! function(f, b, e, v, n, t, s) {
+                if (f.fbq) return;
+                n = f.fbq = function() {
+                    n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+                };
+                if (!f._fbq) f._fbq = n;
+                n.push = n;
+                n.loaded = !0;
+                n.version = '2.0';
+                n.queue = [];
+                t = b.createElement(e);
+                t.async = !0;
+                t.src = v;
+                t.onerror = function() {
+                    console.warn('Facebook Pixel gagal dimuat - kemungkinan diblokir ad blocker');
+                };
+                s = b.getElementsByTagName(e)[0];
+                s.parentNode.insertBefore(t, s)
+            }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+            
+            // Delay untuk memastikan script dimuat
+            setTimeout(function() {
+                if (typeof fbq !== 'undefined') {
+                    fbq('init', '{{ facebook_pixel_id }}');
+                    fbq('track', 'PageView');
+                }
+            }, 100);
+        } catch (error) {
+            console.warn('Facebook Pixel error:', error);
+        }
+    </script>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id={{ facebook_pixel_id }}&ev=PageView&noscript=1" /></noscript>
+    {% endif %}
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

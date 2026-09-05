@@ -1,0 +1,297 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .backup-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .backup-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+    
+    .backup-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .backup-name {
+        font-weight: 600;
+        color: #495057;
+        margin: 0;
+    }
+    
+    .backup-meta {
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+    
+    .backup-size {
+        background: #e9ecef;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: 500;
+    }
+    
+    .backup-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .btn-download {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .btn-download:hover {
+        background: #218838;
+        border-color: #1e7e34;
+    }
+    
+    .btn-restore {
+        background: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+    
+    .btn-restore:hover {
+        background: #0056b3;
+        border-color: #004085;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c82333;
+        border-color: #bd2130;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4em;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .quick-actions {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .quick-actions h5 {
+        color: #495057;
+        margin-bottom: 15px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-save"></i> {{ page_title }}</h2>
+                <a href="{% url 'core:database_reset_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Kembali ke Reset Management
+                </a>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="createBackup()">
+                        <i class="fas fa-plus"></i> Buat Backup Baru
+                    </button>
+                    <a href="{% url 'core:database_reset_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-cogs"></i> Kelola Konfigurasi Reset
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Backup Files List -->
+            {% if backup_files %}
+                <div class="row">
+                    {% for backup in backup_files %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="backup-card">
+                                <div class="backup-header">
+                                    <h6 class="backup-name">
+                                        <i class="fas fa-file-archive"></i> {{ backup.name }}
+                                    </h6>
+                                    <span class="backup-size">{{ backup.size|filesizeformat }}</span>
+                                </div>
+                                
+                                <div class="backup-meta">
+                                    <div><i class="fas fa-calendar"></i> Dibuat: {{ backup.created|date:"d F Y H:i" }}</div>
+                                    <div><i class="fas fa-folder"></i> Path: {{ backup.relative_path }}</div>
+                                </div>
+                                
+                                <div class="backup-actions">
+                                    <a href="{% url 'core:database_backup_download' backup.name %}" class="btn btn-download btn-sm">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                    <button class="btn btn-restore btn-sm" onclick="restoreBackup('{{ backup.name }}')">
+                                        <i class="fas fa-undo"></i> Restore
+                                    </button>
+                                    <button class="btn btn-delete btn-sm" onclick="deleteBackup('{{ backup.name }}')">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <h4>Belum Ada Backup</h4>
+                    <p>Belum ada file backup database yang tersedia.</p>
+                    <button class="btn btn-primary" onclick="createBackup()">
+                        <i class="fas fa-plus"></i> Buat Backup Pertama
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function createBackup() {
+    if (!confirm('Apakah Anda yakin ingin membuat backup database?')) {
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Membuat Backup...';
+    button.disabled = true;
+    
+    fetch('{% url "core:database_backup_create" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('✅ Backup berhasil dibuat!');
+            location.reload();
+        } else {
+            alert('❌ Error saat membuat backup');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        alert('❌ Error: ' + error.message);
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function restoreBackup(backupName) {
+    if (!confirm(`⚠️ PERINGATAN!\n\nApakah Anda yakin ingin restore dari backup "${backupName}"?\n\nOperasi ini akan mengganti data saat ini dan TIDAK DAPAT DIBATALKAN!\n\nPastikan Anda sudah membuat backup data saat ini jika diperlukan.`)) {
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restoring...';
+    button.disabled = true;
+    
+    fetch('{% url "core:database_backup_restore" "backup_name" %}'.replace('backup_name', backupName), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('✅ Restore berhasil!');
+            location.reload();
+        } else {
+            alert('❌ Error saat restore');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        alert('❌ Error: ' + error.message);
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function deleteBackup(backupName) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus backup "${backupName}"?\n\nFile ini akan dihapus secara permanen!`)) {
+        return;
+    }
+    
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menghapus...';
+    button.disabled = true;
+    
+    fetch('{% url "core:database_backup_delete" "backup_name" %}'.replace('backup_name', backupName), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('✅ Backup berhasil dihapus!');
+            location.reload();
+        } else {
+            alert('❌ Error saat menghapus backup');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        alert('❌ Error: ' + error.message);
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+</script>
+{% endblock %}

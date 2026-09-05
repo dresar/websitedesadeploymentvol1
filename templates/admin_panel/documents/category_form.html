@@ -1,0 +1,169 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}{% if category %}Edit Kategori{% else %}Tambah Kategori{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-form.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/documents/documents-mobile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="mb-3">
+        <a href="{% url 'admin_panel:document_categories_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar Kategori
+        </a>
+    </div>
+
+    <form method="post" class="documents-form-card">
+        {% csrf_token %}
+
+        <div class="documents-form-header">
+            <h5 class="documents-form-title">
+                <i class="fas fa-tag me-2"></i>
+                {% if category %}Edit Kategori: {{ category.name }}{% else %}Tambah Kategori Baru{% endif %}
+            </h5>
+        </div>
+
+        <div class="documents-form-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">
+                            Nama Kategori <span class="text-danger">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.category_type.id_for_label }}" class="form-label">
+                            Jenis Kategori <span class="text-danger">*</span>
+                        </label>
+                        {{ form.category_type }}
+                        {% if form.category_type.errors %}
+                            <div class="text-danger small mt-1">{{ form.category_type.errors.0 }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Jenis kategori untuk pengelompokan di tampilan publik</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            Deskripsi Kategori
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="documents-form-sidebar-card">
+                        <div class="documents-form-sidebar-header">
+                            <i class="fas fa-cog me-2"></i> Pengaturan Tampilan
+                        </div>
+                        <div class="documents-form-sidebar-body">
+                            <div class="mb-3">
+                                <label for="{{ form.icon.id_for_label }}" class="form-label">
+                                    Icon FontAwesome
+                                </label>
+                                {{ form.icon }}
+                                {% if form.icon.errors %}
+                                    <div class="text-danger small mt-1">{{ form.icon.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted d-block mt-1">
+                                    Contoh: fa-file, fa-folder, fa-chart-bar
+                                </small>
+                                <div class="mt-2 p-3 bg-light rounded text-center">
+                                    <i class="fas {{ category.icon|default:'fa-file' }} fa-3x text-primary"></i>
+                                    <p class="small text-muted mb-0 mt-2">Preview Icon</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.color.id_for_label }}" class="form-label">
+                                    Warna Kategori
+                                </label>
+                                {{ form.color }}
+                                {% if form.color.errors %}
+                                    <div class="text-danger small mt-1">{{ form.color.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.display_order.id_for_label }}" class="form-label">
+                                    Urutan Tampilan
+                                </label>
+                                {{ form.display_order }}
+                                {% if form.display_order.errors %}
+                                    <div class="text-danger small mt-1">{{ form.display_order.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Semakin kecil, semakin atas</small>
+                            </div>
+
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Kategori Aktif
+                                </label>
+                                {% if form.is_active.errors %}
+                                    <div class="text-danger small mt-1">{{ form.is_active.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if category %}
+                    <div class="documents-form-sidebar-card mt-3">
+                        <div class="documents-form-sidebar-header">
+                            <i class="fas fa-info-circle me-2"></i> Informasi
+                        </div>
+                        <div class="documents-form-sidebar-body">
+                            <p class="small text-muted mb-2">
+                                <strong>Total Dokumen:</strong> {{ category.documents.count }}
+                            </p>
+                            <p class="small text-muted mb-2">
+                                <strong>Dibuat:</strong> {{ category.created_at|date:"d M Y H:i" }}
+                            </p>
+                            <p class="small text-muted mb-0">
+                                <strong>Terakhir diubah:</strong> {{ category.updated_at|date:"d M Y H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="documents-form-footer">
+            <button type="submit" class="btn btn-primary documents-form-btn-submit">
+                <i class="fas fa-save me-2"></i> Simpan Kategori
+            </button>
+            <a href="{% url 'admin_panel:document_categories_list' %}" class="btn btn-outline-secondary documents-form-btn-back">
+                <i class="fas fa-times me-2"></i> Batal
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>document.addEventListener('DOMContentLoaded', function() {
+    const iconInput = document.getElementById('{{ form.icon.id_for_label }}');
+    if (iconInput) {
+        iconInput.addEventListener('input', function() {
+            const iconPreview = document.querySelector('.fa-3x');
+            if (iconPreview) {
+                iconPreview.className = 'fas ' + this.value + ' fa-3x text-primary';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+

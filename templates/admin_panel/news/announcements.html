@@ -1,0 +1,368 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}Manajemen Pengumuman{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/news/news_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="news-list-page">
+    <div class="container-fluid">
+        
+        <!-- Page Header -->
+        <div class="news-list-header">
+            <div class="news-list-header-content">
+                <div class="news-list-title-wrapper">
+                    <h1 class="news-list-main-title">
+                        <i class="fas fa-bullhorn"></i>
+                        Manajemen Pengumuman
+                    </h1>
+                    <p class="news-list-subtitle">Kelola dan pantau semua pengumuman</p>
+                </div>
+                <div class="news-list-actions">
+                    <a href="{% url 'admin_panel:news_announcement_create' %}" class="news-list-header-btn news-list-header-btn-primary">
+                        <i class="fas fa-plus"></i>Tambah Pengumuman
+                    </a>
+                    <a href="{% url 'admin_panel:news_dashboard' %}" class="news-list-header-btn news-list-header-btn-outline">
+                        <i class="fas fa-chart-pie"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="news-stats-bar" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center;">
+                <span style="font-size: 2rem; font-weight: 700;">{{ announcements.paginator.count|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Total Pengumuman</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #28a745, #20c997);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ published_announcements|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Dipublikasi</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #ffc107, #e0a800);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ draft_announcements|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Draft</span>
+            </div>
+            <div class="news-stats-badge" style="flex-direction: column; text-align: center; background: linear-gradient(135deg, #17a2b8, #138496);">
+                <span style="font-size: 2rem; font-weight: 700;">{{ pinned_announcements|default:0 }}</span>
+                <span style="font-size: 0.875rem;">Dipin</span>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="news-filter-section">
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                <a href="{% url 'admin_panel:news_announcements_list' %}" 
+                   class="news-filter-btn {% if not current_filters.status %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-list"></i> Semua
+                </a>
+                <a href="{% url 'admin_panel:news_announcements_list' %}?status=published" 
+                   class="news-filter-btn {% if current_filters.status == 'published' %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-check-circle"></i> Dipublikasi
+                </a>
+                <a href="{% url 'admin_panel:news_announcements_list' %}?status=draft" 
+                   class="news-filter-btn {% if current_filters.status == 'draft' %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-edit"></i> Draft
+                </a>
+                <a href="{% url 'admin_panel:news_announcements_list' %}?priority=urgent" 
+                   class="news-filter-btn {% if current_filters.priority == 'urgent' %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-exclamation-triangle"></i> Mendesak
+                </a>
+                <a href="{% url 'admin_panel:news_announcements_list' %}?pinned=true" 
+                   class="news-filter-btn {% if current_filters.pinned %}news-filter-btn-primary{% else %}news-filter-btn-reset{% endif %}">
+                    <i class="fas fa-thumbtack"></i> Dipin
+                </a>
+            </div>
+        </div>
+
+        <!-- Search & Filter Form -->
+        <div class="news-filter-section">
+            <h5 class="news-filter-title">
+                <i class="fas fa-filter"></i>
+                Filter & Pencarian
+            </h5>
+            <form method="GET" id="searchForm" class="news-filter-form">
+                <div class="news-filter-group">
+                    <label for="search" class="news-filter-label">
+                        <i class="fas fa-search"></i> Pencarian
+                    </label>
+                    <div class="news-filter-input-icon-wrapper">
+                        <i class="fas fa-search news-filter-input-icon"></i>
+                        <input type="text" class="news-filter-input news-filter-input-with-icon" 
+                               id="search" name="search" value="{{ current_filters.search }}" 
+                               placeholder="Cari pengumuman...">
+                    </div>
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="announcement_type" class="news-filter-label">Jenis</label>
+                    <select class="news-filter-select" id="announcement_type" name="announcement_type">
+                        <option value="">Semua Jenis</option>
+                        <option value="info" {% if current_filters.announcement_type == 'info' %}selected{% endif %}>Informasi</option>
+                        <option value="warning" {% if current_filters.announcement_type == 'warning' %}selected{% endif %}>Peringatan</option>
+                        <option value="urgent" {% if current_filters.announcement_type == 'urgent' %}selected{% endif %}>Mendesak</option>
+                        <option value="schedule" {% if current_filters.announcement_type == 'schedule' %}selected{% endif %}>Jadwal</option>
+                        <option value="event" {% if current_filters.announcement_type == 'event' %}selected{% endif %}>Acara</option>
+                        <option value="service" {% if current_filters.announcement_type == 'service' %}selected{% endif %}>Layanan</option>
+                    </select>
+                </div>
+
+                <div class="news-filter-group">
+                    <label for="priority" class="news-filter-label">Prioritas</label>
+                    <select class="news-filter-select" id="priority" name="priority">
+                        <option value="">Semua Prioritas</option>
+                        <option value="low" {% if current_filters.priority == 'low' %}selected{% endif %}>Rendah</option>
+                        <option value="normal" {% if current_filters.priority == 'normal' %}selected{% endif %}>Normal</option>
+                        <option value="high" {% if current_filters.priority == 'high' %}selected{% endif %}>Tinggi</option>
+                        <option value="urgent" {% if current_filters.priority == 'urgent' %}selected{% endif %}>Mendesak</option>
+                    </select>
+                </div>
+
+                <div class="news-filter-actions">
+                    <button type="submit" class="news-filter-btn news-filter-btn-primary">
+                        <i class="fas fa-search"></i> Cari
+                    </button>
+                    <a href="{% url 'admin_panel:news_announcements_list' %}" class="news-filter-btn news-filter-btn-reset">
+                        <i class="fas fa-redo"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Announcements Grid -->
+        <div class="news-grid-view">
+            {% for announcement in announcements %}
+            <div class="news-item-card {% if announcement.announcement_type == 'urgent' %}news-item-status-archived{% elif announcement.is_pinned %}news-item-status-published{% endif %}">
+                
+                <!-- Header with Title & Status -->
+                <div class="news-item-content" style="padding-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+                        <h5 class="news-item-title" style="margin-bottom: 0;">
+                            <a href="{% url 'admin_panel:news_announcement_detail' announcement.pk %}">
+                                {% if announcement.is_pinned %}<i class="fas fa-thumbtack" style="color: #ffc107;"></i>{% endif %}
+                                {{ announcement.title }}
+                            </a>
+                        </h5>
+                    </div>
+
+                    <!-- Badges -->
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <span class="news-item-status-badge news-item-status-{% if announcement.status == 'published' %}published{% else %}draft{% endif %}">
+                            {% if announcement.status == 'published' %}Dipublikasi{% else %}Draft{% endif %}
+                        </span>
+                        <span class="news-item-status-badge" style="background: {% if announcement.priority == 'urgent' %}rgba(220, 53, 69, 0.95){% elif announcement.priority == 'high' %}rgba(255, 193, 7, 0.95){% else %}rgba(23, 162, 184, 0.95){% endif %}; color: white;">
+                            {{ announcement.get_priority_display }}
+                        </span>
+                    </div>
+
+                    <!-- Content Preview -->
+                    <p class="news-item-excerpt">{{ announcement.content|striptags|truncatewords:30 }}</p>
+
+                    <!-- Meta Info -->
+                    <div class="news-item-meta">
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-tag news-item-meta-icon"></i>
+                            <span>{{ announcement.get_announcement_type_display }}</span>
+                        </div>
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-user news-item-meta-icon"></i>
+                            <span>{{ announcement.author.username }}</span>
+                        </div>
+                        <div class="news-item-meta-row">
+                            <i class="fas fa-calendar news-item-meta-icon"></i>
+                            <span>{{ announcement.start_date|date:"d M Y" }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="news-item-stats">
+                        <div class="news-item-stat">
+                            <i class="fas fa-users"></i>
+                            <span class="news-item-stat-number" style="font-size: 0.75rem;">{{ announcement.target_audience|default:"Semua"|truncatechars:15 }}</span>
+                        </div>
+                        {% if announcement.location %}
+                        <div class="news-item-stat">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span class="news-item-stat-number" style="font-size: 0.75rem;">{{ announcement.location|truncatechars:15 }}</span>
+                        </div>
+                        {% endif %}
+                        {% if announcement.is_popup %}
+                        <div class="news-item-stat">
+                            <i class="fas fa-external-link-alt"></i>
+                            <span class="news-item-stat-number" style="font-size: 0.75rem;">Popup</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="news-item-actions">
+                        <a href="{% url 'admin_panel:news_announcement_detail' announcement.pk %}" 
+                           class="news-item-action-btn news-item-action-view">
+                            <i class="fas fa-eye"></i> Lihat
+                        </a>
+                        <a href="{% url 'admin_panel:news_announcement_edit' announcement.pk %}" 
+                           class="news-item-action-btn news-item-action-edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button class="news-item-action-btn news-item-action-delete delete-btn" 
+                                data-id="{{ announcement.id }}" data-title="{{ announcement.title }}">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="news-empty-state">
+                    <i class="fas fa-bullhorn news-empty-state-icon"></i>
+                    <h3 class="news-empty-state-title">Tidak ada pengumuman ditemukan</h3>
+                    <p class="news-empty-state-text">Belum ada pengumuman yang sesuai dengan filter yang dipilih.</p>
+                    <a href="{% url 'admin_panel:news_announcement_create' %}" class="news-empty-state-action">
+                        <i class="fas fa-plus"></i> Tambah Pengumuman
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if announcements.has_other_pages %}
+        <div class="news-pagination-wrapper">
+            <ul class="news-pagination">
+                {% if announcements.has_previous %}
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page=1{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.announcement_type %}&announcement_type={{ current_filters.announcement_type }}{% endif %}{% if current_filters.priority %}&priority={{ current_filters.priority }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ announcements.previous_page_number }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.announcement_type %}&announcement_type={{ current_filters.announcement_type }}{% endif %}{% if current_filters.priority %}&priority={{ current_filters.priority }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in announcements.paginator.page_range %}
+                    {% if announcements.number == num %}
+                    <li class="news-pagination-item active">
+                        <span class="news-pagination-link">{{ num }}</span>
+                    </li>
+                    {% elif num > announcements.number|add:'-3' and num < announcements.number|add:'3' %}
+                    <li class="news-pagination-item">
+                        <a class="news-pagination-link" href="?page={{ num }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.announcement_type %}&announcement_type={{ current_filters.announcement_type }}{% endif %}{% if current_filters.priority %}&priority={{ current_filters.priority }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if announcements.has_next %}
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ announcements.next_page_number }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.announcement_type %}&announcement_type={{ current_filters.announcement_type }}{% endif %}{% if current_filters.priority %}&priority={{ current_filters.priority }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="news-pagination-item">
+                    <a class="news-pagination-link" href="?page={{ announcements.paginator.num_pages }}{% if current_filters.search %}&search={{ current_filters.search }}{% endif %}{% if current_filters.announcement_type %}&announcement_type={{ current_filters.announcement_type }}{% endif %}{% if current_filters.priority %}&priority={{ current_filters.priority }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="news-delete-modal" id="deleteModal">
+    <div class="news-delete-modal-content">
+        <div class="news-delete-modal-header">
+            <h5 class="news-delete-modal-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                Konfirmasi Hapus
+            </h5>
+            <button type="button" class="news-delete-modal-close" onclick="closeDeleteModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="news-delete-modal-body">
+            <p class="news-delete-modal-text">
+                Apakah Anda yakin ingin menghapus pengumuman <strong id="deleteAnnouncementTitle"></strong>?
+            </p>
+            <div class="news-delete-modal-warning">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Tindakan ini tidak dapat dibatalkan.</span>
+            </div>
+        </div>
+        <div class="news-delete-modal-footer">
+            <button type="button" class="news-delete-modal-btn news-delete-modal-btn-cancel" onclick="closeDeleteModal()">
+                Batal
+            </button>
+            <button type="button" class="news-delete-modal-btn news-delete-modal-btn-delete" id="confirmDelete">
+                Hapus
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Delete buttons
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const title = this.getAttribute('data-title');
+            openDeleteModal(id, title);
+        });
+    });
+});
+
+function openDeleteModal(id, title) {
+    document.getElementById('deleteAnnouncementTitle').textContent = title;
+    document.getElementById('deleteModal').classList.add('show');
+    
+    document.getElementById('confirmDelete').onclick = function() {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            alert('CSRF token tidak ditemukan. Silakan refresh halaman.');
+            return;
+        }
+
+        fetch(`{% url 'admin_panel:news_announcement_delete' 0 %}`.replace('0', id), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken.value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menghapus pengumuman: ' + error.message);
+        });
+    };
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('show');
+}
+
+// Close modal on outside click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

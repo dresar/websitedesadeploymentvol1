@@ -1,0 +1,619 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %}Detail Permintaan Surat{% endblock %}
+{% block page_description %}Lihat detail permintaan surat dan kelola dokumen pendukung{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Request Detail Styles */
+.request-detail-page {
+    padding: 1rem 0;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.request-detail-header {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.request-detail-header h4 {
+    margin: 0;
+    color: #495057;
+    font-size: 1.25rem;
+}
+
+.detail-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+}
+
+.detail-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.detail-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.section-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title i {
+    color: #007bff;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+    border-left: 3px solid #007bff;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    color: #495057;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.verified {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-badge.in_progress {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-badge.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.priority-badge.low {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.priority-badge.normal {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.priority-badge.high {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.priority-badge.urgent {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Document List */
+.document-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.document-card {
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.document-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.document-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.document-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.375rem;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.document-info h6 {
+    margin: 0;
+    color: #495057;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.document-info small {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.document-actions {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
+}
+
+.document-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+/* Verification Notes */
+.verification-notes {
+    background: #e7f3ff;
+    border: 1px solid #b8daff;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.verification-notes h6 {
+    color: #004085;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.verification-notes p {
+    color: #004085;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .detail-container {
+        padding: 1rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .document-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="request-detail-page">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="request-detail-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-file-alt me-2"></i>Detail Permintaan Surat</h4>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'admin_panel:letters:letter_request_list' %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Kembali ke Daftar
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Request Information -->
+        <div class="detail-container">
+            <div class="detail-section">
+                <h5 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Informasi Permintaan
+                </h5>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Nomor Permintaan</div>
+                        <div class="info-value">{{ letter_request.request_number }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Status</div>
+                        <div class="info-value">
+                            <span class="status-badge {{ letter_request.status }}">
+                                {{ letter_request.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Prioritas</div>
+                        <div class="info-value">
+                            <span class="priority-badge {{ letter_request.priority }}">
+                                {{ letter_request.get_priority_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Tanggal Pengajuan</div>
+                        <div class="info-value">{{ letter_request.submitted_at|date:"d M Y H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Applicant Information -->
+            <div class="detail-section">
+                <h5 class="section-title">
+                    <i class="fas fa-user"></i>
+                    Informasi Pemohon
+                </h5>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Nama Lengkap</div>
+                        <div class="info-value">{{ letter_request.applicant.nama }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">NIK</div>
+                        <div class="info-value">{{ letter_request.applicant.nik }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Alamat</div>
+                        <div class="info-value">{{ letter_request.applicant.alamat|default:"-" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">No. Telepon</div>
+                        <div class="info-value">{{ letter_request.applicant.telepon|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Letter Type -->
+            <div class="detail-section">
+                <h5 class="section-title">
+                    <i class="fas fa-envelope"></i>
+                    Jenis Surat
+                </h5>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Jenis Surat</div>
+                        <div class="info-value">{{ letter_request.letter_type.name }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Kode Surat</div>
+                        <div class="info-value">{{ letter_request.letter_type.code }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Purpose -->
+            <div class="detail-section">
+                <h5 class="section-title">
+                    <i class="fas fa-bullseye"></i>
+                    Tujuan Penggunaan
+                </h5>
+                
+                <div class="info-item">
+                    <div class="info-label">Tujuan</div>
+                    <div class="info-value">{{ letter_request.purpose }}</div>
+                </div>
+                
+                {% if letter_request.detailed_purpose %}
+                <div class="info-item">
+                    <div class="info-label">Detail Tambahan</div>
+                    <div class="info-value">{{ letter_request.detailed_purpose }}</div>
+                </div>
+                {% endif %}
+                
+                {% if letter_request.urgency_reason %}
+                <div class="info-item">
+                    <div class="info-label">Alasan Urgensi</div>
+                    <div class="info-value">{{ letter_request.urgency_reason }}</div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Verification Information -->
+            {% if letter_request.status != 'pending' %}
+            <div class="detail-section">
+                <h5 class="section-title">
+                    <i class="fas fa-check-circle"></i>
+                    Informasi Verifikasi
+                </h5>
+                
+                <div class="info-grid">
+                    {% if letter_request.verified_by %}
+                    <div class="info-item">
+                        <div class="info-label">Diverifikasi Oleh</div>
+                        <div class="info-value">{{ letter_request.verified_by.get_full_name|default:letter_request.verified_by.username }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if letter_request.verification_date %}
+                    <div class="info-item">
+                        <div class="info-label">Tanggal Verifikasi</div>
+                        <div class="info-value">{{ letter_request.verification_date|date:"d M Y H:i" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if letter_request.verification_notes %}
+                <div class="verification-notes">
+                    <h6><i class="fas fa-sticky-note me-1"></i>Catatan Verifikasi</h6>
+                    <p>{{ letter_request.verification_notes }}</p>
+                </div>
+                {% endif %}
+                
+                {% if letter_request.rejection_reason %}
+                <div class="verification-notes" style="background: #f8d7da; border-color: #f5c6cb;">
+                    <h6><i class="fas fa-exclamation-triangle me-1"></i>Alasan Penolakan</h6>
+                    <p>{{ letter_request.rejection_reason }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Supporting Documents -->
+            {% if supporting_documents %}
+            <div class="detail-section">
+                <h5 class="section-title">
+                    <i class="fas fa-paperclip"></i>
+                    Dokumen Pendukung
+                </h5>
+                
+                <div class="document-grid">
+                    {% for doc in supporting_documents %}
+                    <div class="document-card">
+                        <div class="document-header">
+                            <div class="document-icon">
+                                <i class="fas fa-file-{% if doc.file.name|slice:'-4:' == '.pdf' %}pdf{% elif doc.file.name|slice:'-4:' == '.doc' or doc.file.name|slice:'-5:' == '.docx' %}word{% elif doc.file.name|slice:'-4:' == '.jpg' or doc.file.name|slice:'-4:' == '.png' %}image{% else %}alt{% endif %}"></i>
+                            </div>
+                            <div class="document-info">
+                                <h6>{{ doc.title }}</h6>
+                                <small>{{ doc.file_size|filesizeformat }} • {{ doc.uploaded_at|date:"d M Y" }}</small>
+                            </div>
+                        </div>
+                        
+                        {% if doc.description %}
+                        <p class="mb-2" style="font-size: 0.85rem; color: #6c757d;">{{ doc.description }}</p>
+                        {% endif %}
+                        
+                        <div class="document-actions">
+                            <a href="{{ doc.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> Lihat
+                            </a>
+                            <a href="{{ doc.file.url }}" download class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            {% if letter_request.status == 'pending' %}
+            <button class="btn btn-success" onclick="verifyRequest({{ letter_request.id }})">
+                <i class="fas fa-check me-1"></i>Verifikasi
+            </button>
+            <button class="btn btn-danger" onclick="rejectRequest({{ letter_request.id }})">
+                <i class="fas fa-times me-1"></i>Tolak
+            </button>
+            {% elif letter_request.status == 'verified' %}
+            <button class="btn btn-primary" onclick="generateLetter({{ letter_request.id }})">
+                <i class="fas fa-file-alt me-1"></i>Buat Surat
+            </button>
+            {% endif %}
+            
+            {% if letter_request.id %}
+            <a href="{% url 'admin_panel:letters:letter_request_edit' letter_request.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-edit me-1"></i>Edit
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Verification Modal -->
+<div class="modal fade" id="verificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Verifikasi Permintaan Surat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="verificationForm">
+                    <div class="mb-3">
+                        <label for="verificationNotes" class="form-label">Catatan Verifikasi</label>
+                        <textarea class="form-control" id="verificationNotes" name="verification_notes" rows="3" 
+                                  placeholder="Tambahkan catatan verifikasi..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="confirmVerification">Verifikasi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tolak Permintaan Surat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rejectionForm">
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">Alasan Penolakan</label>
+                        <textarea class="form-control" id="rejectionReason" name="rejection_reason" rows="3" 
+                                  placeholder="Jelaskan alasan penolakan..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmRejection">Tolak</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRequestId = {{ letter_request.id }};
+
+function verifyRequest(requestId) {
+    currentRequestId = requestId;
+    $('#verificationModal').modal('show');
+}
+
+function rejectRequest(requestId) {
+    currentRequestId = requestId;
+    $('#rejectionModal').modal('show');
+}
+
+function generateLetter(requestId) {
+    if (confirm('Apakah Anda yakin ingin membuat surat dari permintaan ini?')) {
+        // Submit form to generate letter
+        const form = $('<form method="post"></form>');
+        form.attr('action', window.location.href);
+        form.append('<input type="hidden" name="action" value="generate_letter">');
+        form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+        $('body').append(form);
+        form.submit();
+    }
+}
+
+$('#confirmVerification').click(function() {
+    if (currentRequestId) {
+        const form = $('<form method="post"></form>');
+        form.attr('action', window.location.href);
+        form.append('<input type="hidden" name="action" value="verify">');
+        form.append('<input type="hidden" name="verification_notes" value="' + $('#verificationNotes').val() + '">');
+        form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+        $('body').append(form);
+        form.submit();
+    }
+});
+
+$('#confirmRejection').click(function() {
+    if (currentRequestId && $('#rejectionReason').val().trim()) {
+        const form = $('<form method="post"></form>');
+        form.attr('action', window.location.href);
+        form.append('<input type="hidden" name="action" value="reject">');
+        form.append('<input type="hidden" name="rejection_reason" value="' + $('#rejectionReason').val() + '">');
+        form.append('<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">');
+        $('body').append(form);
+        form.submit();
+    } else {
+        alert('Alasan penolakan harus diisi');
+    }
+});
+
+// Reset forms when modals are closed
+$('#verificationModal').on('hidden.bs.modal', function() {
+    $('#verificationNotes').val('');
+});
+
+$('#rejectionModal').on('hidden.bs.modal', function() {
+    $('#rejectionReason').val('');
+});
+</script>
+{% endblock %}

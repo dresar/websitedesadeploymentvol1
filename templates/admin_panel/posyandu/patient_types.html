@@ -1,0 +1,182 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/posyandu/posyandu_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-users text-primary mr-2"></i>
+                        {{ page_title }}
+                    </h2>
+                    <p class="text-muted mb-0 d-none d-md-block">{{ page_subtitle }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'admin_panel:posyandu:patient_type_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus mr-1"></i>
+                        <span class="d-none d-sm-inline">Tambah</span>
+                    </a>
+                </div>
+            </div>
+            <a href="{% url 'admin_panel:posyandu:posyandu_admin' %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-arrow-left mr-1"></i>
+                Kembali
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_count }}</div>
+                <div class="stats-label">Total</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="stats-number">{{ patient_types|length }}</div>
+                <div class="stats-label">Aktif</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="stats-number">{{ patient_types|length }}</div>
+                <div class="stats-label">Ditampilkan</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-2">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="stats-number">{{ patient_types|length }}</div>
+                <div class="stats-label">Halaman Ini</div>
+            </div>
+        </div>
+    </div>
+
+    {% if patient_types %}
+        <div class="row">
+            {% for patient_type in patient_types %}
+                <div class="col-md-6 mb-3">
+                    <div class="patient-type-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="mb-0 font-weight-bold">{{ patient_type.name }}</h6>
+                            <span class="badge {% if patient_type.is_active %}badge-success{% else %}badge-secondary{% endif %}">
+                                {% if patient_type.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="mb-2">
+                            <i class="fas fa-barcode text-muted mr-1"></i>
+                            <code style="font-size: 0.85rem;">{{ patient_type.code }}</code>
+                        </div>
+
+                        {% if patient_type.description %}
+                            <p class="text-muted small mb-2">{{ patient_type.description|truncatechars:80 }}</p>
+                        {% endif %}
+
+                        {% if patient_type.age_min or patient_type.age_max %}
+                            <div class="mb-2">
+                                <i class="fas fa-birthday-cake text-muted mr-1"></i>
+                                <small>
+                                    {% if patient_type.age_min and patient_type.age_max %}
+                                        {{ patient_type.age_min }} - {{ patient_type.age_max }} tahun
+                                    {% elif patient_type.age_min %}
+                                        {{ patient_type.age_min }}+ tahun
+                                    {% elif patient_type.age_max %}
+                                        ≤ {{ patient_type.age_max }} tahun
+                                    {% endif %}
+                                </small>
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2" style="border-top: 1px solid #e9ecef;">
+                            <small class="text-muted">
+                                <i class="far fa-calendar mr-1"></i>
+                                {{ patient_type.created_at|date:"d M Y" }}
+                            </small>
+                            <div class="action-buttons">
+                                <a href="{% url 'admin_panel:posyandu:patient_type_detail' patient_type.id %}"
+                                   class="btn btn-sm btn-outline-primary" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:posyandu:patient_type_update' patient_type.id %}"
+                                   class="btn btn-sm btn-outline-warning" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:posyandu:patient_type_delete' patient_type.id %}"
+                                   class="btn btn-sm btn-outline-danger delete-btn" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if patient_types.has_other_pages %}
+            <div class="pagination-wrapper">
+                <nav aria-label="Patient types pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if patient_types.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">&laquo; Awal</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ patient_types.previous_page_number }}">Sebelumnya</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Hal {{ patient_types.number }} dari {{ patient_types.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if patient_types.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ patient_types.next_page_number }}">Selanjutnya</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ patient_types.paginator.num_pages }}">Akhir &raquo;</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h4>Belum ada jenis pasien</h4>
+            <p>Mulai dengan menambahkan jenis pasien pertama</p>
+            <a href="{% url 'admin_panel:posyandu:patient_type_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus mr-2"></i>
+                Tambah Jenis Pasien
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+    $('.delete-btn').on('click', function(e) {
+        e.preventDefault();
+        const url = $(this).attr('href');
+        
+        if (confirm('Apakah Anda yakin ingin menghapus jenis pasien ini?\n\nTindakan ini tidak dapat dibatalkan.')) {
+            window.location.href = url;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1295 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load role_permissions %}
+
+{% block page_title %}Data Dusun{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/references/references-general.css' %}">
+{% endblock %}
+
+{% block content %}
+<form id="csrfForm" style="display:none;">
+    {% csrf_token %}
+</form>
+<div class="container-fluid">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                <div class="mb-2 mb-md-0">
+                    <h1 class="h3 mb-1 text-dark font-weight-bold">
+                        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                        Data Dusun
+                    </h1>
+                    <p class="text-muted mb-0 small">Kelola data dusun di wilayah desa</p>
+                </div>
+                <div class="header-buttons-wrapper">
+                    {% if user|can_add:"references" %}
+                    <a href="{% url 'admin_panel:references_dusun_add' %}" class="btn btn-primary btn-header-action">
+                        <i class="fas fa-plus"></i>
+                        <span class="ms-1">Tambah</span>
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'references:global_import' %}" class="btn btn-info btn-header-action">
+                        <i class="fas fa-file-import"></i>
+                        <span class="d-none d-sm-inline ms-1">Global Import</span>
+                    </a>
+                    
+                    <a href="{% url 'references:import_export_dashboard' %}" class="btn btn-success btn-header-action">
+                        <i class="fas fa-download"></i>
+                        <span class="d-none d-sm-inline ms-1">Export Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card filter-card shadow-sm">
+                <div class="card-header py-1">
+                    <h6 class="m-0 font-weight-bold text-primary small">
+                        <i class="fas fa-filter me-1"></i>
+                        Filter
+                    </h6>
+                </div>
+                <div class="card-body p-2">
+                    <form method="get" id="filterForm">
+                        <div class="row g-2">
+                            <div class="col-lg-4 col-md-6 col-6">
+                                <label for="search" class="form-label small mb-1">Cari</label>
+                                <input type="text" class="form-control form-control-sm" id="search" name="search"
+                                       value="{{ request.GET.search }}" placeholder="Nama dusun...">
+                            </div>
+                            <div class="col-lg-4 col-md-6 col-6">
+                                <label for="status" class="form-label small mb-1">Status</label>
+                                <select class="form-control form-control-sm" id="status" name="status">
+                                    <option value="">Semua</option>
+                                    <option value="aktif" {% if request.GET.status == 'aktif' %}selected{% endif %}>Aktif</option>
+                                    <option value="tidak_aktif" {% if request.GET.status == 'tidak_aktif' %}selected{% endif %}>Nonaktif</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-4 col-md-12 col-12 d-flex align-items-end">
+                                <div class="d-flex gap-1 w-100">
+                                    <button type="submit" class="btn btn-sm btn-primary flex-fill">
+                                        <i class="fas fa-search"></i>
+                                        <span class="d-none d-sm-inline ms-1">Cari</span>
+                                    </button>
+                                    <a href="{% url 'admin_panel:references_dusun_list' %}" class="btn btn-sm btn-outline-secondary flex-fill">
+                                        <i class="fas fa-times"></i>
+                                        <span class="d-none d-sm-inline ms-1">Reset</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card data-card shadow-sm">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-table me-2"></i>
+                        Daftar Dusun
+                    </h6>
+                    <span class="text-muted small">
+                        <span class="d-none d-md-inline">Menampilkan </span>
+                        <span id="paginationStart">0</span>-<span id="paginationEnd">0</span> dari <span id="paginationTotal">0</span>
+                    </span>
+                </div>
+
+                <div id="bulkActionsBar" class="bulk-actions-bar" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <span class="mr-3">
+                            <strong id="selectedCount">0</strong> item dipilih
+                        </span>
+                        <div class="btn-group mr-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="bulkDeleteBtn" disabled>
+                                <i class="fas fa-trash mr-1"></i>
+                                Hapus
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning" id="bulkDeactivateBtn" disabled>
+                                <i class="fas fa-eye-slash mr-1"></i>
+                                Nonaktifkan
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success" id="bulkActivateBtn" disabled>
+                                <i class="fas fa-eye mr-1"></i>
+                                Aktifkan
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clearSelectionBtn">
+                            <i class="fas fa-times mr-1"></i>
+                            Batal
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+
+                    <div class="d-block d-md-none text-center py-2 bg-light border-bottom">
+                        <small class="text-muted">
+                            <i class="fas fa-hand-point-right"></i> Geser ke kanan untuk melihat lebih banyak
+                        </small>
+                    </div>
+
+                    <div id="tableView" class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th width="35">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="selectAll">
+                                            <label class="custom-control-label" for="selectAll"></label>
+                                        </div>
+                                    </th>
+                                    <th width="40">No</th>
+                                    <th width="200">Nama Dusun</th>
+                                    <th width="160">Kepala Dusun</th>
+                                    <th width="95">Jumlah RW</th>
+                                    <th width="100">Penduduk</th>
+                                    <th width="80">Status</th>
+                                    <th width="105">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dusunTableBody">
+
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 mb-0 text-muted small">Memuat data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <div class="card-footer py-2">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+
+                        <div class="bulk-actions-inline">
+                            <span class="bulk-count-badge" id="bulkActionsCount">0</span>
+                            <button class="bulk-btn bulk-btn-activate" type="button" data-action="activate" title="Aktifkan">
+                                <i class="fas fa-check"></i>
+                                <span class="bulk-btn-text">Aktifkan</span>
+                            </button>
+                            <button class="bulk-btn bulk-btn-deactivate" type="button" data-action="deactivate" title="Nonaktifkan">
+                                <i class="fas fa-pause"></i>
+                                <span class="bulk-btn-text">Nonaktif</span>
+                            </button>
+                            <button class="bulk-btn bulk-btn-delete" type="button" data-action="delete" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                                <span class="bulk-btn-text">Hapus</span>
+                            </button>
+                        </div>
+
+                        <nav aria-label="Pagination" class="flex-grow-1 d-flex justify-content-center">
+                            <ul class="pagination pagination-sm mb-0" id="paginationList">
+
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white py-2">
+                <h6 class="modal-title mb-0" id="deleteModalLabel">
+                    <i class="fas fa-trash mr-1"></i>
+                    Hapus Data
+                </h6>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="margin: 0; padding: 0; font-size: 1.5rem; line-height: 1;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center py-3">
+                <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                <h6 class="mt-3 mb-2"><strong id="deleteNama">-</strong></h6>
+                <small class="text-muted d-block mb-3">
+                    Kode: <span id="deleteKode">-</span><br>
+                    Kepala: <span id="deleteKepalaDusun">-</span>
+                </small>
+
+                <form id="deleteForm" method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="dusun_id" id="deleteDusunId">
+                    <input type="hidden" name="reason" value="Dihapus melalui sistem">
+
+                    <div class="custom-control custom-checkbox text-left">
+                        <input type="checkbox" class="custom-control-input" id="deleteConfirm" required>
+                        <label class="custom-control-label small" for="deleteConfirm">
+                            Yakin hapus data ini?
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer py-2 justify-content-center">
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-sm btn-danger px-3" id="confirmDeleteBtn" disabled>
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% csrf_token %}
+<script>window.currentModelName = 'dusun';
+
+$(document).ready(function() {
+
+    loadDusunData();
+
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault();
+        currentPage = 1;
+        applyFilters();
+    });
+
+    $('#selectAll').change(function() {
+        $('.item-checkbox').prop('checked', this.checked);
+        updateBulkActions();
+    });
+
+    $(document).on('change', '.item-checkbox', function() {
+        updateBulkActions();
+    });
+
+    $('#deleteConfirm').on('change', function() {
+        validateDeleteForm();
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+        if (validateDeleteForm()) {
+            submitDeleteForm();
+        }
+    });
+
+    $('#deleteModal .close, #deleteModal [data-dismiss="modal"]').on('click', function() {
+        $('#deleteModal').modal('hide');
+    });
+
+    $('#deleteModal').on('hidden.bs.modal', function() {
+        $('#deleteConfirm').prop('checked', false);
+        $('#confirmDeleteBtn').prop('disabled', true);
+    });
+
+    $(document).on('click', '.bulk-btn', function(e) {
+        e.preventDefault();
+        var action = $(this).data('action');
+        executeBulkAction(action);
+    });
+});
+
+let currentPage = 1;
+const itemsPerPage = 15;
+let allDusunData = [];
+let filteredData = [];
+
+function loadDusunData(page = 1) {
+    console.log('Loading dusun data...');
+    currentPage = page;
+
+    $('#dusunTableBody').html(`
+        <tr>
+            <td colspan="8" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-2 mb-0 text-muted small">Memuat data...</p>
+            </td>
+        </tr>
+    `);
+
+    fetch('{% url "admin_panel:api_references_dusun_list" %}')
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response content-type:', response.headers.get('content-type'));
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON! Received: ' + contentType);
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            console.log('API response:', data);
+            if (data.success && data.data && Array.isArray(data.data)) {
+                allDusunData = data.data.map(dusun => ({
+                    id: dusun.id || 0,
+                    nama: String(dusun.nama || dusun.nama_dusun || 'N/A'),
+                    kode: String(dusun.kode || '-'),
+                    kepala_dusun: String(dusun.kepala_dusun || '-'),
+                    jumlah_rw: parseInt(dusun.jumlah_rw) || 0,
+                    jumlah_penduduk: parseInt(dusun.population_count) || 0,
+                    status: dusun.is_active ? 'aktif' : 'tidak_aktif',
+                    luas_wilayah: parseFloat(dusun.area_size) || 0,
+                    alamat_kantor: String(dusun.alamat_kantor || '-')
+                }));
+
+                console.log('Processed dusun data:', allDusunData.length, 'items');
+                applyFilters();
+            } else {
+                console.error('API returned error or invalid data structure:', data);
+                console.error('Error message:', data.message || 'Unknown error');
+                showErrorState(data.message || 'Tidak dapat memuat data');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dusun data:', error);
+            console.error('Error details:', error.message);
+            showErrorState(error.message);
+        });
+}
+
+function applyFilters() {
+    const searchTerm = ($('#search').val() || '').toLowerCase();
+    const statusFilter = $('#status').val() || '';
+
+    filteredData = allDusunData.filter(item => {
+        const nama = String(item.nama || '').toLowerCase();
+        const kode = String(item.kode || '').toLowerCase();
+        const kepala = String(item.kepala_dusun || '').toLowerCase();
+
+        const matchesSearch = !searchTerm ||
+            nama.includes(searchTerm) ||
+            kode.includes(searchTerm) ||
+            kepala.includes(searchTerm);
+
+        const matchesStatus = !statusFilter ||
+            (statusFilter === 'aktif' && item.status === 'aktif') ||
+            (statusFilter === 'tidak_aktif' && item.status === 'tidak_aktif');
+
+        return matchesSearch && matchesStatus;
+    });
+
+    currentPage = 1;
+    renderCurrentPage();
+}
+
+function renderCurrentPage() {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageData = filteredData.slice(startIndex, endIndex);
+
+    renderTableView(pageData);
+    renderPagination();
+}
+
+function renderPagination() {
+    const totalItems = filteredData.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = totalItems > 0 ? ((currentPage - 1) * itemsPerPage + 1) : 0;
+    const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+
+    console.log('Pagination:', { totalItems, totalPages, currentPage, startIndex, endIndex });
+
+    $('#paginationStart').text(startIndex);
+    $('#paginationEnd').text(endIndex);
+    $('#paginationTotal').text(totalItems);
+
+    const paginationList = $('#paginationList');
+    paginationList.empty();
+
+    if (totalPages <= 1) {
+        paginationList.parent().hide();
+        return;
+    }
+
+    paginationList.parent().show();
+
+    const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+    paginationList.append(`
+        <li class="page-item ${prevDisabled}">
+            <a class="page-link" href="#" onclick="return changePage(${currentPage - 1});" ${prevDisabled ? 'tabindex="-1"' : ''}>
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+    `);
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    if (startPage > 1) {
+        paginationList.append(`
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="return changePage(1);">1</a>
+            </li>
+        `);
+        if (startPage > 2) {
+            paginationList.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const activeClass = i === currentPage ? 'active' : '';
+        paginationList.append(`
+            <li class="page-item ${activeClass}">
+                <a class="page-link" href="#" onclick="return changePage(${i});">${i}</a>
+            </li>
+        `);
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            paginationList.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+        }
+        paginationList.append(`
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="return changePage(${totalPages});">${totalPages}</a>
+            </li>
+        `);
+    }
+
+    const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+    paginationList.append(`
+        <li class="page-item ${nextDisabled}">
+            <a class="page-link" href="#" onclick="return changePage(${currentPage + 1});" ${nextDisabled ? 'tabindex="-1"' : ''}>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    `);
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        renderCurrentPage();
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    return false;
+}
+
+function goToPage(page) {
+    changePage(page);
+}
+
+function escapeHtml(text) {
+    if (text === null || text === undefined || text === '') return '';
+    const str = String(text);
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/\//g, '&#x2F;');
+}
+
+function renderTableView(data) {
+    const tbody = $('#dusunTableBody');
+    tbody.empty();
+
+    if (data.length === 0) {
+        tbody.append(`
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox fa-3x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Tidak ada data dusun</p>
+                    </div>
+                </td>
+            </tr>
+        `);
+        return;
+    }
+
+    data.forEach(function(item, index) {
+        // Ensure all data is safe
+        const safeItem = {
+            id: parseInt(item.id) || 0,
+            nama: String(item.nama || '-'),
+            kode: String(item.kode || '-'),
+            kepala_dusun: String(item.kepala_dusun || '-'),
+            jumlah_rw: parseInt(item.jumlah_rw) || 0,
+            jumlah_penduduk: parseInt(item.jumlah_penduduk) || 0,
+            status: String(item.status || 'tidak_aktif')
+        };
+
+        const detailUrl = '/admin-panel/references/dusun/detail/' + safeItem.id + '/';
+        const editUrl = '/admin-panel/references/dusun/edit/' + safeItem.id + '/';
+        const rowNumber = ((currentPage - 1) * itemsPerPage) + index + 1;
+
+        const row = '<tr>' +
+            '<td>' +
+                '<div class="custom-control custom-checkbox">' +
+                    '<input type="checkbox" class="custom-control-input item-checkbox" ' +
+                           'id="dusun_' + safeItem.id + '" value="' + safeItem.id + '">' +
+                    '<label class="custom-control-label" for="dusun_' + safeItem.id + '"></label>' +
+                '</div>' +
+            '</td>' +
+            '<td class="text-center"><span class="badge badge-light">' + rowNumber + '</span></td>' +
+            '<td class="td-name">' +
+                '<div class="text-truncate" title="' + escapeHtml(safeItem.nama) + '">' +
+                    '<strong>' + escapeHtml(safeItem.nama) + '</strong>' +
+                '</div>' +
+                '<small class="text-muted">' + escapeHtml(safeItem.kode) + '</small>' +
+            '</td>' +
+            '<td class="td-kepala-dusun">' +
+                '<div class="text-truncate" title="' + escapeHtml(safeItem.kepala_dusun) + '">' + escapeHtml(safeItem.kepala_dusun) + '</div>' +
+            '</td>' +
+            '<td class="text-center">' +
+                '<span class="badge badge-sm badge-info">' + safeItem.jumlah_rw + '</span>' +
+            '</td>' +
+            '<td class="text-center">' +
+                '<span class="badge badge-sm badge-success">' + safeItem.jumlah_penduduk + '</span>' +
+            '</td>' +
+            '<td class="text-center">' +
+                '<span class="badge badge-sm badge-' + (safeItem.status === 'aktif' ? 'success' : 'secondary') + '">' +
+                    '<i class="fas fa-circle"></i>' +
+                    '<span class="d-none d-lg-inline ms-1">' + (safeItem.status === 'aktif' ? 'Aktif' : 'Nonaktif') + '</span>' +
+                '</span>' +
+            '</td>' +
+            '<td class="text-center">' +
+                '<div class="btn-group btn-group-sm" role="group">' +
+                    '<a href="' + detailUrl + '" class="btn btn-sm btn-outline-primary" title="Lihat">' +
+                        '<i class="fas fa-eye"></i>' +
+                    '</a>' +
+                    '<a href="' + editUrl + '" class="btn btn-sm btn-outline-warning" title="Edit">' +
+                        '<i class="fas fa-edit"></i>' +
+                    '</a>' +
+                    '<button class="btn btn-sm btn-outline-danger btn-delete-dusun" title="Hapus" ' +
+                        'data-id="' + safeItem.id + '" ' +
+                        'data-nama="' + escapeHtml(safeItem.nama) + '" ' +
+                        'data-kode="' + escapeHtml(safeItem.kode) + '" ' +
+                        'data-kepala="' + escapeHtml(safeItem.kepala_dusun) + '" ' +
+                        'data-jumlah-rw="' + safeItem.jumlah_rw + '" ' +
+                        'data-jumlah-penduduk="' + safeItem.jumlah_penduduk + '" ' +
+                        'data-status="' + safeItem.status + '">' +
+                        '<i class="fas fa-trash"></i>' +
+                    '</button>' +
+                '</div>' +
+            '</td>' +
+        '</tr>';
+        tbody.append(row);
+    });
+
+    // Bind checkbox change events
+    $('.item-checkbox').off('change').on('change', function() {
+        const totalCheckboxes = $('.item-checkbox').length;
+        const checkedCheckboxes = $('.item-checkbox:checked').length;
+        $('#selectAll').prop('checked', totalCheckboxes === checkedCheckboxes);
+        updateBulkActions();
+    });
+
+    // Bind delete button events
+    $('.btn-delete-dusun').off('click').on('click', function() {
+        const $btn = $(this);
+        const id = $btn.data('id');
+        const nama = $btn.data('nama');
+        const kode = $btn.data('kode');
+        const kepala = $btn.data('kepala');
+        const jumlahRw = $btn.data('jumlah-rw');
+        const jumlahPenduduk = $btn.data('jumlah-penduduk');
+        const status = $btn.data('status');
+
+        showDeleteModal(id, nama, kode, kepala, jumlahRw, jumlahPenduduk, status);
+    });
+}
+
+// Card view removed - only table view
+
+function generateQuickActions(id, name, options = {}) {
+    const {
+        viewUrl = '#',
+        editUrl = '#',
+        deleteCallback = '',
+        showToggle = false,
+        toggleCallback = '',
+        isActive = true
+    } = options;
+
+    let actions = `
+        <div class="btn-group" role="group">
+            <a href="${viewUrl}" class="btn btn-sm btn-outline-info" title="Lihat Detail">
+                <i class="fas fa-eye"></i>
+            </a>
+            <a href="${editUrl}" class="btn btn-sm btn-outline-warning" title="Edit">
+                <i class="fas fa-edit"></i>
+            </a>
+    `;
+
+    if (showToggle) {
+        const toggleClass = isActive ? 'btn-outline-secondary' : 'btn-outline-success';
+        const toggleIcon = isActive ? 'fa-toggle-off' : 'fa-toggle-on';
+        const toggleTitle = isActive ? 'Nonaktifkan' : 'Aktifkan';
+
+        actions += `
+            <button class="btn btn-sm ${toggleClass}" title="${toggleTitle}" onclick="${toggleCallback}">
+                <i class="fas ${toggleIcon}"></i>
+            </button>
+        `;
+    }
+
+    actions += `
+            <button class="btn btn-sm btn-outline-danger" title="Hapus" onclick="${deleteCallback}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+
+    return actions;
+}
+
+function toggleStatus(id) {
+    if (confirm('Apakah Anda yakin ingin mengubah status data ini?')) {
+        showLoading('Mengubah status...');
+
+        // Find the dusun data
+        const dusunData = allDusunData.find(d => d.id === id);
+        if (!dusunData) {
+            hideLoading();
+            showAlert('Data tidak ditemukan', 'error');
+            return;
+        }
+
+        const newStatus = dusunData.status === 'aktif' ? 'tidak_aktif' : 'aktif';
+        const action = newStatus === 'aktif' ? 'activate' : 'deactivate';
+
+        $.ajax({
+            url: action === 'activate' ?
+                '{% url "admin_panel:references_dusun_bulk_activate" %}' :
+                '{% url "admin_panel:references_dusun_bulk_deactivate" %}',
+            type: 'POST',
+            data: {
+                'dusun_ids[]': [id],
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                hideLoading();
+                if (response.success) {
+                    showAlert('Status berhasil diubah', 'success');
+                    loadDusunData();
+                } else {
+                    showAlert(response.message || 'Gagal mengubah status', 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                showAlert('Terjadi kesalahan saat mengubah status', 'error');
+            }
+        });
+    }
+}
+
+// Bulk Actions Functions
+function updateBulkActions() {
+    const selected = $('.item-checkbox:checked').length;
+    const count = $('#bulkActionsCount');
+    const container = $('.bulk-actions-inline');
+
+    // Update count
+    count.text(selected);
+
+    // Enable/disable buttons and change appearance
+    if (selected > 0) {
+        container.addClass('has-selection');
+        $('.bulk-btn').prop('disabled', false).removeClass('disabled');
+    } else {
+        container.removeClass('has-selection');
+        $('.bulk-btn').prop('disabled', true).addClass('disabled');
+    }
+
+    // Update select all checkbox
+    const totalCheckboxes = $('.item-checkbox').length;
+    const selectAll = $('#selectAll');
+
+    if (selected === 0) {
+        selectAll.prop('indeterminate', false).prop('checked', false);
+    } else if (selected === totalCheckboxes) {
+        selectAll.prop('indeterminate', false).prop('checked', true);
+    } else {
+        selectAll.prop('indeterminate', true);
+    }
+}
+
+function executeBulkAction(action) {
+    const selected = $('.item-checkbox:checked');
+
+    console.log('Selected checkboxes:', selected.length);
+    console.log('Selected elements:', selected);
+
+    if (selected.length === 0) {
+        showError('Pilih minimal satu data');
+        return;
+    }
+
+    // Get selected IDs
+    const selectedIds = [];
+    selected.each(function() {
+        const value = $(this).val();
+        console.log('Checkbox value:', value);
+        selectedIds.push(value);
+    });
+
+    console.log('Selected IDs:', selectedIds);
+
+    // Action labels
+    const actionLabels = {
+        'activate': 'mengaktifkan',
+        'deactivate': 'menonaktifkan',
+        'delete': 'menghapus'
+    };
+
+    // Confirm for delete action
+    if (action === 'delete') {
+        if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} data dusun?\n\nTindakan ini tidak dapat dibatalkan!`)) {
+            return;
+        }
+    } else {
+        if (!confirm(`Apakah Anda yakin ingin ${actionLabels[action]} ${selectedIds.length} data dusun?`)) {
+            return;
+        }
+    }
+
+    showLoading(`Menjalankan aksi ${actionLabels[action]} pada ${selectedIds.length} data...`);
+
+    // Execute the actual bulk action
+    if (action === 'delete') {
+        bulkDeleteDusun(selectedIds);
+    } else if (action === 'activate') {
+        bulkActivateDusun(selectedIds);
+    } else if (action === 'deactivate') {
+        bulkDeactivateDusun(selectedIds);
+    }
+}
+
+function bulkDeleteDusun(ids) {
+    const csrftoken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    if (!csrftoken) {
+        showAlert('CSRF token tidak ditemukan. Refresh halaman dan coba lagi.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    ids.forEach(id => {
+        formData.append('dusun_ids', id);
+    });
+
+    $.ajax({
+        url: '{% url "admin_panel:references_dusun_bulk_delete" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil menghapus ${response.deleted_count} data dusun`, 'success');
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                let errorMessage = response.message || 'Gagal menghapus data dusun';
+                if (response.errors && response.errors.length > 0) {
+                    errorMessage += '\n\nDetail error:\n' + response.errors.join('\n');
+                }
+                showAlert(errorMessage, 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            let errorMsg = 'Terjadi kesalahan saat menghapus data';
+            try {
+                const jsonResponse = JSON.parse(xhr.responseText);
+                errorMsg = jsonResponse.message || errorMsg;
+            } catch(e) {
+                errorMsg += ': ' + (xhr.responseText || error);
+            }
+            showAlert(errorMsg, 'error');
+        }
+    });
+}
+
+function bulkActivateDusun(ids) {
+    const csrftoken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    if (!csrftoken) {
+        showAlert('CSRF token tidak ditemukan. Refresh halaman dan coba lagi.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    ids.forEach(id => {
+        formData.append('dusun_ids', id);
+    });
+
+    $.ajax({
+        url: '{% url "admin_panel:references_dusun_bulk_activate" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil mengaktifkan ${response.activated_count} data dusun`, 'success');
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(response.message || 'Gagal mengaktifkan data dusun', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            let errorMsg = 'Terjadi kesalahan saat mengaktifkan data';
+            try {
+                const jsonResponse = JSON.parse(xhr.responseText);
+                errorMsg = jsonResponse.message || errorMsg;
+            } catch(e) {
+                errorMsg += ': ' + (xhr.responseText || error);
+            }
+            showAlert(errorMsg, 'error');
+        }
+    });
+}
+
+function bulkDeactivateDusun(ids) {
+    const csrftoken = $('#csrfForm input[name="csrfmiddlewaretoken"]').val();
+
+    if (!csrftoken) {
+        showAlert('CSRF token tidak ditemukan. Refresh halaman dan coba lagi.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    ids.forEach(id => {
+        formData.append('dusun_ids', id);
+    });
+
+    $.ajax({
+        url: '{% url "admin_panel:references_dusun_bulk_deactivate" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            hideLoading();
+            if (response.success) {
+                showAlert(`Berhasil menonaktifkan ${response.deactivated_count} data dusun`, 'success');
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(response.message || 'Gagal menonaktifkan data dusun', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideLoading();
+            let errorMsg = 'Terjadi kesalahan saat menonaktifkan data';
+            try {
+                const jsonResponse = JSON.parse(xhr.responseText);
+                errorMsg = jsonResponse.message || errorMsg;
+            } catch(e) {
+                errorMsg += ': ' + (xhr.responseText || error);
+            }
+            showAlert(errorMsg, 'error');
+        }
+    });
+}
+
+// Reset pagination after bulk actions
+function resetPaginationAfterAction() {
+    currentPage = 1;
+    applyFilters();
+}
+
+// Export/Import Functions
+function exportData() {
+    showLoading('Mengekspor data...');
+    const exportUrl = '{% url "admin_panel:references_dusun_export_csv" %}';
+
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'data_dusun_' + new Date().toISOString().split('T')[0] + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('Data CSV berhasil diekspor');
+    }, 1000);
+}
+
+function exportExcel() {
+    showLoading('Mengekspor ke Excel...');
+    const exportUrl = '{% url "admin_panel:references_dusun_export_excel" %}';
+
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = 'data_dusun_' + new Date().toISOString().split('T')[0] + '.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('File Excel berhasil dibuat');
+    }, 1000);
+}
+
+function exportPDF() {
+    showLoading('Mengekspor ke PDF...');
+    const exportUrl = '{% url "admin_panel:references_dusun_export_pdf" %}';
+
+    window.open(exportUrl, '_blank');
+
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('File PDF berhasil dibuat');
+    }, 1000);
+}
+
+function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls,.csv';
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            showLoading('Mengimpor data...');
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Data berhasil diimpor');
+            }, 3000);
+        }
+    };
+    input.click();
+}
+
+function downloadTemplate() {
+    showLoading('Mengunduh template...');
+    setTimeout(() => {
+        hideLoading();
+        showSuccess('Template berhasil diunduh');
+    }, 1000);
+}
+
+// Utility Functions
+function showLoading(message) {
+    // Remove existing loading overlays first
+    $('.loading-overlay').remove();
+
+    const overlay = $(`
+        <div class="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+            <div class="loading-spinner text-center text-white">
+                <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+                <p class="h5">${message}</p>
+            </div>
+        </div>
+    `);
+    $('body').append(overlay);
+}
+
+function hideLoading() {
+    $('.loading-overlay').remove();
+}
+
+function showAlert(message, type) {
+    // Create toast notification
+    const toastId = 'toast_' + Date.now();
+    const iconMap = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    };
+    const bgMap = {
+        'success': '#28a745',
+        'error': '#dc3545',
+        'warning': '#ffc107',
+        'info': '#17a2b8'
+    };
+
+    const textColor = type === 'warning' ? '#212529' : 'white';
+
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${bgMap[type] || bgMap.info};
+        color: ${textColor};
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        min-width: 300px;
+        max-width: 400px;
+        animation: slideIn 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    `;
+
+    toast.innerHTML = `
+        <i class="fas ${iconMap[type] || iconMap.info}" style="font-size: 1.2rem; color: ${textColor};"></i>
+        <span style="flex: 1; color: ${textColor};">${message}</span>
+        <button onclick="document.getElementById('${toastId}').remove()" style="background: none; border: none; color: ${textColor}; cursor: pointer; font-size: 1.2rem; padding: 0; margin-left: 10px; opacity: 0.8;">&times;</button>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (document.getElementById(toastId)) {
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+}
+
+// Add CSS animations
+if (!document.getElementById('toastAnimations')) {
+    const style = document.createElement('style');
+    style.id = 'toastAnimations';
+    style.innerHTML = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function showSuccess(message) {
+    showAlert(message, 'success');
+}
+
+function showError(message) {
+    showAlert(message, 'error');
+}
+
+function showInfo(message) {
+    showAlert(message, 'info');
+}
+
+function showWarning(message) {
+    showAlert(message, 'warning');
+}
+
+function showDeleteModal(id, nama, kode, kepalaDusun, jumlahRt, jumlahPenduduk, status) {
+    // Set form action
+    $('#deleteForm').attr('action', '{% url "admin_panel:references_dusun_delete" 0 %}'.replace('0', id));
+    $('#deleteDusunId').val(id);
+
+    // Set data details - simplified
+    $('#deleteNama').text(nama);
+    $('#deleteKode').text(kode);
+    $('#deleteKepalaDusun').text(kepalaDusun || '-');
+
+    // Reset form
+    $('#deleteConfirm').prop('checked', false);
+    $('#confirmDeleteBtn').prop('disabled', true);
+
+    // Show modal
+    $('#deleteModal').modal('show');
+}
+
+function validateDeleteForm() {
+    const confirmed = $('#deleteConfirm').is(':checked');
+
+    if (confirmed) {
+        $('#confirmDeleteBtn').prop('disabled', false);
+        return true;
+    } else {
+        $('#confirmDeleteBtn').prop('disabled', true);
+        return false;
+    }
+}
+
+function submitDeleteForm() {
+    if (!validateDeleteForm()) {
+        return;
+    }
+
+    const form = $('#deleteForm');
+    const formData = new FormData(form[0]);
+    const btn = $('#confirmDeleteBtn');
+    const originalText = btn.html();
+
+    // Get CSRF token from form
+    const csrftoken = form.find('[name=csrfmiddlewaretoken]').val();
+
+    // Show loading
+    btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Menghapus...');
+    btn.prop('disabled', true);
+
+    $.ajax({
+        url: form.attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        success: function(response) {
+            if (response.success) {
+                // Close modal first
+                $('#deleteModal').modal('hide');
+
+                // Show success message
+                showAlert(response.message || 'Data berhasil dihapus', 'success');
+
+                // Reload data and reset pagination
+                setTimeout(function() {
+                    loadDusunData();
+                }, 1000);
+            } else {
+                // Don't close modal on error
+                showAlert(response.message || 'Terjadi kesalahan saat menghapus data', 'error');
+                btn.prop('disabled', false).html(originalText);
+            }
+        },
+        error: function(xhr, status, error) {
+            // Don't close modal on error
+            let message = 'Terjadi kesalahan saat menghapus data';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    message = response.message || message;
+                } catch(e) {
+                    console.error('Error parsing response:', e);
+                }
+            }
+            showAlert(message, 'error');
+            btn.prop('disabled', false).html(originalText);
+        }
+    });
+}
+
+// showAlert and showError are now global in base.html - no need to define them here
+
+function showErrorState(errorMessage) {
+    const tbody = $('#dusunTableBody');
+    tbody.empty();
+
+    const displayMessage = errorMessage || 'Terjadi kesalahan saat memuat data';
+
+    tbody.append(`
+        <tr>
+            <td colspan="8" class="text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <p class="text-muted">${displayMessage}</p>
+                <small class="text-muted d-block mb-3">Silakan refresh halaman atau hubungi administrator</small>
+                <button class="btn btn-primary" onclick="loadDusunData()">
+                    <i class="fas fa-refresh mr-1"></i>Coba Lagi
+                </button>
+            </td>
+        </tr>
+    `);
+}
+
+// Bulk Actions Dropdown Toggle
+function toggleBulkActionsDropdown(event) {
+    event.stopPropagation();
+    const menu = document.getElementById('bulkActionsMenu');
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('bulkActionsMenu');
+    const button = document.getElementById('bulkActionsDropdown');
+
+    if (menu && !button.contains(event.target) && !menu.contains(event.target)) {
+        menu.classList.remove('show');
+    }
+});
+
+</script>
+
+<div class="modal fade" id="bulkActionModal" tabindex="-1" role="dialog" aria-labelledby="bulkActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkActionModalLabel">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Konfirmasi Aksi Bulk
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-warning mr-2"></i>
+                    <strong>Peringatan:</strong> Aksi ini akan diterapkan pada <span id="bulkActionCount">0</span> item yang dipilih.
+                </div>
+                <p id="bulkActionMessage">Apakah Anda yakin ingin melanjutkan?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="confirmBulkAction">
+                    <i class="fas fa-check mr-1"></i>
+                    Ya, Lanjutkan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

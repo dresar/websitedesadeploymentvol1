@@ -1,0 +1,301 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/complaints/complaints.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="complaints-container">
+    <div class="complaints-card">
+        <div class="complaints-card-header">
+            <h3 class="complaints-card-title">
+                <i class="fas fa-tags"></i>Kelola Kategori Keluhan
+            </h3>
+        </div>
+        <div class="complaints-card-body">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center mb-3 gap-2">
+                <div class="d-flex flex-column flex-md-row gap-2 flex-grow-1">
+                    <input type="text" id="searchCategories" placeholder="Cari kategori..." class="form-control form-control-sm">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSearch()">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+                <button type="button" class="complaints-btn complaints-btn-danger" onclick="openAddModal()">
+                    <i class="fas fa-plus"></i>Tambah
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 10%">No</th>
+                            <th style="width: 50%">Nama Kategori</th>
+                            <th style="width: 15%">Status</th>
+                            <th style="width: 10%">Jumlah</th>
+                            <th style="width: 15%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><strong>{{ category.name }}</strong></td>
+                            <td>
+                                <span class="complaints-badge {% if category.is_active %}complaints-badge-success{% else %}complaints-badge-danger{% endif %}">
+                                    {% if category.is_active %}Aktif{% else %}Nonaktif{% endif %}
+                                </span>
+                            </td>
+                            <td><span class="complaints-badge complaints-badge-info">{{ category.complaint_set.count }}</span></td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="editCategory({{ category.id }})" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning btn-sm"
+                                            onclick="toggleCategory({{ category.id }}, {{ category.is_active|yesno:'false,true' }})"
+                                            title="{% if category.is_active %}Nonaktifkan{% else %}Aktifkan{% endif %}">
+                                        <i class="fas fa-{% if category.is_active %}eye-slash{% else %}eye{% endif %}"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteCategory({{ category.id }})" title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="complaints-empty">
+                                <i class="fas fa-tags complaints-empty-icon"></i>
+                                <p class="complaints-empty-text">Tidak ada kategori ditemukan</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="categoryModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="categoryModalTitle">
+                    <i class="fas fa-tag"></i> Tambah Kategori
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" for="categoryName">Nama Kategori</label>
+                        <input type="text" class="form-control form-control-sm" id="categoryName" name="name" required>
+                        <div class="invalid-feedback" id="nameError" style="display: none;"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" for="categoryDescription">Deskripsi</label>
+                        <textarea class="form-control form-control-sm" id="categoryDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="categoryActive" name="is_active" checked>
+                            <label class="form-check-label" for="categoryActive">Kategori Aktif</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="saveCategory()">
+                    <i class="fas fa-save"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h6 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Konfirmasi Hapus
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Apakah Anda yakin ingin menghapus kategori ini?</p>
+                <p class="text-muted small mb-0">Kategori yang memiliki keluhan tidak dapat dihapus.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete()">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>let currentCategoryId = null;
+let deleteCategoryId = null;
+
+$(document).ready(function() {
+
+    $('#searchCategories').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        $('tbody tr').each(function() {
+            const text = $(this).text().toLowerCase();
+            if (text.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+});
+
+function clearSearch() {
+    $('#searchCategories').val('');
+    $('tbody tr').show();
+}
+
+function openAddModal() {
+    currentCategoryId = null;
+    $('#categoryModalTitle').html('<i class="fas fa-tag"></i> Tambah Kategori');
+    $('#categoryForm')[0].reset();
+    $('#categoryActive').prop('checked', true);
+    const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+    modal.show();
+}
+
+function editCategory(id) {
+    currentCategoryId = id;
+    $('#categoryModalTitle').html('<i class="fas fa-edit"></i> Edit Kategori');
+
+    $.get(`{% url 'admin_panel:complaint_category_update' 0 %}`.replace('0', id), function(data) {
+        if (data.category) {
+            $('#categoryName').val(data.category.name);
+            $('#categoryDescription').val(data.category.description);
+            $('#categoryActive').prop('checked', data.category.is_active);
+            const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+            modal.show();
+        } else {
+            showAlert('Gagal memuat data kategori', 'error');
+        }
+    }).fail(function() {
+        showAlert('Gagal memuat data kategori', 'error');
+    });
+}
+
+function saveCategory() {
+    const formData = {
+        name: $('#categoryName').val(),
+        description: $('#categoryDescription').val(),
+        is_active: $('#categoryActive').is(':checked')
+    };
+
+    if (!formData.name.trim()) {
+        showFieldError('nameError', 'Nama kategori harus diisi');
+        return;
+    }
+
+    const url = currentCategoryId ?
+        `{% url 'admin_panel:complaint_category_update' 0 %}`.replace('0', currentCategoryId) :
+        '{% url "admin_panel:complaint_category_create" %}';
+    const method = 'POST';
+
+    $.ajax({
+        url: url,
+        method: method,
+        data: JSON.stringify(formData),
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(data) {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
+                showAlert(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showAlert(data.message, 'error');
+            }
+        },
+        error: function() {
+            showAlert('Terjadi kesalahan saat menyimpan kategori', 'error');
+        }
+    });
+}
+
+function toggleCategory(id, currentStatus) {
+    const newStatus = !currentStatus;
+    const action = newStatus ? 'mengaktifkan' : 'menonaktifkan';
+
+    if (confirm(`Apakah Anda yakin ingin ${action} kategori ini?`)) {
+        $.ajax({
+            url: `{% url 'admin_panel:complaint_category_update' 0 %}`.replace('0', id),
+            method: 'POST',
+            data: JSON.stringify({ is_active: newStatus }),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data) {
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            },
+            error: function() {
+                showAlert('Terjadi kesalahan saat mengubah status kategori', 'error');
+            }
+        });
+    }
+}
+
+function deleteCategory(id) {
+    deleteCategoryId = id;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+function confirmDelete() {
+    if (deleteCategoryId) {
+        $.ajax({
+            url: `{% url 'admin_panel:complaint_category_delete' 0 %}`.replace('0', deleteCategoryId),
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data) {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+                    showAlert(data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            },
+            error: function() {
+                showAlert('Terjadi kesalahan saat menghapus kategori', 'error');
+            }
+        });
+    }
+}
+
+function showFieldError(fieldId, message) {
+    $(`#${fieldId}`).text(message).show();
+    $(`#${fieldId}`).siblings('input, textarea').addClass('is-invalid');
+}
+
+</script>
+{% endblock extra_js %}

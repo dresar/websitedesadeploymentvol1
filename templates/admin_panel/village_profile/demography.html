@@ -1,0 +1,572 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block title %}Demografi Desa - Admin Panel{% endblock %}
+
+{% block page_title %}Demografi Desa{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/village_profile_global.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/village_profile/demography.css' %}">
+<style>
+/* Page specific overrides only */
+
+.demography-form-card .card-body {
+    padding: 1.5rem;
+    background: transparent;
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    position: relative;
+}
+
+.form-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: #6f42c1;
+    border-radius: 0 2px 2px 0;
+}
+
+.form-section h6 {
+    color: #6f42c1;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    position: relative;
+}
+
+.form-section h6::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: #6f42c1;
+    border-radius: 1px;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+}
+
+.form-control {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
+    background: #ffffff;
+    color: #495057;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.form-control:focus {
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+    background: #ffffff;
+    color: #495057;
+    outline: none;
+}
+
+.form-control:hover {
+    border-color: #adb5bd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.btn {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    color: white;
+}
+
+.btn-outline-primary {
+    border-color: #007bff;
+    color: #007bff;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .demography-form-card {
+        margin-bottom: 1rem;
+        border-radius: 0.375rem;
+    }
+
+    .demography-form-card .card-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .demography-form-card .card-body {
+        padding: 1rem;
+    }
+
+    .form-section {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-section h6 {
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .form-group {
+        margin-bottom: 0.75rem;
+    }
+
+    .form-control {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .demography-form-card .card-header {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .demography-form-card .card-body {
+        padding: 0.75rem;
+    }
+
+    .form-section {
+        padding: 0.5rem;
+    }
+
+    .form-section h6 {
+        font-size: 0.8rem;
+    }
+
+    .form-control {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <div class="mb-3 mb-md-0">
+        <h4 class="text-primary mb-2" style="font-weight: 600; font-size: 1.5rem;">
+            <i class="fas fa-chart-pie mr-2"></i>Data Demografi Desa
+        </h4>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Kelola informasi demografi dan statistik penduduk desa
+        </p>
+    </div>
+    <div class="d-flex flex-column flex-sm-row gap-2">
+        <button class="btn btn-outline-primary btn-sm mb-2 mb-sm-0" onclick="previewDemography()">
+            <i class="fas fa-eye mr-1"></i>Preview
+        </button>
+        <button class="btn btn-success btn-sm" onclick="saveDemographyData()">
+            <i class="fas fa-save mr-1"></i>Simpan Data
+        </button>
+    </div>
+</div>
+
+<div class="demography-form-card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-chart-pie mr-2"></i>Data Demografi Desa
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="demographyForm">
+            {% csrf_token %}
+            <input type="hidden" name="village_id" value="{{ village_profile.id|default:'' }}">
+
+            <div class="form-section">
+                <h6><i class="fas fa-users mr-2"></i>Data Populasi Dasar</h6>
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="form-group">
+                            {{ form.total_population.label_tag }}
+                            {{ form.total_population }}
+                            <small class="form-text text-muted">Jumlah total penduduk</small>
+                            {% if form.total_population.errors %}
+                                <div class="text-danger">{{ form.total_population.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="form-group">
+                            {{ form.male_population.label_tag }}
+                            {{ form.male_population }}
+                            <small class="form-text text-muted">Jumlah penduduk laki-laki</small>
+                            {% if form.male_population.errors %}
+                                <div class="text-danger">{{ form.male_population.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="form-group">
+                            {{ form.female_population.label_tag }}
+                            {{ form.female_population }}
+                            <small class="form-text text-muted">Jumlah penduduk perempuan</small>
+                            {% if form.female_population.errors %}
+                                <div class="text-danger">{{ form.female_population.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="form-group">
+                            {{ form.total_families.label_tag }}
+                            {{ form.total_families }}
+                            <small class="form-text text-muted">Jumlah kepala keluarga</small>
+                            {% if form.total_families.errors %}
+                                <div class="text-danger">{{ form.total_families.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h6><i class="fas fa-chart-line mr-2"></i>Kepadatan & Pertumbuhan</h6>
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-group">
+                            {{ form.population_density.label_tag }}
+                            {{ form.population_density }}
+                            <small class="form-text text-muted">Kepadatan penduduk per km²</small>
+                            {% if form.population_density.errors %}
+                                <div class="text-danger">{{ form.population_density.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-group">
+                            {{ form.growth_rate.label_tag }}
+                            {{ form.growth_rate }}
+                            <small class="form-text text-muted">Tingkat pertumbuhan penduduk tahunan</small>
+                            {% if form.growth_rate.errors %}
+                                <div class="text-danger">{{ form.growth_rate.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-12 col-12">
+                        <div class="form-group">
+                            {{ form.year.label_tag }}
+                            {{ form.year }}
+                            <small class="form-text text-muted">Tahun data demografi</small>
+                            {% if form.year.errors %}
+                                <div class="text-danger">{{ form.year.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h6><i class="fas fa-child mr-2"></i>Kelompok Usia</h6>
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-group">
+                            {{ form.age_0_14.label_tag }}
+                            {{ form.age_0_14 }}
+                            <small class="form-text text-muted">Anak-anak dan remaja</small>
+                            {% if form.age_0_14.errors %}
+                                <div class="text-danger">{{ form.age_0_14.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-group">
+                            {{ form.age_15_64.label_tag }}
+                            {{ form.age_15_64 }}
+                            <small class="form-text text-muted">Usia produktif</small>
+                            {% if form.age_15_64.errors %}
+                                <div class="text-danger">{{ form.age_15_64.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-12 col-12">
+                        <div class="form-group">
+                            {{ form.age_65_plus.label_tag }}
+                            {{ form.age_65_plus }}
+                            <small class="form-text text-muted">Lansia</small>
+                            {% if form.age_65_plus.errors %}
+                                <div class="text-danger">{{ form.age_65_plus.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h6><i class="fas fa-graduation-cap mr-2"></i>Tingkat Pendidikan</h6>
+                <div class="row">
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="form-group">
+                            {{ form.education_none.label_tag }}
+                            {{ form.education_none }}
+                            <small class="form-text text-muted">Belum sekolah</small>
+                            {% if form.education_none.errors %}
+                                <div class="text-danger">{{ form.education_none.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="form-group">
+                            {{ form.education_elementary.label_tag }}
+                            {{ form.education_elementary }}
+                            <small class="form-text text-muted">Sekolah Dasar</small>
+                            {% if form.education_elementary.errors %}
+                                <div class="text-danger">{{ form.education_elementary.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="form-group">
+                            {{ form.education_junior.label_tag }}
+                            {{ form.education_junior }}
+                            <small class="form-text text-muted">Sekolah Menengah Pertama</small>
+                            {% if form.education_junior.errors %}
+                                <div class="text-danger">{{ form.education_junior.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="form-group">
+                            {{ form.education_senior.label_tag }}
+                            {{ form.education_senior }}
+                            <small class="form-text text-muted">Sekolah Menengah Atas</small>
+                            {% if form.education_senior.errors %}
+                                <div class="text-danger">{{ form.education_senior.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-6 col-6">
+                        <div class="form-group">
+                            {{ form.education_higher.label_tag }}
+                            {{ form.education_higher }}
+                            <small class="form-text text-muted">Universitas/Akademi</small>
+                            {% if form.education_higher.errors %}
+                                <div class="text-danger">{{ form.education_higher.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-6 col-6">
+                        <div class="form-group">
+                            {{ form.employed.label_tag }}
+                            {{ form.employed }}
+                            <small class="form-text text-muted">Status bekerja</small>
+                            {% if form.employed.errors %}
+                                <div class="text-danger">{{ form.employed.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <a href="{% url "village_profile:admin_dashboard" %}" class="btn btn-secondary btn-sm mb-3 mb-md-0">
+                <i class="fas fa-arrow-left mr-1"></i>Kembali ke Dashboard
+            </a>
+            <div class="d-flex flex-column flex-sm-row gap-2">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="resetDemographyForm()">
+                    <i class="fas fa-undo mr-1"></i>Reset Form
+                </button>
+                <button type="button" class="btn btn-success btn-sm" onclick="saveDemographyData()">
+                    <i class="fas fa-save mr-1"></i>Simpan Data Demografi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+
+    $('#totalPopulation, #area').on('input', function() {
+        calculatePopulationDensity();
+    });
+
+    $('#malePopulation, #femalePopulation').on('input', function() {
+        calculateTotalPopulation();
+    });
+});
+
+function calculatePopulationDensity() {
+    const population = parseInt($('#totalPopulation').val()) || 0;
+    const area = parseFloat($('#area').val()) || 1;
+    const density = population / area;
+    $('#populationDensity').val(density.toFixed(2));
+}
+
+function calculateTotalPopulation() {
+    const male = parseInt($('#malePopulation').val()) || 0;
+    const female = parseInt($('#femalePopulation').val()) || 0;
+    const total = male + female;
+    $('#totalPopulation').val(total);
+    calculatePopulationDensity();
+}
+
+function validateDemographyData() {
+    const male = parseInt($('#malePopulation').val()) || 0;
+    const female = parseInt($('#femalePopulation').val()) || 0;
+    const total = parseInt($('#totalPopulation').val()) || 0;
+
+    if (male + female !== total) {
+        showError('Jumlah laki-laki + perempuan harus sama dengan total populasi');
+        return false;
+    }
+
+    const year = parseInt($('#year').val());
+    if (year < 1900 || year > 2100) {
+        showError('Tahun harus antara 1900 dan 2100');
+        return false;
+    }
+
+    return true;
+}
+
+function saveDemographyData() {
+    if (!validateDemographyData()) {
+        return;
+    }
+
+    const submitBtn = $('button[onclick="saveDemographyData()"]');
+    const originalText = submitBtn.html();
+    submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Menyimpan...');
+
+    const formData = new FormData();
+    formData.append('village_id', $('#demographyVillageId').val());
+    formData.append('total_population', $('#totalPopulation').val());
+    formData.append('male_population', $('#malePopulation').val());
+    formData.append('female_population', $('#femalePopulation').val());
+    formData.append('total_families', $('#totalFamilies').val());
+    formData.append('population_density', $('#populationDensity').val());
+    formData.append('growth_rate', $('#growthRate').val());
+    formData.append('age_0_14', $('#age014').val());
+    formData.append('age_15_64', $('#age1564').val());
+    formData.append('age_65_plus', $('#age65plus').val());
+    formData.append('education_none', $('#educationNone').val());
+    formData.append('education_elementary', $('#educationElementary').val());
+    formData.append('education_junior', $('#educationJunior').val());
+    formData.append('education_senior', $('#educationSenior').val());
+    formData.append('education_higher', $('#educationHigher').val());
+    formData.append('employed', $('#employed').val());
+    formData.append('year', $('#year').val());
+    formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val());
+
+    $.ajax({
+        url: '{% url "village_profile:admin_save_demography" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                showSuccess('Data demografi berhasil disimpan');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showError('Gagal menyimpan data: ' + response.message);
+            }
+        },
+        error: function() {
+            showError('Gagal menyimpan data demografi');
+        },
+        finally: function() {
+            submitBtn.prop('disabled', false).html(originalText);
+        }
+    });
+}
+
+function resetDemographyForm() {
+    if (confirm('Apakah Anda yakin ingin mereset form?')) {
+        location.reload();
+    }
+}
+
+function previewDemography() {
+    window.open('{% url "village_profile:demography" %}', '_blank');
+}
+</script>
+{% csrf_token %}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+{% endblock extra_js %}

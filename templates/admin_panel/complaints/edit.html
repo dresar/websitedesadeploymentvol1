@@ -1,0 +1,193 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/complaints/complaints.css' %}">
+{% endblock extra_css %}
+
+{% block content %}
+<div class="complaints-container">
+
+    <div class="mb-2">
+        <a href="{% url 'admin_panel:complaint_detail' complaint.id %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Kembali ke Detail
+        </a>
+    </div>
+
+    <div class="complaints-card">
+        <div class="complaints-card-header">
+            <h3 class="complaints-card-title">
+                <i class="fas fa-edit"></i> Edit Pengaduan {{ complaint.complaint_id }}
+            </h3>
+        </div>
+        <div class="complaints-card-body">
+            <form id="complaintEditForm" method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="title" class="form-label">Judul Pengaduan</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ complaint.title }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="category" class="form-label">Kategori</label>
+                            <select class="form-control" id="category" name="category_id" required>
+                                <option value="">Pilih Kategori</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" 
+                                        {% if category.id == complaint.category_id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="description" class="form-label">Deskripsi Pengaduan</label>
+                    {{ complaint_form.description }}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="priority" class="form-label">Prioritas</label>
+                            <select class="form-control" id="priority" name="priority" required>
+                                {% for value, label in priority_choices %}
+                                <option value="{{ value }}" 
+                                        {% if value == complaint.priority %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-control" id="status" name="status" required>
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}" 
+                                        {% if value == complaint.status %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="location" class="form-label">Lokasi</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   value="{{ complaint.location }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="admin_notes" class="form-label">Catatan Admin</label>
+                    {{ admin_notes_form.admin_notes }}
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="update_notes" class="form-label">Catatan Update</label>
+                    <textarea class="form-control" id="update_notes" name="update_notes" rows="2" 
+                              placeholder="Catatan untuk update status (opsional)"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">
+                        <i class="fas fa-times"></i> Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for jQuery to be available
+    function waitForJQuery(callback) {
+        if (typeof $ !== 'undefined') {
+            callback();
+        } else {
+            setTimeout(function() {
+                waitForJQuery(callback);
+            }, 100);
+        }
+    }
+    
+    waitForJQuery(function() {
+        $('#complaintEditForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const form = $(this);
+            const btn = form.find('button[type="submit"]');
+            const originalText = btn.html();
+            
+            // Show loading state
+            btn.html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+            btn.prop('disabled', true);
+            
+            // Get form data
+            const formData = {
+                title: $('#title').val(),
+                description: $('#id_description').val(),
+                category_id: parseInt($('#category').val()),
+                priority: $('#priority').val(),
+                status: $('#status').val(),
+                location: $('#location').val(),
+                admin_notes: $('#id_admin_notes').val(),
+                update_notes: $('#update_notes').val()
+            };
+            
+            // Get CSRF token
+            const csrftoken = $('[name=csrfmiddlewaretoken]').val();
+            
+            $.ajax({
+                url: '{% url "admin_panel:complaint_update" complaint.id %}',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                success: function(response) {
+                    if (response.success) {
+                        if (window.showAlert) {
+                            window.showAlert(response.message || 'Pengaduan berhasil diperbarui', 'success');
+                        }
+                        setTimeout(function() {
+                            window.location.href = '{% url "admin_panel:complaint_detail" complaint.id %}';
+                        }, 1000);
+                    } else {
+                        if (window.showAlert) {
+                            window.showAlert(response.message || 'Gagal memperbarui pengaduan', 'error');
+                        }
+                        btn.html(originalText);
+                        btn.prop('disabled', false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Update error:', error);
+                    if (window.showAlert) {
+                        window.showAlert('Terjadi kesalahan saat memperbarui pengaduan', 'error');
+                    }
+                    btn.html(originalText);
+                    btn.prop('disabled', false);
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock content %}

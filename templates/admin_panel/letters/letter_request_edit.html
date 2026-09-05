@@ -1,0 +1,565 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title %}Edit Permintaan Surat{% endblock %}
+{% block page_description %}Edit permintaan surat yang sudah ada{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/letters/letters-admin.css' %}">
+<style>
+/* Request Edit Form Styles */
+.request-edit-page {
+    padding: 1rem 0;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.request-edit-header {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.request-edit-header h4 {
+    margin: 0;
+    color: #495057;
+    font-size: 1.25rem;
+}
+
+.form-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.form-section h6 {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-section h6 i {
+    color: #007bff;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #343a40;
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border-radius: 0.3rem;
+    border: 1px solid #ced4da;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Priority Badges */
+.priority-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.priority-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.priority-badge.low { background: #e2e3e5; color: #383d41; }
+.priority-badge.normal { background: #d1ecf1; color: #0c5460; }
+.priority-badge.high { background: #fff3cd; color: #856404; }
+.priority-badge.urgent { background: #f8d7da; color: #721c24; }
+
+.priority-badge.active {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+/* Document Upload Area */
+.document-upload-area {
+    border: 2px dashed #ced4da;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f8f9fa;
+    margin-bottom: 1.5rem;
+}
+
+.document-upload-area:hover {
+    border-color: #007bff;
+    background: #e9ecef;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.upload-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.upload-subtext {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* Document List */
+#documentList {
+    margin-top: 1rem;
+}
+
+.document-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #e9ecef;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.document-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.document-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 0.3rem;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.document-info h6 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #343a40;
+    font-weight: 600;
+}
+
+.document-info small {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.document-actions .btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+/* Existing Documents */
+.existing-documents {
+    margin-bottom: 1.5rem;
+}
+
+.existing-documents h6 {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.existing-document-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.existing-document-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.existing-document-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 0.3rem;
+    background: #28a745;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.existing-document-info h6 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #343a40;
+    font-weight: 600;
+}
+
+.existing-document-info small {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.existing-document-actions .btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+/* Submit Button */
+.btn-submit {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .form-container {
+        padding: 1rem;
+    }
+    .priority-badges {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .priority-badge {
+        width: 100%;
+        text-align: center;
+    }
+    .document-upload-area {
+        padding: 1.5rem;
+    }
+    .document-card, .existing-document-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    .document-actions, .existing-document-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="request-edit-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Header -->
+                <div class="request-edit-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4><i class="fas fa-edit me-2"></i>Edit Permintaan Surat</h4>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'admin_panel:letters:letter_request_detail' request_obj.id %}" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-arrow-left me-1"></i>Kembali
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Container -->
+                <div class="form-container">
+                    <form method="post" enctype="multipart/form-data" id="letterRequestForm">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-info-circle"></i>Informasi Dasar</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="id_letter_type" class="form-label">Jenis Surat <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="id_letter_type" name="letter_type" required>
+                                        <option value="">Pilih Jenis Surat</option>
+                                        {% for type in letter_types %}
+                                            <option value="{{ type.id }}" {% if type.id == request_obj.letter_type.id %}selected{% endif %}>
+                                                {{ type.name }} ({{ type.code }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_applicant" class="form-label">Pemohon <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="id_applicant" name="applicant" required>
+                                        <option value="">Pilih Pemohon</option>
+                                        {% for penduduk in penduduks %}
+                                            <option value="{{ penduduk.id }}" {% if penduduk.id == request_obj.applicant.id %}selected{% endif %}>
+                                                {{ penduduk.nama }} (NIK: {{ penduduk.nik }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Purpose Information -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-bullseye"></i>Tujuan Penggunaan</h6>
+                            <div class="mb-3">
+                                <label for="id_purpose" class="form-label">Tujuan Penggunaan Surat <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="id_purpose" name="purpose" rows="3" 
+                                          placeholder="Jelaskan tujuan penggunaan surat ini..." required>{{ request_obj.purpose }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_detailed_purpose" class="form-label">Detail Tujuan (Opsional)</label>
+                                <textarea class="form-control" id="id_detailed_purpose" name="detailed_purpose" rows="3" 
+                                          placeholder="Berikan penjelasan lebih detail jika diperlukan...">{{ request_obj.detailed_purpose }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_urgency_reason" class="form-label">Alasan Urgensi (Jika Mendesak)</label>
+                                <textarea class="form-control" id="id_urgency_reason" name="urgency_reason" rows="2" 
+                                          placeholder="Jelaskan mengapa permintaan ini mendesak...">{{ request_obj.urgency_reason }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Priority Selection -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-flag"></i>Prioritas</h6>
+                            <div class="priority-badges">
+                                {% for value, label in priority_choices %}
+                                    <div class="priority-badge {{ value }} {% if value == request_obj.priority %}active{% endif %}" 
+                                         data-priority="{{ value }}">
+                                        <i class="fas fa-flag me-1"></i>{{ label }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="priority" id="id_priority" value="{{ request_obj.priority }}">
+                        </div>
+
+                        <!-- Existing Documents -->
+                        {% if request_obj.supportingdocument_set.all %}
+                        <div class="form-section">
+                            <h6><i class="fas fa-paperclip"></i>Dokumen Pendukung yang Ada</h6>
+                            <div class="existing-documents">
+                                {% for doc in request_obj.supportingdocument_set.all %}
+                                <div class="existing-document-item">
+                                    <div class="existing-document-header">
+                                        <div class="existing-document-icon">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div class="existing-document-info">
+                                            <h6>{{ doc.title }}</h6>
+                                            <small>{{ doc.file_size|filesizeformat }} • {{ doc.uploaded_at|date:"d M Y" }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="existing-document-actions">
+                                        <a href="{{ doc.file.url }}" target="_blank" class="btn btn-outline-primary btn-sm" title="Lihat Dokumen">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ doc.file.url }}" download class="btn btn-outline-success btn-sm" title="Download Dokumen">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Additional Documents -->
+                        <div class="form-section">
+                            <h6><i class="fas fa-plus-circle"></i>Tambah Dokumen Pendukung</h6>
+                            <div class="document-upload-area" id="uploadArea">
+                                <input type="file" id="documentInput" name="documents" multiple hidden accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="upload-text">Upload Dokumen Tambahan</div>
+                                <div class="upload-subtext">
+                                    Drag & drop file atau klik untuk memilih<br>
+                                    Format yang didukung: PDF, DOC, DOCX, JPG, PNG (Max 5MB per file)
+                                </div>
+                            </div>
+                            <div id="documentList" class="mt-3">
+                                <!-- New uploaded documents will be listed here -->
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-submit">
+                                <i class="fas fa-save me-2"></i>Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const uploadArea = document.getElementById('uploadArea');
+const documentInput = document.getElementById('documentInput');
+const documentList = document.getElementById('documentList');
+let uploadedFiles = [];
+
+function validateFile(file) {
+    const allowedTypes = ['application/pdf', 'application/msword', 
+                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                          'image/jpeg', 'image/jpg', 'image/png'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    
+    if (!allowedTypes.includes(file.type)) {
+        alert(`File ${file.name} tidak didukung. Gunakan format PDF, DOC, DOCX, JPG, atau PNG.`);
+        return false;
+    }
+    
+    if (file.size > maxSize) {
+        alert(`File ${file.name} terlalu besar. Maksimal 5MB per file.`);
+        return false;
+    }
+    
+    return true;
+}
+
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+function getFileIconClass(fileType) {
+    if (fileType.includes('pdf')) return 'fa-file-pdf';
+    if (fileType.includes('word') || fileType.includes('doc')) return 'fa-file-word';
+    if (fileType.includes('image')) return 'fa-file-image';
+    return 'fa-file-alt';
+}
+
+function addFileToList(file) {
+    if (!validateFile(file)) {
+        return;
+    }
+
+    const fileCard = document.createElement('div');
+    fileCard.className = 'document-card';
+    fileCard.innerHTML = `
+        <div class="document-header">
+            <div class="document-icon">
+                <i class="fas ${getFileIconClass(file.type)}"></i>
+            </div>
+            <div class="document-info">
+                <h6>${file.name}</h6>
+                <small>${formatBytes(file.size)} • ${new Date().toLocaleDateString()}</small>
+            </div>
+        </div>
+        <div class="document-actions">
+            <button type="button" class="btn btn-outline-danger btn-sm remove-doc-btn">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    documentList.appendChild(fileCard);
+
+    uploadedFiles.push({ file: file, element: fileCard });
+
+    fileCard.querySelector('.remove-doc-btn').addEventListener('click', () => {
+        removeFileFromList(fileCard, file);
+    });
+}
+
+function removeFileFromList(fileCard, fileToRemove) {
+    fileCard.remove();
+    uploadedFiles = uploadedFiles.filter(item => item.file !== fileToRemove);
+}
+
+// Event Listeners for Drag & Drop
+uploadArea.addEventListener('click', () => documentInput.click());
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+});
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('drag-over');
+});
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    for (let i = 0; i < files.length; i++) {
+        addFileToList(files[i]);
+    }
+});
+
+// Event Listener for File Input Change
+documentInput.addEventListener('change', (e) => {
+    const files = e.target.files;
+    for (let i = 0; i < files.length; i++) {
+        addFileToList(files[i]);
+    }
+    documentInput.value = ''; 
+});
+
+// Priority selection logic
+document.querySelectorAll('.priority-badge').forEach(badge => {
+    badge.addEventListener('click', function() {
+        document.querySelectorAll('.priority-badge').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('id_priority').value = this.dataset.priority;
+    });
+});
+
+// Handle form submission to include all files
+document.getElementById('letterRequestForm').addEventListener('submit', function(e) {
+    const formData = new FormData(this);
+    // Remove existing 'documents' field if any, then append all files from uploadedFiles array
+    formData.delete('documents'); 
+    uploadedFiles.forEach(item => {
+        formData.append('documents', item.file);
+    });
+});
+</script>
+{% endblock %}

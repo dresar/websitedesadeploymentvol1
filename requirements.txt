@@ -1,0 +1,177 @@
+# Requirements Lengkap untuk Mode Deployment - Tidak Ketat
+# Dikonfigurasi khusus untuk shared hosting dengan pengaturan yang fleksibel
+# Mode: Development/Testing - Bukan Production
+
+# ==================== DJANGO CORE ====================
+Django==4.2.16                    # Web framework utama
+django-environ==0.11.2           # Environment variables management
+setuptools==80.9.0               # Package management
+
+# ==================== DATABASE DRIVERS ====================
+psycopg2-binary==2.9.10          # PostgreSQL database adapter
+
+# ==================== FORMS & UI ====================
+django-crispy-forms==2.1         # Form rendering dengan Bootstrap
+crispy-bootstrap5==0.7          # Bootstrap 5 integration
+django-widget-tweaks==1.5.0    # Widget customization
+
+# ==================== API & AUTHENTICATION ====================
+djangorestframework==3.14.0     # REST API framework
+djangorestframework-simplejwt==5.3.0  # JWT authentication
+django-cors-headers==4.3.1     # CORS handling (fleksibel)
+
+# ==================== DATA MANAGEMENT ====================
+django-import-export==3.3.1    # Import/Export data
+pandas==2.3.3                  # Data analysis (untuk references app)
+numpy==2.3.3                   # Numerical computing
+
+# ==================== FILE PROCESSING ====================
+Pillow==11.3.0                 # Image processing (versi terbaru)
+python-docx==1.2.0             # Word document processing
+reportlab==4.4.4               # PDF generation
+qrcode==8.2                    # QR code generation
+lxml==6.0.2                    # XML processing
+
+# ==================== UTILITIES ====================
+python-dotenv==1.0.0           # Environment management
+django-extensions==3.2.3       # Django extensions
+user-agents==2.2.0             # User agent parsing
+colorama==0.4.6                # Terminal colors
+
+# ==================== EXCEL & SPREADSHEET ====================
+openpyxl==3.1.5                # Excel file handling (.xlsx)
+xlsxwriter==3.2.9              # Excel writing dengan formatting (.xlsx)
+xlrd==2.0.2                    # Excel reading (.xls)
+xlwt==1.3.0                    # Excel writing (.xls)
+odfpy==1.4.1                   # OpenDocument format (.ods)
+
+# ==================== DATA EXPORT/IMPORT ====================
+tablib==3.5.0                  # Data export/import
+markuppy==1.18                 # HTML generation
+defusedxml==0.7.1              # XML security
+diff-match-patch==20241021     # Text diffing
+et_xmlfile==2.0.0              # XML file handling
+
+# ==================== SECURITY & VALIDATION ====================
+# DISABLED untuk mode deployment yang tidak ketat
+# SECURE_SSL_REDIRECT=False
+# SECURE_HSTS_SECONDS=0
+# SECURE_HSTS_INCLUDE_SUBDOMAINS=False
+# SECURE_HSTS_PRELOAD=False
+# CSRF_COOKIE_SECURE=False
+# SESSION_COOKIE_SECURE=False
+
+# ==================== SESSION & COOKIES ====================
+# FLEKSIBEL untuk mode deployment
+# SESSION_COOKIE_HTTPONLY=True
+# SESSION_COOKIE_SAMESITE=Lax
+# SESSION_COOKIE_AGE=3600
+# SESSION_EXPIRE_AT_BROWSER_CLOSE=False
+
+# ==================== CORS SETTINGS ====================
+# FLEKSIBEL untuk mode deployment
+# CORS_ALLOWED_ORIGINS=*
+# CORS_ALLOW_CREDENTIALS=True
+# CORS_ALLOW_ALL_ORIGINS=True
+
+# ==================== CACHE SETTINGS ====================
+# DISABLED untuk mode deployment
+# CACHE_BACKEND=django.core.cache.backends.dummy.DummyCache
+# CACHE_MIDDLEWARE_SECONDS=0
+
+# ==================== LOGGING SETTINGS ====================
+# SEDERHANA untuk mode deployment
+# LOG_LEVEL=INFO
+# LOG_FILE=logs/django.log
+
+# ==================== DATABASE SETTINGS ====================
+# SQLite3 untuk mode deployment (tidak perlu install)
+# DATABASE_ENGINE=django.db.backends.sqlite3
+# DATABASE_NAME=db.sqlite3
+
+# ==================== STATIC & MEDIA FILES ====================
+# STATIC_URL=/static/
+# STATIC_ROOT=staticfiles/
+# MEDIA_URL=/media/
+# MEDIA_ROOT=media/
+
+# ==================== PERFORMANCE SETTINGS ====================
+# DISABLED untuk mode deployment
+# CONN_MAX_AGE=0
+# CONN_MAX_AGE_OPTIONS=0
+
+# ==================== SECURITY MONITORING ====================
+# DISABLED untuk mode deployment
+# SECURITY_MONITORING=False
+# INTRUSION_DETECTION=False
+# MALWARE_SCANNING=False
+# VULNERABILITY_SCANNING=False
+
+# ==================== COMPLIANCE & AUDITING ====================
+# DISABLED untuk mode deployment
+# AUDIT_LOGGING=False
+# COMPLIANCE_MODE=False
+# PRIVACY_MODE=False
+
+# ==================== RATE LIMITING ====================
+# DISABLED untuk mode deployment
+# RATE_LIMIT_ENABLED=False
+
+# ==================== ERROR REPORTING ====================
+# DISABLED untuk mode deployment
+# ERROR_REPORTING=False
+
+# ==================== MAINTENANCE MODE ====================
+# DISABLED untuk mode deployment
+# MAINTENANCE_MODE=False
+# MAINTENANCE_MODE_IGNORE_ADMIN=True
+# MAINTENANCE_MODE_IGNORE_STAFF=True
+
+# ==================== SUPPORTING LIBRARIES ====================
+asgiref==3.10.0                # ASGI support
+sqlparse==0.5.3                # SQL parsing
+tzdata==2025.2                 # Timezone data
+pytz==2025.2                   # Timezone handling
+PyJWT==2.10.1                  # JWT token handling
+python-dateutil==2.9.0.post0  # Date utilities
+six==1.17.0                    # Python 2/3 compatibility
+charset-normalizer==3.4.3      # Character encoding
+typing_extensions==4.15.0      # Type hints
+ua-parser==1.0.1               # User agent parsing
+ua-parser-builtins==0.18.0.post1  # User agent data
+PyYAML==6.0.3                  # YAML processing
+
+# ==================== TESTING & CHECKING ====================
+requests==2.32.3               # HTTP requests untuk pengecekan halaman
+beautifulsoup4==4.12.3         # HTML parsing untuk deteksi error
+lxml==6.0.2                    # XML/HTML parser (sudah ada di atas)
+
+# ==================== DEPLOYMENT NOTES ====================
+# 1. SSL/HTTPS: DISABLED - Gunakan HTTP saja
+# 2. Security: RELAXED - Tidak terlalu ketat
+# 3. CORS: FLEKSIBEL - Allow semua origin
+# 4. Session: FLEKSIBEL - Tidak secure cookies
+# 5. Cache: DISABLED - Tidak ada caching
+# 6. Logging: SEDERHANA - Level INFO
+# 7. Database: SQLite3 - File-based
+# 8. Static Files: Django serving
+# 9. Media Files: Django serving
+# 10. Performance: DISABLED - Tidak ada optimasi
+
+# ==================== INSTALLATION NOTES ====================
+# pip install -r requirements.txt
+# python manage.py migrate
+# python manage.py collectstatic --noinput
+# python manage.py runserver
+
+# ==================== DEPLOYMENT CHECKLIST ====================
+# ✅ Virtual Environment: Created
+# ✅ Dependencies: Installed
+# ✅ Database: SQLite3 ready
+# ✅ Static Files: Collected
+# ✅ SSL/HTTPS: Disabled
+# ✅ Security: Relaxed
+# ✅ CORS: Flexible
+# ✅ Session: Flexible
+# ✅ Cache: Disabled
+# ✅ Logging: Simple

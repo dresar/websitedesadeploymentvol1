@@ -1,0 +1,320 @@
+{% extends 'public/base.html' %}
+{% load static %}
+{% load currency_filters %}
+{% load tourism_filters %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative h-64 sm:h-80 md:h-96 lg:h-[500px] overflow-hidden">
+    {% if package.image %}
+    <img src="{{ package.image.url }}" alt="{{ package.title }}" class="w-full h-full object-cover">
+    {% else %}
+    <div class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+        <i class="fas fa-suitcase text-4xl sm:text-6xl text-white opacity-50"></i>
+    </div>
+    {% endif %}
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+    <div class="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8 text-white">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500 text-white">
+                    {{ package.get_package_type_display }}
+                </span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
+                    {{ package.duration }}
+                </span>
+                {% if package.is_featured %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-500 text-white">
+                    Unggulan
+                </span>
+                {% endif %}
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight">{{ package.title }}</h1>
+            <p class="text-sm sm:text-base lg:text-lg opacity-90 mb-4">{{ package.tourism_location.title }}</p>
+            <div class="flex flex-wrap items-center gap-4 text-sm">
+                {% if package.max_participants %}
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-users"></i>
+                    <span>Maks {{ package.max_participants }} peserta</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ package.duration }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <!-- Left Column - Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Description -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Deskripsi Paket</h2>
+                <div class="prose max-w-none prose-sm sm:prose-base">
+                    {{ package.description|safe }}
+                </div>
+            </div>
+
+            <!-- Includes & Excludes -->
+            {% with includes_list=package.includes|json_to_list excludes_list=package.excludes|json_to_list %}
+            {% if includes_list or excludes_list %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {% if includes_list %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        Yang Termasuk
+                    </h3>
+                    <ul class="space-y-2">
+                        {% for item in includes_list %}
+                        <li class="flex items-start gap-3 text-sm sm:text-base">
+                            <i class="fas fa-check text-green-500 mt-1 flex-shrink-0"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if excludes_list %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                        Yang Tidak Termasuk
+                    </h3>
+                    <ul class="space-y-2">
+                        {% for item in excludes_list %}
+                        <li class="flex items-start gap-3 text-sm sm:text-base">
+                            <i class="fas fa-times text-red-500 mt-1 flex-shrink-0"></i>
+                            <span class="text-gray-700">{{ item }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- Itinerary -->
+            {% with itinerary_dict=package.itinerary|json_to_dict %}
+            {% if itinerary_dict %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Itinerary</h2>
+                <div class="space-y-6">
+                    {% for day, activities in itinerary_dict.items %}
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Hari {{ day }}</h3>
+                        <ul class="space-y-2">
+                            {% for activity in activities %}
+                            <li class="flex items-start gap-3 text-sm sm:text-base">
+                                <i class="fas fa-circle text-blue-500 mt-2 flex-shrink-0 text-xs"></i>
+                                <span class="text-gray-700">{{ activity }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- Gallery -->
+            {% if galleries %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Galeri</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {% for item in galleries %}
+                    {% if item.image %}
+                    <div class="aspect-square rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200" onclick="openGallery({{ forloop.counter0 }})">
+                        <img src="{{ item.image.url }}" alt="{{ item.title }}" class="w-full h-full object-cover">
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column - Booking & Info -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Price & Booking -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div class="bg-gradient-to-r from-green-500 to-green-600 text-white text-center p-6 rounded-lg mb-6">
+                    <div class="text-3xl sm:text-4xl font-bold mb-1">{{ package.price|currency_idr }}</div>
+                    <div class="text-sm opacity-90">{{ package.currency }} per orang</div>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    {% if package.min_participants %}
+                    <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+                        <i class="fas fa-users text-blue-500 w-5 h-5"></i>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-500">Minimal Peserta</div>
+                            <div class="font-semibold text-gray-900">{{ package.min_participants }} orang</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if package.max_participants %}
+                    <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+                        <i class="fas fa-users text-blue-500 w-5 h-5"></i>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-500">Maksimal Peserta</div>
+                            <div class="font-semibold text-gray-900">{{ package.max_participants }} orang</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+                        <i class="fas fa-clock text-blue-500 w-5 h-5"></i>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-500">Durasi</div>
+                            <div class="font-semibold text-gray-900">{{ package.duration }}</div>
+                        </div>
+                    </div>
+                    {% if package.booking_deadline %}
+                    <div class="flex items-center gap-3 py-3">
+                        <i class="fas fa-calendar text-blue-500 w-5 h-5"></i>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-500">Deadline Booking</div>
+                            <div class="font-semibold text-gray-900">{{ package.booking_deadline }} hari sebelumnya</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-3">
+                    {% if package.whatsapp %}
+                    <a href="https://wa.me/{{ package.whatsapp }}" target="_blank" 
+                       class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fab fa-whatsapp mr-2"></i>Pesan via WhatsApp
+                    </a>
+                    {% endif %}
+                    {% if package.youtube_link %}
+                    <a href="{{ package.youtube_link }}" target="_blank" 
+                       class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fab fa-youtube mr-2"></i>Lihat Video
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Package Info -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4">Informasi Paket</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+                        <i class="fas fa-map-marker-alt text-blue-500 w-5 h-5"></i>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-500">Lokasi</div>
+                            <div class="font-semibold text-gray-900">{{ package.tourism_location.title }}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 py-3 border-b border-gray-100">
+                        <i class="fas fa-clock text-blue-500 w-5 h-5"></i>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-500">Durasi</div>
+                            <div class="font-semibold text-gray-900">{{ package.duration }}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 py-3">
+                        <i class="fas fa-tag text-blue-500 w-5 h-5"></i>
+                        <div class="flex-1">
+                            <div class="text-sm text-gray-500">Jenis Paket</div>
+                            <div class="font-semibold text-gray-900">{{ package.get_package_type_display }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-tools text-blue-500 mr-2"></i>Aksi
+                </h3>
+                <div class="space-y-3">
+                    {% if package.whatsapp %}
+                    <a href="https://wa.me/{{ package.whatsapp }}" target="_blank" 
+                       class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fab fa-whatsapp mr-2"></i>Hubungi via WhatsApp
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'tourism:location_detail' package.tourism_location.slug %}" 
+                       class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Lihat Lokasi
+                    </a>
+                    <a href="{% url 'tourism:package_list' %}" 
+                       class="w-full bg-slate-600 hover:bg-slate-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-arrow-left mr-2"></i>Kembali ke Daftar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Gallery functionality
+    function openGallery(index) {
+        const images = document.querySelectorAll('.gallery-item img');
+        if (images[index]) {
+            // Simple lightbox implementation
+            const lightbox = document.createElement('div');
+            lightbox.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                cursor: pointer;
+            `;
+            
+            const img = document.createElement('img');
+            img.src = images[index].src;
+            img.style.cssText = `
+                max-width: 90%;
+                max-height: 90%;
+                object-fit: contain;
+                border-radius: 0.5rem;
+            `;
+            
+            lightbox.appendChild(img);
+            document.body.appendChild(lightbox);
+            
+            lightbox.addEventListener('click', () => {
+                document.body.removeChild(lightbox);
+            });
+        }
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Package detail page loaded');
+        
+        // Add loading states to buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                if (!this.href || this.href.includes('#')) {
+                    this.classList.add('loading');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

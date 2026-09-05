@@ -1,0 +1,491 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/core/dashboard.css' %}">
+<style>
+.btn-outline-pink {
+    color: #e83e8c;
+    border-color: #e83e8c;
+}
+
+.btn-outline-pink:hover {
+    color: #fff;
+    background-color: #e83e8c;
+    border-color: #e83e8c;
+}
+
+a.system-info-cart {
+    transition: all 0.3s ease;
+    color: inherit;
+}
+
+a.system-info-cart:hover {
+    text-decoration: none;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.25);
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem;
+    }
+
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem;
+    }
+
+    .activities-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+    }
+
+    .stat-cart, .info-cart, .system-info-cart {
+        padding: 0.75rem;
+    }
+
+    .stat-number, .info-number {
+        font-size: 1.5rem;
+    }
+
+    .stat-label, .info-label {
+        font-size: 0.75rem;
+    }
+
+    .stat-description, .info-description {
+        font-size: 0.7rem;
+    }
+
+    .stat-icon, .info-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+
+    .cart-title {
+        font-size: 1.2rem;
+    }
+
+    .cart-subtitle {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-cart, .info-cart, .system-info-cart {
+        padding: 0.625rem;
+    }
+
+    .stat-number, .info-number {
+        font-size: 1.3rem;
+    }
+
+    .stat-label, .info-label {
+        font-size: 0.7rem;
+    }
+
+    .stat-icon, .info-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+
+<div class="dashboard-header">
+    <div class="header-content">
+        <div class="header-info">
+            <h1 class="dashboard-title">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard Posyandu
+            </h1>
+            <p class="dashboard-subtitle">Ringkasan data dan statistik posyandu</p>
+        </div>
+        <div class="header-meta">
+            <a href="{% url 'admin_panel:dashboard' %}" class="btn btn-light">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Kembali
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="stats-cart-container">
+    <div class="cart-header">
+        <h2 class="cart-title">
+            <i class="fas fa-chart-bar"></i>
+            Statistik Posyandu
+        </h2>
+        <p class="cart-subtitle">Data utama posyandu</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-cart stat-cart-success">
+            <div class="stat-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="total-locations">{{ total_locations|default:0 }}</div>
+                <div class="stat-label">Total Lokasi</div>
+                <div class="stat-description">Lokasi Posyandu</div>
+            </div>
+        </div>
+
+        <div class="stat-cart stat-cart-primary">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="active-locations">{{ active_locations|default:0 }}</div>
+                <div class="stat-label">Lokasi Aktif</div>
+                <div class="stat-description">Posyandu Beroperasi</div>
+            </div>
+        </div>
+
+        <div class="stat-cart stat-cart-warning">
+            <div class="stat-icon">
+                <i class="fas fa-user-nurse"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="total-kaders">{{ total_kaders|default:0 }}</div>
+                <div class="stat-label">Total Kader</div>
+                <div class="stat-description">Kader Posyandu</div>
+            </div>
+        </div>
+
+        <div class="stat-cart stat-cart-info">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-number" id="total-schedules">{{ total_schedules|default:0 }}</div>
+                <div class="stat-label">Jadwal Aktif</div>
+                <div class="stat-description">Kegiatan Terjadwal</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="info-cart-container">
+    <div class="cart-header">
+        <h2 class="cart-title">
+            <i class="fas fa-heartbeat"></i>
+            Data Kesehatan
+        </h2>
+        <p class="cart-subtitle">Statistik kesehatan masyarakat</p>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-cart info-cart-success">
+            <div class="info-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-number" id="total-health-records">{{ total_health_records|default:0 }}</div>
+                <div class="info-label">Rekam Kesehatan</div>
+                <div class="info-description">Total data kesehatan</div>
+            </div>
+        </div>
+
+        <div class="info-cart info-cart-primary">
+            <div class="info-icon">
+                <i class="fas fa-syringe"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-number" id="total-immunizations">{{ total_immunizations|default:0 }}</div>
+                <div class="info-label">Data Imunisasi</div>
+                <div class="info-description">Total imunisasi</div>
+            </div>
+        </div>
+
+        <div class="info-cart info-cart-warning">
+            <div class="info-icon">
+                <i class="fas fa-baby"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-number" id="total-ibu-hamil">{{ total_ibu_hamil|default:0 }}</div>
+                <div class="info-label">Ibu Hamil</div>
+                <div class="info-description">Data kehamilan</div>
+            </div>
+        </div>
+
+        <div class="info-cart info-cart-danger">
+            <div class="info-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="info-content">
+                <div class="info-number" id="stunting-count">{{ stunting_count|default:0 }}</div>
+                <div class="info-label">Kasus Stunting</div>
+                <div class="info-description">Monitoring stunting</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="activities-cart-container">
+    <div class="cart-header">
+        <h2 class="cart-title">
+            <i class="fas fa-history"></i>
+            Aktivitas & Jadwal
+        </h2>
+        <p class="cart-subtitle">Aktivitas terbaru dan jadwal mendatang</p>
+    </div>
+
+    <div class="activities-grid">
+        <div class="activity-cart">
+            <div class="activity-header">
+                <h3 class="activity-title">
+                    <i class="fas fa-clipboard-list"></i>
+                    Aktivitas Terbaru
+                </h3>
+                <p class="activity-subtitle">Kegiatan terkini</p>
+            </div>
+            <div class="activity-body" id="recent-activities">
+
+            </div>
+        </div>
+
+        <div class="activity-cart">
+            <div class="activity-header">
+                <h3 class="activity-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Jadwal Mendatang
+                </h3>
+                <p class="activity-subtitle">Jadwal kegiatan</p>
+            </div>
+            <div class="activity-body" id="upcoming-schedules">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="system-info-cart-container">
+    <div class="cart-header">
+        <h2 class="cart-title">
+            <i class="fas fa-bolt"></i>
+            Aksi Cepat Posyandu
+        </h2>
+        <p class="cart-subtitle">Menu navigasi cepat</p>
+    </div>
+
+    <div class="quick-actions-grid system-info-grid">
+        <a href="{% url 'admin_panel:posyandu:locations' %}" class="system-info-cart" style="text-decoration: none;">
+            <div class="info-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="info-label">Lokasi</div>
+            <div class="info-description">Kelola lokasi</div>
+        </a>
+
+        <a href="{% url 'admin_panel:posyandu:kaders' %}" class="system-info-cart" style="text-decoration: none;">
+            <div class="info-icon">
+                <i class="fas fa-user-nurse"></i>
+            </div>
+            <div class="info-label">Kader</div>
+            <div class="info-description">Kelola kader</div>
+        </a>
+
+        <a href="{% url 'admin_panel:posyandu:schedules' %}" class="system-info-cart" style="text-decoration: none;">
+            <div class="info-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="info-label">Jadwal</div>
+            <div class="info-description">Kelola jadwal</div>
+        </a>
+
+        <a href="{% url 'admin_panel:posyandu:health_records' %}" class="system-info-cart" style="text-decoration: none;">
+            <div class="info-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="info-label">Kesehatan</div>
+            <div class="info-description">Data kesehatan</div>
+        </a>
+
+        <a href="{% url 'admin_panel:posyandu:ibu_hamil' %}" class="system-info-cart" style="text-decoration: none;">
+            <div class="info-icon">
+                <i class="fas fa-baby"></i>
+            </div>
+            <div class="info-label">Ibu Hamil</div>
+            <div class="info-description">Data kehamilan</div>
+        </a>
+
+        <a href="{% url 'admin_panel:posyandu:immunizations' %}" class="system-info-cart" style="text-decoration: none;">
+            <div class="info-icon">
+                <i class="fas fa-syringe"></i>
+            </div>
+            <div class="info-label">Imunisasi</div>
+            <div class="info-description">Data vaksin</div>
+        </a>
+
+        <a href="{% url 'admin_panel:posyandu:nutrition_data' %}" class="system-info-cart" style="text-decoration: none;">
+            <div class="info-icon">
+                <i class="fas fa-apple-alt"></i>
+            </div>
+            <div class="info-label">Data Gizi</div>
+            <div class="info-description">Status gizi</div>
+        </a>
+
+        <a href="{% url 'admin_panel:posyandu:stunting_data' %}" class="system-info-cart" style="text-decoration: none;">
+            <div class="info-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="info-label">Stunting</div>
+            <div class="info-description">Monitor stunting</div>
+        </a>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>$(document).ready(function() {
+    loadDashboardData();
+
+    setInterval(loadDashboardData, 300000);
+});
+
+function loadDashboardData() {
+
+    $.get('{% url "admin_panel:posyandu:api_statistics" %}')
+        .done(function(data) {
+            $('#total-locations').text(data.total_locations || 0);
+            $('#active-locations').text(data.active_locations || 0);
+            $('#total-kaders').text(data.total_kaders || 0);
+            $('#total-schedules').text(data.total_schedules || 0);
+            $('#total-health-records').text(data.total_health_records || 0);
+            $('#total-immunizations').text(data.total_immunizations || 0);
+            $('#total-ibu-hamil').text(data.total_ibu_hamil || 0);
+            $('#stunting-count').text(data.total_stunting_data || 0);
+        })
+        .fail(function() {
+            console.log('Failed to load statistics');
+        });
+
+    loadRecentActivities();
+    loadUpcomingSchedules();
+}
+
+function loadRecentActivities() {
+    const activities = `
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title-text">Pemeriksaan Kesehatan Baru</div>
+                <div class="activity-time">5 menit yang lalu</div>
+            </div>
+            <div class="activity-status">
+                <span class="status-badge status-success">Selesai</span>
+            </div>
+        </div>
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-syringe"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title-text">Imunisasi Balita</div>
+                <div class="activity-time">15 menit yang lalu</div>
+            </div>
+            <div class="activity-status">
+                <span class="status-badge status-info">Proses</span>
+            </div>
+        </div>
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-calendar"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title-text">Jadwal Baru Ditambahkan</div>
+                <div class="activity-time">1 jam yang lalu</div>
+            </div>
+            <div class="activity-status">
+                <span class="status-badge status-warning">Baru</span>
+            </div>
+        </div>
+    `;
+    $('#recent-activities').html(activities);
+}
+
+function loadUpcomingSchedules() {
+    $.get('{% url "admin_panel:posyandu:api_schedule_list" %}')
+        .done(function(data) {
+            let schedulesHtml = '';
+            if (data.results && data.results.length > 0) {
+                data.results.slice(0, 5).forEach(function(schedule) {
+                    schedulesHtml += `
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title-text">${schedule.title}</div>
+                                <div class="activity-time">${schedule.schedule_date} - ${schedule.start_time}</div>
+                            </div>
+                            <div class="activity-status">
+                                <span class="status-badge status-info">Jadwal</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                schedulesHtml = '<div class="empty-state"><i class="fas fa-calendar-times"></i><p>Tidak ada jadwal mendatang</p></div>';
+            }
+            $('#upcoming-schedules').html(schedulesHtml);
+        })
+        .fail(function() {
+            $('#upcoming-schedules').html('<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Gagal memuat jadwal</p></div>');
+        });
+}
+
+let toastCount = 0;
+const maxToasts = 2;
+const toastMessages = new Set();
+
+function showToast(type, message) {
+
+    if (toastMessages.has(message)) {
+        return;
+    }
+
+    if (toastCount >= maxToasts) {
+        return;
+    }
+
+    toastMessages.add(message);
+    toastCount++;
+
+    const toast = $(`
+        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `);
+
+    $('#toast-container').append(toast);
+    toast.toast('show');
+
+    setTimeout(() => {
+        toast.remove();
+        toastCount--;
+        toastMessages.delete(message);
+    }, 3000);
+}
+</script>
+{% endblock extra_js %}

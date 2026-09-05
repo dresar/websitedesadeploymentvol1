@@ -1,0 +1,472 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/users.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+
+            <!-- Back Button -->
+            <div class="mb-3">
+                <a href="{% url 'core:user_management' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Kembali ke Manajemen Pengguna
+                </a>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Form Card -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user{% if is_edit %}-edit{% else %}-plus{% endif %} me-2"></i>
+                        {{ title }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informasi Dasar
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label">
+                                        Username <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.username.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">
+                                        Email <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.email.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">Nama Depan</label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.first_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">Nama Belakang</label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.last_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">Nomor Telepon</label>
+                                    {{ form.phone_number }}
+                                    {% if form.phone_number.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.phone_number.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.position.id_for_label }}" class="form-label">Posisi/Jabatan</label>
+                                    {{ form.position }}
+                                    {% if form.position.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.position.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.address.id_for_label }}" class="form-label">Alamat</label>
+                                    {{ form.address }}
+                                    {% if form.address.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.address.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Password Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-lock me-2"></i>
+                                    Password Management
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                        Password {% if not is_edit %}<span class="text-danger">*</span>{% endif %}
+                                    </label>
+                                    {{ form.password1 }}
+                                    {% if form.password1.help_text %}
+                                        <div class="form-text">{{ form.password1.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.password1.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.password1.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                        Konfirmasi Password {% if not is_edit %}<span class="text-danger">*</span>{% endif %}
+                                    </label>
+                                    {{ form.password2 }}
+                                    {% if form.password2.help_text %}
+                                        <div class="form-text">{{ form.password2.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.password2.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.password2.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if is_edit %}
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Reset Password:</strong> Kosongkan field password jika tidak ingin mengubah password. 
+                                    Untuk reset password, isi kedua field password dengan password baru.
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Role Management -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-users-cog me-2"></i>
+                                    Role Management
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Role Pengguna</label>
+                                    <select class="form-select" name="user_role" id="user_role">
+                                        <option value="">Pilih Role</option>
+                                        <option value="admin" {% if user.is_superuser %}selected{% endif %}>Administrator</option>
+                                        <option value="staff" {% if user.is_staff and not user.is_superuser %}selected{% endif %}>Staff</option>
+                                        <option value="user" {% if not user.is_staff and not user.is_superuser %}selected{% endif %}>User Biasa</option>
+                                    </select>
+                                    <div class="form-text">Pilih role untuk pengguna ini</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Departemen</label>
+                                    <select class="form-select" name="department" id="department">
+                                        <option value="">Pilih Departemen</option>
+                                        <option value="admin">Administrasi</option>
+                                        <option value="sekretariat">Sekretariat</option>
+                                        <option value="keuangan">Keuangan</option>
+                                        <option value="umum">Umum</option>
+                                        <option value="kependudukan">Kependudukan</option>
+                                        <option value="pembangunan">Pembangunan</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permissions -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-shield-alt me-2"></i>
+                                    Izin & Status
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-check mb-3">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        <i class="fas fa-check-circle text-success me-1"></i>
+                                        Aktif
+                                    </label>
+                                    <div class="form-text">Pengguna dapat login ke sistem</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mb-3">
+                                    {{ form.is_staff }}
+                                    <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">
+                                        <i class="fas fa-user-tie text-primary me-1"></i>
+                                        Staff
+                                    </label>
+                                    <div class="form-text">Akses ke admin panel</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mb-3">
+                                    {{ form.is_superuser }}
+                                    <label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">
+                                        <i class="fas fa-crown text-warning me-1"></i>
+                                        Superuser
+                                    </label>
+                                    <div class="form-text">Akses penuh ke sistem</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="can_manage_users" name="can_manage_users">
+                                    <label class="form-check-label" for="can_manage_users">
+                                        <i class="fas fa-users text-info me-1"></i>
+                                        Kelola User
+                                    </label>
+                                    <div class="form-text">Dapat mengelola pengguna lain</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Permissions -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Izin Lanjutan
+                                </h6>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="can_edit_content" name="can_edit_content">
+                                    <label class="form-check-label" for="can_edit_content">
+                                        <i class="fas fa-edit text-primary me-1"></i>
+                                        Edit Konten
+                                    </label>
+                                    <div class="form-text">Dapat mengedit konten website</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="can_manage_media" name="can_manage_media">
+                                    <label class="form-check-label" for="can_manage_media">
+                                        <i class="fas fa-images text-success me-1"></i>
+                                        Kelola Media
+                                    </label>
+                                    <div class="form-text">Dapat mengelola file media</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mb-3">
+                                    <input type="checkbox" class="form-check-input" id="can_view_reports" name="can_view_reports">
+                                    <label class="form-check-label" for="can_view_reports">
+                                        <i class="fas fa-chart-bar text-info me-1"></i>
+                                        Lihat Laporan
+                                    </label>
+                                    <div class="form-text">Dapat melihat laporan sistem</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% if is_edit %}Perbarui{% else %}Simpan{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-focus on first input
+    $('input[type="text"]:first').focus();
+    
+    // Role management
+    $('#user_role').on('change', function() {
+        var role = $(this).val();
+        
+        // Reset all checkboxes
+        $('#id_is_staff, #id_is_superuser').prop('checked', false);
+        
+        // Set permissions based on role
+        if (role === 'admin') {
+            $('#id_is_staff').prop('checked', true);
+            $('#id_is_superuser').prop('checked', true);
+            $('#can_manage_users').prop('checked', true);
+            $('#can_edit_content').prop('checked', true);
+            $('#can_manage_media').prop('checked', true);
+            $('#can_view_reports').prop('checked', true);
+        } else if (role === 'staff') {
+            $('#id_is_staff').prop('checked', true);
+            $('#can_edit_content').prop('checked', true);
+            $('#can_manage_media').prop('checked', true);
+        } else if (role === 'user') {
+            // User biasa - no special permissions
+        }
+    });
+    
+    // Show/hide password fields based on edit mode
+    {% if is_edit %}
+    $('#id_password1, #id_password2').on('input', function() {
+        var password1 = $('#id_password1').val();
+        var password2 = $('#id_password2').val();
+        
+        if (password1 || password2) {
+            $('#id_password1, #id_password2').prop('required', true);
+        } else {
+            $('#id_password1, #id_password2').prop('required', false);
+        }
+    });
+    {% endif %}
+    
+    // Form validation
+    $('form').on('submit', function(e) {
+        var username = $('#id_username').val();
+        var email = $('#id_email').val();
+        
+        if (!username || !email) {
+            e.preventDefault();
+            alert('Username dan Email harus diisi!');
+            return false;
+        }
+        
+        // Password validation for new users
+        {% if not is_edit %}
+        var password1 = $('#id_password1').val();
+        var password2 = $('#id_password2').val();
+        
+        if (!password1 || !password2) {
+            e.preventDefault();
+            alert('Password harus diisi untuk user baru!');
+            return false;
+        }
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            alert('Password tidak sama!');
+            return false;
+        }
+        {% endif %}
+    });
+    
+    // Initialize role based on current user status
+    {% if is_edit %}
+    if ($('#id_is_superuser').is(':checked')) {
+        $('#user_role').val('admin');
+    } else if ($('#id_is_staff').is(':checked')) {
+        $('#user_role').val('staff');
+    } else {
+        $('#user_role').val('user');
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}
